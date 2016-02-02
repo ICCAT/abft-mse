@@ -1,0 +1,231 @@
+; TextPad syntax definitions for R.
+; Copyright (C) 2002, Steve Martell
+
+C=1
+
+[Syntax]
+Namespace1 = 6
+IgnoreCase = No
+KeyWordLength =
+BracketChars = {[()]}
+OperatorChars = -+*/<>!~%^&|=
+PreprocStart = #
+SyntaxStart =
+SyntaxEnd =
+HexPrefix = 0x
+CommentStart = /*
+CommentEnd = */
+CommentStartAlt =
+CommentEndAlt =
+SingleComment = //
+SingleCommentCol =
+SingleCommentAlt =
+SingleCommentColAlt =
+SingleCommentEsc =
+StringsSpanLines = Yes
+StringStart = "
+StringEnd = "
+StringAlt =
+StringEsc = \
+CharStart = '
+CharEnd = '
+CharEsc = \
+
+[Preprocessor keywords]
+#define
+#elif
+#else
+#endif
+#error
+#if
+#ifdef
+#ifndef
+#import
+#include
+#line
+#pragma
+#undef
+defined
+
+[Keywords 1]
+3darray
+4darray
+5darray
+6darray
+7darray
+allocated
+acos
+argc
+argv
+asin
+atan
+auto
+betai
+break
+case
+char
+choleski_decomp
+cin
+colfill
+colfill_randn
+colfill_randu
+colfill_seqadd
+colsum
+column
+const
+continue
+cos
+cosh
+cout
+cumd_cauchy
+cumd_norm
+cube
+default
+det
+dmatrix
+do
+double
+dvar_matrix
+dvar_vector
+dvariable
+dvector
+d3array
+dvar3_array
+eigenvalues
+eigenvectors
+elem_div
+random_number_generator
+elem_prod
+else
+endl
+enum
+envp
+exp
+extern
+extract_column
+extract_diagonal
+extract_row
+fabs
+fill
+fill_multinomial
+fill_randbi
+fill_randn
+fill_randpoisson
+fill_randu
+fill_seqadd
+float
+for
+gammaln
+goto
+identity_matrix
+if
+indexmin
+indexmax
+init_3darray
+init_bounded_dev_vector
+init_bounded_int
+init_bounded_matrix
+init_bounded_number
+init_bounded_vector
+init_ivector
+init_int
+init_matrix
+init_number
+init_vector
+initialize
+dll_int
+dll_vector
+dll_matrix
+dll_number
+dll_init_number
+dll_init_vector
+dll_init_matrix
+int
+inv
+inv_cumd_cauchy
+inv_cumd_norm
+likeprof_number
+log
+log10
+log_comb
+long
+main
+mark
+matrix
+max
+mean
+mfexp
+min
+norm
+norm2
+number
+objective_function_value
+outer_prod
+pow
+register
+regression
+report
+return
+robust_regression
+row
+rowfill
+rowfill_randn
+rowfill_randu
+rowfill_seqadd
+rowsum
+set_stepnumber
+set_stepsize
+sdreport_matrix
+sdreport_number
+sdreport_vector
+sfabs
+short
+signed
+sin
+sinh
+sizeof
+solve
+sort
+sqrt
+square
+ofstream
+static
+struct
+sum
+switch
+tan
+tanh
+trans
+typedef
+union
+unsigned
+vector
+void
+volatile
+wchar_t
+while
+wmain
+
+[Keywords 2]
+DATA_SECTION
+INITIALIZATION_SECTION
+PARAMETER_SECTION
+PRELIMINARY_CALCS_SECTION
+PROCEDURE_SECTION
+FUNCTION
+REPORT_SECTION
+RUNTIME_SECTION
+TOP_OF_MAIN_SECTION
+GLOBALS_SECTION
+BETWEEN_PHASES_SECTION
+LOCAL_CALCS
+LOC_CALCS
+END_CALCS
+FINAL_SECTION
+
+[Keywords 3]
+current_phase
+last_phase
+mceval_phase
+set_stepsize
+set_stepnumber
