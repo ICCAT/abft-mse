@@ -1,0 +1,104 @@
+
+---
+title: "`r OMI@Name`"
+subtitle: "ABT-MSE Operating model fitting report"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: pdf_document
+---
+
+### Operating model scenario is
+
+`r LNames_Ref[i,1]`  
+`r LNames_Ref[i,2]`   
+`r LNames_Ref[i,3]`    
+`r LNames_Ref[i,4]`  
+
+### Estimated selectivities 
+
+Words with markup to indicated `code` or `R function` names.
+
+Some  R:
+```{r memory, cache=FALSE}
+OMI@Name # objects in memory and current namespace
+```
+
+Now some MSE results:
+
+```{r}
+print(Sys.time())
+
+```
+
+**Fit to observed catches**
+
+```{r wormplots, fig.width=7, fig.height=10,echo=FALSE}
+
+  firstyr=1960
+  fleetnams=c(OMI@Fleets$name,'ALL OTH')
+  areanams=OMI@areanams
+  subyrnams=c("Jan-Mar","Apr-Jun","Jul-Sept","Oct-Dec")
+  popnams=c("East","West")
+  fcols<-c("#99999980","#ff000080","#00ff0080","#0000ff80","#ffff0080")
+  pcols<-c("#ff000080","#0000ff80","#00ff0080","#ffff0080")
+  
+  pch<-19
+  cex<-0.8
+  lwd=1.5
+  
+  np<-out$np   
+  ny<-out$ny
+  ns<-out$ns
+  nr<-out$nr
+  nf<-out$nf
+  na<-out$na
+  nl<-out$nl
+  
+  yrs<-firstyr:(firstyr+ny-1)
+  
+  # Fit to catches --------------------------
+  
+  CobsA<-array(NA,c(ny,ns,nr,nf))
+  CobsA[out$Cobs[,1:4]]<-out$Cobs[,5]
+  Co<-CobsA/1000
+  Cp<-out$Cpred/1000
+  Co<-log(Co)
+  Cp<-log(Cp)
+  
+  par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.4,0.05))
+  ylim=c(0,max(Co,na.rm=T))
+  ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
+  xs<-pretty(seq(yrs[1],yrs[ny],length.out=6))
+  
+  for(s in 1:ns){
+    
+    for(r in 1:nr){
+      
+      plot(yrs,Co[,s,r,1],col=fcols[1],pch=pch,ylim=ylim,axes=F)
+      lines(yrs,Cp[,s,r,1],col=fcols[1],lwd=lwd)
+      if(r==nr)axis(1,xs,xs)
+      if(r<nr)axis(1,xs,NA)
+      if(s==1)axis(2,ys,ys)
+      if(s<(ns+1))axis(2,ys,NA)
+      if(s==1)mtext(areanams[r],2,line=2.75)
+      if(r==1)mtext(subyrnams[s],3,line=-0.5)
+      if(nf>1){
+        for(f in 2:nf){
+          
+          points(yrs,Co[,s,r,f],col=fcols[f],pch=pch)
+          lines(yrs,Cp[,s,r,f],col=fcols[f],lwd=lwd)
+          
+        }
+      }  
+      
+      if(r==1&s==ns)legend('topright',legend=fleetnams,text.font=2,text.col=fcols[1:nf],bty='n')
+      
+    }
+    
+  }
+  
+  mtext("Year",1,outer=T,line=2)
+  mtext("Predicted (line) versus observed (point) catches of Atlantic bluefin (log tonnes)",3,line=1.5,outer=T)
+  
+```
+
