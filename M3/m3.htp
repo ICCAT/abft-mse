@@ -26,6 +26,7 @@ class model_data : public ad_comm{
   data_matrix Fec;
   data_vector steep;
   data_vector spawns;
+  data_matrix canspawn;
   data_matrix Ma;
   data_int nCobs;
   data_matrix Cobs;
@@ -74,6 +75,7 @@ class model_data : public ad_comm{
   data_5array mov_ini;
   data_vector lnqCPUE_ini;
   data_vector lnqI_ini;
+  data_vector D_ini;
   data_int complexRD;
   data_int complexF;
   data_int nF;
@@ -138,6 +140,7 @@ private:
   param_number objSOO;
   param_number objRD;
   param_number objmov;
+  param_number objsel;
   param_number objPSAT;
   param_number objPSAT2;
   param_5array N;
@@ -151,6 +154,7 @@ private:
   param_3array B;
   param_vector R0;
   param_vector SSB0;
+  param_vector D;
   param_vector SSBpR;
   param_matrix iRD;
   param_matrix RD;
