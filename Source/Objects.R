@@ -1507,7 +1507,7 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
     .Object@proyears<-as.integer(proyears)
     .Object@nlen<-as.integer(out$nl)
     .Object@nma<-as.integer(out$nma)
-    .Object@ma<-ma<-out$ma #ma<-array(rep(c(rep(1,4),rep(2,4),rep(3,na-8)),each=2),c(np,na))
+    .Object@ma<-ma<-array(rep(c(rep(1,4),rep(2,4),rep(3,na-8)),each=2),c(np,na)) # for some reason this doesn't yet exist. 
     
     .Object@lenbins<-rep(0,out$nl+1)
     .Object@mulen<-out$ml

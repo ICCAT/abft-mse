@@ -16,23 +16,32 @@ output: pdf_document
 
 ### Estimated selectivities 
 
-Words with markup to indicated `code` or `R function` names.
+```{r estimatedsels, fig.width=7, fig.height=5,echo=FALSE}
+  fleetnams=c(OMI@Fleets$name,'OTH')
+  nf<-out$nf
+  nl<-out$nl
+  fcols<-rep(c("#99999980","#ff000080","#00ff0080","#0000ff80","#ffff0080","#ff00ff80","#00ffff80"),2)
+  ltys<-rep(c(1,2),each=7)
+  
+  par(mai=c(0.05,0.15,0.01,0.01),omi=c(0.66,0.5,0.1,0.05))
+  
+  plot(out$ml[c(1,nl)],c(0,1),col='white',lwd=2,type='l',lty=ltys[1])
+  
+  for(f in 1:nf){
+    
+    lines(out$ml,out$sel[f,],col=fcols[f],lwd=2,lty=ltys[f])
+    
+  }
+  legend('topright',legend=fleetnams,text.font=2,text.col=fcols[1:nf],bty='n',col=fcols[1:nf],lty=ltys[1:nf])
+  
+  mtext("Length (cm)",1,outer=T,line=2)
+  mtext("Selectivity",2,outer=T,line=1.5)
 
-Some  R:
-```{r memory, cache=FALSE}
-OMI@Name # objects in memory and current namespace
 ```
 
-Now some MSE results:
+### Fit to observed catches ###
 
-```{r}
-print(Sys.time())
-
-```
-
-**Fit to observed catches**
-
-```{r wormplots, fig.width=7, fig.height=10,echo=FALSE}
+```{r catchfit, fig.width=7, fig.height=10,echo=FALSE}
 
   firstyr=1960
   fleetnams=c(OMI@Fleets$name,'ALL OTH')
@@ -100,5 +109,121 @@ print(Sys.time())
   mtext("Year",1,outer=T,line=2)
   mtext("Predicted (line) versus observed (point) catches of Atlantic bluefin (log tonnes)",3,line=1.5,outer=T)
   
+```
+
+### Fit to abundance indices ###
+
+```{r indexfit, fig.width=7, fig.height=9,echo=FALSE}
+B<-array(NA,dim(out$N))
+  ind<-TEG(dim(out$N))
+  indw<-ind[,c(2,4,1)]
+  B[ind]<-out$N[ind]*out$wt_age[indw]
+
+  RAIp<-apply(B,c(5,3,2),sum) # r s y
+  RAIo<-out$RAI
+  muRAIp<-mean(RAIp)
+  RAIp<-RAIp/muRAIp
+  RAIo<-RAIo/mean(RAIo) 
+
+  RAIpP<-apply(B,c(5,3,2,1),sum) # r s y p
+  RAIpP<-RAIpP/muRAIp
+
+  par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.4,0.05))
+  ylim=c(0,max(RAIo,RAIp,na.rm=T))
+  ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
+  xs<-pretty(seq(yrs[1],yrs[ny],length.out=6))
+ 
+  for(s in 1:ns){
+  
+    for(r in 1:nr){
+    
+      plot(yrs,RAIo[r,s,],col="#99999980",pch=pch,ylim=ylim,axes=F)
+      lines(yrs,RAIp[r,s,],col="#ff00ff80",lwd=2)
+      for(p in 1:np){
+        lines(yrs,RAIpP[r,s,,p],col=pcols[p],lwd=1.5)
+      }
+    
+      if(r==nr)axis(1,xs,xs)
+      if(r<nr)axis(1,xs,NA)
+      if(s==1)axis(2,ys,ys)
+      if(s<(ns+1))axis(2,ys,NA)
+      if(s==1)mtext(areanams[r],2,line=2.75)
+      if(r==1)mtext(subyrnams[s],3,line=-0.5)
+      if(r==1&s==ns)legend('topright',legend=popnams,text.font=2,text.col=pcols[1:np],bty='n')
+    
+    }
+  
+  }
+
+  mtext("Year",1,outer=T,line=2)
+  mtext("Predicted (line) versus observed (point) relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
+```
+
+
+```{r, results='asis',echo=FALSE}
+  
+  ny<-out$ny
+  ns<-out$ns
+  nr<-out$nr
+  nf<-out$nf
+  nl<-out$nl
+
+  CLobsA<-array(NA,c(ny,ns,nr,nf,nl))
+  CLobsA[out$CLobs[,1:5]]<-out$CLobs[,6]
+  
+  CLo<-apply(CLobsA,c(1,4,5),sum,na.rm=T)
+  CLo[CLo==0]<-NA
+  CLotot<-array(apply(CLo,1:2,sum,na.rm=T),dim(CLo))
+  CLo<-CLo/CLotot
+  CLp<-apply(out$CLtotpred,c(1,4,5),sum,na.rm=T)#*CLotot
+  CLp<-CLp/array(apply(CLp,1:2,sum,na.rm=T),dim(CLp))
+  
+  for(f in 1:nf){
+    
+    #jpeg(paste(outdir,"Catch_comp_fit_",fleetnams[f],".jpg",sep=""),res=300,height=7,width=8,units='in')
+    cat('\n')  
+    cat("### Catch composition fit for",fleetnams[f],"\n") 
+    
+    yrswd<-unique(array(1:ny,dim(CLo[,f,]))[!is.na(CLo[,f,])])
+    yrswd<-yrswd[order(yrswd)]
+    nplotyrs<-length(yrswd)
+    
+    ncs<-6
+    nrs<-ceiling(nplotyrs/ncs)
+    
+    par(mfrow=c(nrs,ncs),mai=c(0.15,0.25,0.01,0.01),omi=c(0.5,0.15,0.4,0.05))
+    
+    ylim=c(0,0.4)
+    ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
+    xs<-pretty(seq(1,out$nl,length.out=8))
+    
+    for(i in 1:nplotyrs){
+      
+      y<-yrswd[i]
+      if(i>(nplotyrs-ncs)){
+        barplot(CLo[y,f,],ylim=ylim,names.arg=out$ml,border=NA,col='orange')
+      }else{
+        barplot(CLo[y,f,],ylim=ylim,border=NA,col='orange')
+      }
+      lines(CLp[y,f,],col="#0000ff90",lwd=1.5)
+      legend('topleft',legend=y+firstyr-1,bty='n')  
+      legend('topright',legend=paste("n=",round(sum(CLobsA[y,,,f,],na.rm=T)/1000,1),"k",sep=""),bty='n')
+      abline(v=xs,col="#99999980")
+    }   
+    
+    
+    mtext("Length (cm)",1,outer=T,line=2)
+    mtext(paste("Predicted (line) versus observed (point) catch at length for the ",fleetnams[f]," fleet (n=",floor(sum(CLobsA[,,,f,],na.rm=T)/1000),"k)",sep=""),3,line=1.25,outer=T)
+    
+    #dev.off()
+    cat('\n') 
+  }  
+
+#for (i in 1:2){
+#cat('\n')  
+#cat("#This is a heading for ", i, "\n") 
+#hist(cars[,i])
+#cat('\n') 
+#}
 ```
 

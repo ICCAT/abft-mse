@@ -1763,7 +1763,7 @@ M3write<-function(OMI,datfile="C:/M3/M3.dat"){
   write(OMI@spawns,datfile,OMI@np,append=T)
   
   write("# canspawn, areas in which the stock spawns",datfile,1,append=T)
-  write(OMI@canspawn,datfile,OMI@np,append=T)
+  write(OMI@canspawn,datfile,OMI@nr,append=T)
   
   # -- Natural Mortality rate --
   

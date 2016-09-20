@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	    v0.19 (alpha)                                   
+//                                	           	    v1.0 (beta)                                   
 //
-//                                   		          6th August 2016                           
+//                                   		          12th September 2016                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -18,9 +18,9 @@
 // this regard M3 includes several simplifications over a conventional age-structured stock assessment in order to reduce calculations and 
 // ensure that the estimation problem is well defined. 
 //
-// M3 is currently in a developmental (alpha) stage. Any comments, bugs or otherwise can be forwarded to t.carruthers@fisheries.ubc.ca. 
+// M3 is currently in a developmental (beta) stage. Any comments, bugs or otherwise can be forwarded to t.carruthers@fisheries.ubc.ca. 
 //
-// M3 was compiled using ADMB 11.5 (64 bit) under Windows 8 using mingw64 
+// M3 was compiled using ADMB 11.5 (64 bit) under Windows 10 using mingw64 
 //
 //
 // -- Acknowledgements --
@@ -85,6 +85,8 @@
 // * Tweaking of plus group initialization
 // * Canspawn has been added which is a matrix of 1s and 0s denoting if a stock spawns or not in each area
 // * Model predicted SSB depletion is now calculated and outputted in verbose=T to examine fit to simulations
+// * Reparameterization of selectivity estimation (current ogives could produce maximum selectivity at age much less than 1 and were therefore confounded with catchability)
+// * Likelihoods reweighted for realistic quantity of various data (following data prep)
 //
 //
 // -- Dev notes --
@@ -306,7 +308,6 @@ PARAMETER_SECTION
 
 
 PROCEDURE_SECTION
-	
 	
 	if(debug)cout<<"datacheck: "<<datacheck<<endl; // Were the data the correct length?
 	

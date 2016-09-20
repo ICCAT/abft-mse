@@ -69,7 +69,21 @@ sfInit(parallel=T,cpus=8)              # Initiate the cluster
 sfLapply(1:nOMs,runM3,M3temp="C:/M3temp") # run the M3 script
 
 storeoutputs(fromdir=paste(M3temp,1:nOMs,sep=""),todir=paste(getwd(),"/Objects/Reference OMs/",1:nOMs,sep=""))
+
+
+MPInd<-read.csv(paste0(getwd(),"/Data/Processed/MP Indices/MP indices compiled.csv"))
 make_fit_reports(dirs=paste(getwd(),"/Objects/Reference OMs/",1:nOMs,sep=""))
+
+
+
+dim(out$SSB)
+dim(out$N)
+
+
+SSB<-apply(out$SSB,1:2,mean)
+SSBt<-SSB/apply(SSB,1,mean)
+N<-apply(apply(out$N[,,,6:out$na,],1:3,sum),1:2,mean)
+Nt<-N/apply(N,1,mean)
 
 
 
