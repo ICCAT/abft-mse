@@ -13,7 +13,7 @@
 //
 // -- About M3 --
 //
-// M3 is a spatial, multistock, subyear, statistical catch-at-length stock assessment model. M3 was designed to be used as an operating model 
+// M3 is a spatial, multi-stock, subyear, statistical catch-at-length stock assessment model. M3 was designed to be used as an operating model 
 // that could be fitted to various data to predict spatial stock structure of a multi-stock fishery (specifically Atlantic bluefin tuna). In
 // this regard M3 includes several simplifications over a conventional age-structured stock assessment in order to reduce calculations and 
 // ensure that the estimation problem is well defined. 
@@ -636,7 +636,7 @@ FUNCTION calcSelectivities
 	    case 2: // Logistic selectivity
 	     
 	      spar(2)=ml(nl)*(0.2+0.5*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));        // Inflection point (2) as a fraction of largest length I(0.1|0.8)
-	      spar(1)=ml(nl)*(0.02+0.08*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));   // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
+	      spar(1)=ml(nl)*(0.02+0.08*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));    // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
 	      
 	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
 	      
@@ -653,7 +653,7 @@ FUNCTION calcSelectivities
 	      
 	      spar(1)=0.2*mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)));                     // Dome-shape parameter I(0|0.2)
 	      spar(2)=0.1+(0.15*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));              // Precision as the ratio of the inflection point I(0.1|0.7)
-	      spar(3)=ml(nl)*(0.15+(0.65*mfexp(selpar(ss,3))/(1+mfexp(selpar(ss,3)))));      // Inflection point as a fraction of largest length I(0.15|0.9)
+	      spar(3)=ml(nl)*(0.15+(0.65*mfexp(selpar(ss,3))/(1+mfexp(selpar(ss,3)))));    // Inflection point as a fraction of largest length I(0.15|0.9)
 	     
 	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
 	        
