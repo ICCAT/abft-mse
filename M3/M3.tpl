@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	    v1.0 (beta)                                   
+//                                	           	    v1.1 (beta)                                   
 //
-//                                   		          12th September 2016                           
+//                                   		          5th October 2016                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -88,6 +88,12 @@
 // * Reparameterization of selectivity estimation (current ogives could produce maximum selectivity at age much less than 1 and were therefore confounded with catchability)
 // * Likelihoods reweighted for realistic quantity of various data (following data prep)
 //
+// -- Change log since v1.0 (post ICCAT species group meeting)
+// 
+// * MCMC outputs
+// * Alternative index pass through
+// * Pass through of OM naming
+// * Historical spool nyeq up must be less than na at the moment (due to allocation of recruitment deviations to bottom triangle of N matrix) 
 //
 // -- Dev notes --
 //
@@ -100,6 +106,9 @@
 DATA_SECTION
 	
 	// -- Model Dimensions --
+	//init_adstring Name;                  // Name of operating model
+	//init_int nOMfactors;                 // Number of factor levels
+	//init_vector OMfactors(1,nOMfactors); // The various factor levels of the operating model
 	init_int ny;                           // Number of years
 	init_int ns;                           // Number of sub-year time steps
 	init_int np;                           // Number of stocks
@@ -114,7 +123,7 @@ DATA_SECTION
 	init_int nydist;                       // Number of years over which initial stock distribution is calculated (prior to spool up)
 	init_int nyeq;                         // Number of spool-up years over which the stock is subject to nZeq, used to define equilibrium conditions
 	init_vector ml(1,nl);                  // Mean length in each length class (used for calculating selectivity only) 
-	init_vector RDblock(1,ny);             // Recruitment blocks for simple recruitment estimation
+	init_vector RDblock(1,ny+na-1);        // Recruitment blocks for simple recruitment estimation
 	init_int nRD;                          // Number of estimated recruitment dev parameters per stock                   
 		
 	// -- Growth --
@@ -199,8 +208,7 @@ DATA_SECTION
 	init_matrix sel_ini(1,nf,1,nl);                   // Selectivity 
 	init_matrix selpars_ini(1,nf,1,3);                // Selectivity parameters
 	init_vector lnF_ini(1,nCobs);                     // Effort (complexF=0) or log fishing mortality rate (complexF=1) 
-	init_matrix ilnRD_ini(1,np,2,na);                 // Recruitment deviations (initial)
-	init_matrix lnRD_ini(1,np,1,ny);                  // Recruitment deviations
+	init_matrix lnRD_ini(1,np,1,ny+na-1);                  // Recruitment deviations
 	init_5darray mov_ini(1,np,1,ns,1,na,1,nr,1,nr);   // Movement parameters
 	init_vector lnqCPUE_ini(1,nCPUE);                 // q estimates for CPUE fleets
 	init_vector lnqI_ini(1,nI);                       // q estimates for Fish. Ind. Indices
@@ -211,6 +219,8 @@ DATA_SECTION
 	init_int complexRD;                    // 0: estimate five year blocks of recruitment 1: estimate all annual recruitment deviations
 	init_int complexF;                     // 0: Estimate a q by fleet using C/index as a covariate of effort (nf params e.g. 5) 1: Estimate an F for every Cobs (nCobs params e.g. 1200)
 	init_int nF;                           // nCobs if complexF = 1, or 1 if complexF=0
+	//init_int nMPind;                       // The number of index observations for management procedures
+	//init_matrix MPind(1,nMPind,1,7);       // Indices used by management procedures (pass through)
 	init_int debug;                        // 1 = run with initial values
 	init_int verbose;                      // 1 = print handy text
 	init_number datacheck;                 // Validates length of dat file read, 991199
@@ -222,14 +232,14 @@ DATA_SECTION
 PARAMETER_SECTION
 		
 	// -- Estimated parameters --
-	init_bounded_vector lnR0(1,np,8.,18.,1);                  // Unfished recruitment
+	init_bounded_vector lnR0(1,np,8.,18.,1);                    // Unfished recruitment
 	init_bounded_matrix selpar(1,nsel,1,seltype,-3.,3.,1);      // Selectivity parameters
-	// init_bounded_matrix ilnRD(1,np,2,na,-1.,1.,2);            // Recruitment deviations (years prior to initial year)
-	init_bounded_matrix lnRD(1,np,1,nRD,-6.,6.,1);              // Recruitment deviations
+	init_bounded_matrix lnRD(1,np,1,nRD,-6.,6.,2);              // Recruitment deviations
 	init_bounded_vector movest(1,nMP,-6.,6.,1);                 // Movement parameters
-	init_bounded_vector lnqCPUE(1,nCPUE,-9.,2,1);            // q estimates for CPUE fleets UB mu F=0.3
+	init_bounded_vector lnqCPUE(1,nCPUE,-9.,2,1);               // q estimates for CPUE fleets UB mu F=0.3
         init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. Indices
 	
+	vector nodes(1,np+sum(seltype)+np*nRD+nMP+nCPUE+nI);        // Paramter values stored in nodes vector for mcmc output
 	// -- Objective function values --
 	objective_function_value objG;              // Global objective function value
         number objC;                                // Catch observations
@@ -257,8 +267,7 @@ PARAMETER_SECTION
         vector SSB0(1,np);                          // Unfished spawning stock biomass
         vector D(1,np);                             // Stock depletion SSB now / SSB0
         vector SSBpR(1,np);                         // Unfished spawning stock biomass per recruit
-        matrix iRD(1,np,2,na);                      // Recruitment deviations (years prior to initial year)
-	matrix RD(1,np,1,ny);                       // Recruitment deviations
+        matrix RD(1,np,1,ny+na-1);                   // Recruitment deviations y1 a1 is RD(1), y1 a2 is RD(0), y1 a3 is RD(-1), y1 na is RD(-na+2)
 	5darray CTL(1,np,1,ny,1,ns,1,nr,1,nl);      // Catch at length
 	5darray CTA(1,np,1,ny,1,ns,1,nr,1,na);      // Catch at age
         
@@ -304,11 +313,12 @@ PARAMETER_SECTION
         6darray CLpred(1,np,1,ny,1,ns,1,nr,1,nf,1,nl); // Catches by fleet (weight) and stock
         5darray CLtotpred(1,ny,1,ns,1,nr,1,nf,1,nl);   // Catch composition by fleet
         5darray CLtotfrac(1,ny,1,ns,1,nr,1,nf,1,nl);   // Catch composition by fleet fraction
-       	//sdreport_number R0(1);                       // Requirement of mceval for producing posterior estimates of model parameters/variables                   
+       	sdreport_number R0(1);                       // Requirement of mceval for producing posterior estimates of model parameters/variables                   
 
 
 PROCEDURE_SECTION
 	
+		
 	if(debug)cout<<"datacheck: "<<datacheck<<endl; // Were the data the correct length?
 	
 	calcSurvival();                  // Calculate survival
@@ -349,7 +359,12 @@ PROCEDURE_SECTION
 		
 	if(debug==1) exit(1);            // Exit prior to first function evaluation if in debugging mode
 
-
+        popnodes();                      // populate a vector of parameters for mcmc output
+        
+        if(mceval_phase()){
+          ofstream nodesout("nodes.cha", ios::app);
+          nodesout<<nodes<<"\n";
+        }
 
 FUNCTION assignPars
   {
@@ -367,20 +382,21 @@ FUNCTION assignPars
 	
 	  for(int pp=1;pp<=np;pp++){        // Loop over stocks
 	   
-	    for(int yy=1;yy<=ny;yy++){      // Loop over years
+	    for(int yy=1;yy<=ny+na-1;yy++){  // Loop over years
 	    
 	      int ry = RDblock(yy);         // Find the correct reference block for this year
-	      RD(pp,yy)=mfexp(lnRD(pp,ry)); // Assign recruitment deviation accordingly
+	         
+	      RD(pp,yy)=mfexp(lnRD(pp,ry));
+	      
 	      
 	    }
 	    
-	    RD(pp)/=mean(RD(pp));           // Ensure recruitment deviations sum to 1
+	    RD(pp)/=mean(RD(pp));           // Ensure recruitment deviations average 1
 	    
 	  }                                 // End of stocks
 	  
 	}                                   // End of recruitment estimation type (complexRD)
 	
-	//iRD=mfexp(ilnRD_ini);             // Assign initial recruitment deviations
 	qI=mfexp(lnqI);                     // Assign fishery independent catchabilities
 	
 	for(int pp=1;pp<=np;pp++){          // Loop over stocks
@@ -817,7 +833,7 @@ FUNCTION initModel
 	  
 	  stemp(pp)(ns)=1./nr;                                  // Distribute a fish evenly over areas                     
 	  
-	  for(int ii=1;ii<=nydist;ii++){                        // Loop over 10 years
+	  for(int ii=1;ii<=nydist;ii++){                        // Loop over nydist initial spatial distribution (stabilizes within 3 usually)
 	    
 	    for(int ss=1;ss<=ns;ss++){                          // Loop over subyears
 	        
@@ -836,31 +852,37 @@ FUNCTION initModel
 	  
 	  }                                                     // End of years
 	 
-	 for(int rr=1;rr<=nr;rr++){  
+	  for(int rr=1;rr<=nr;rr++){
+	  
 	    SSB0(pp)+=sum(elem_prod(surv(pp)*R0(pp),Fec(pp)))*canspawn(pp,rr)*stemp(pp,spawns(pp),rr);     // Unfished Spawning Stock Biomass
+	  
 	  }
 	  
 	  SSBpR(pp)=SSB0(pp)/R0(pp); 
 	  
 	  // -- Spool up to equilibrium given total mortality rate over first nZeq years -----------
 	  
+	  // -- Initial guess 
 	  for(int rr=1;rr<=nr;rr++){                                // Loop over areas
 	    
 	    for(int aa=1;aa<=na;aa++){
 	        
 	       N(pp,1,ns,aa,rr)=R0(pp)*surv(pp,aa)*stemp(pp,ns,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
 	       
-	       SSB(pp,1,ns)+=N(pp,1,ns,aa,rr)*Fec(pp,aa)*canspawn(pp,rr);              // Spawning stock biomass
+	       SSB(pp,1,ns)+=N(pp,1,ns,aa,rr)*Fec(pp,aa)*canspawn(pp,rr);           // Spawning stock biomass
 	      
-	    }                                                          // End of subyears  
-	
+	    }                                                       // end of ages
+	    for(int aa=1;aa<=na-nyeq;aa++){     // assign recruitment deviations to age classes prior to nyeq aging iterations (bottom triangle)
+	    
+	       N(pp,1,ns,aa,rr)*=RD(pp,na-nyeq-aa+1);
+	    
+	    }
+	  
 	  }                                                         // End of areas 
 	 
-	  // Checked line for line to here
-	  
+	  // -- Age and movement implications of spool-up
 	  for(int yy=1;yy<=nyeq;yy++){         // Loop over equilibrium years
-		   
-	    
+	   
 	    for(int ss=1;ss<=ns;ss++){         // Loop over seasons
 	      
 	      SSB(pp,1,ss)=0.;                 // reset SSB counter        
@@ -910,13 +932,13 @@ FUNCTION initModel
 		  
 		  N(pp)(1)(ss)(na)+=N(pp)(1)(ss)(na-1);          // Plus group
 		  
-		  for(int aa=(na-1);aa>=2;aa-=1){                  // Loop down age classes from plusgroup(ns)-1
+		  for(int aa=(na-1);aa>=2;aa-=1){                // Loop down age classes from plusgroup(ns)-1
 			   	        
 	            N(pp)(1)(ss)(aa)=N(pp)(1)(ss)(aa-1);         // Age fish
 			  	        
-		  }                                                // End of ages
+		  }                                              // End of ages
 				  
-	          N(pp)(1)(ss)(1)=spawnr(pp)*(0.8*R0(pp)*steep(pp)*SSB(pp,1,ss))/
+	          N(pp)(1)(ss)(1)=RD(pp,na-nyeq+yy)*spawnr(pp)*(0.8*R0(pp)*steep(pp)*SSB(pp,1,ss))/
 	                          (0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * SSB(pp,1,ss)); // Recruitment
 		  
 		  
@@ -1066,7 +1088,7 @@ FUNCTION calcTransitions
 		  	        
 	          }                                        // End of age classes
 	          
-                  N(pp)(yy)(ss)(1)=spawnr(pp)*RD(pp,yy)*(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/
+                  N(pp)(yy)(ss)(1)=spawnr(pp)*RD(pp,na+yy-1)*(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/
 		                   (0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * sum(SSBdist(pp))); // Recruitment (SSB lag 1 year)
 	          
 	       	 	       	  
@@ -1412,22 +1434,12 @@ FUNCTION calcObjective
 	
 	for(int pp=1;pp<=np;pp++){  // Loop over stocks
 	
-	  /*for(int aa=2;aa<=na;aa++){
-	  
-	    LHtemp=dnorm(ilnRD(pp,aa),0.,RDCV);   // Initial age-structure deviations (currently disabled)
-	    objRD+=LHtemp*LHw(8);                 // Weighted likelihood contribution
-	    objG+=LHtemp*LHw(8);                  // Weighted likelihood contribution
-	    
-	  }*/
-	  
 	  for(int yy=1;yy<=nRD;yy++){ // Loop over years (or blocks of recruitment deviations if complexRD=0)
 	    
 	    LHtemp=dnorm(lnRD(pp,yy),0.,RDCV);   // Recruitment deviations
 	    objRD+=LHtemp*LHw(8);                // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
-	    //objRD+=LHtemp*1/nRD;                // Weighted likelihood contribution
-	    //objG+=LHtemp*1/nRD;                 // Weighted likelihood contribution
-	
+	  
 	  }
 	  
         }  
@@ -1480,8 +1492,6 @@ FUNCTION simsam
         cout<<"sel sam f1= "<<sel(1)<<endl;                  // Estimated selectivity fleet 1
         cout<<"sel sim f2= "<<sel_ini(2)<<endl;              // Simulated selectivity fleet 2
 	cout<<"sel sam f2= "<<sel(2)<<endl;                  // Estimated selectivity fleet 2
-	//cout<<"RDi sim= "<<exp(ilnRD_ini(1))<<endl;        // Simulated initial recruitment deviations
-	//cout<<"RDi sam= "<<iRD(1)<<endl;                   // Estimated initial recruitment deviations
 	cout<<"RD sim= "<<exp(lnRD_ini(1))<<endl;            // Simulated recruitment deviations 
         cout<<"RD sam= "<<RD(1)<<endl;                       // Estimated recruitment deviations
 	cout<<"mov sim p1 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 1 in subyear 1
@@ -1502,6 +1512,52 @@ FUNCTION simsam
 	cout<<"D sam= "<<D<<endl;			     // Estimated depletion	
 	
   }
+
+
+
+FUNCTION popnodes
+  {
+	// -- Populate nodes for mcmc output --
+	j.initialize();
+	
+	for(int pp=1;pp<=np;pp++){
+	  j+=1;
+	  nodes(j)=lnR0(pp);
+	}
+	
+	for(int ff=1; ff<=nsel;ff++){
+	  for(int sp=1; sp<=seltype(ff);sp++){
+	    j+=1;
+	    nodes(j)=selpar(ff,sp);
+	  }   
+	}
+	
+	for(int pp=1; pp<=np;pp++){
+	  for(int yy=1; yy<=nRD;yy++){
+	    j+=1;
+            nodes(j)=lnRD(pp,yy);
+          }
+	}
+	
+	for(int mm=1; mm<=nMP;mm++){
+	  j+=1;
+          nodes(j)=movest(mm);
+	}
+	
+	for(int ff=1; ff<=nCPUE;ff++){
+          j+=1;
+	  nodes(j)=lnqCPUE(ff);
+	}
+	
+	for(int pp=1; pp<=nI;pp++){
+	  j+=1;
+          nodes(j)=lnqI(pp);
+	}
+	
+	if(debug)cout<<"--- Finished popnodes ---"<<endl;
+  }
+
+
 
 REPORT_SECTION
   {
