@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	    v1.1 (beta)                                   
+//                                	           	    v1.2 (beta)                                   
 //
-//                                   		          5th October 2016                           
+//                                   		          17th October 2016                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -88,12 +88,18 @@
 // * Reparameterization of selectivity estimation (current ogives could produce maximum selectivity at age much less than 1 and were therefore confounded with catchability)
 // * Likelihoods reweighted for realistic quantity of various data (following data prep)
 //
+//
 // -- Change log since v1.0 (post ICCAT species group meeting)
 // 
 // * MCMC outputs
 // * Alternative index pass through
 // * Pass through of OM naming
 // * Historical spool nyeq up must be less than na at the moment (due to allocation of recruitment deviations to bottom triangle of N matrix) 
+//
+//
+// -- Change log since v1.1 (post ICCAT species group meeting)
+// 
+// * Re parameterization of Thompson selectivity
 //
 // -- Dev notes --
 //
@@ -227,19 +233,31 @@ DATA_SECTION
 	
 	// -- Integer definitions --
 	int mi; 			       // Movement index used only in the gravity model to keep track of where the viscosity parameters are
-		
+	int nodemax;                           // Temporary integer for use in defining nodes (MCMC)
+	int j;                                 // Index location for allocating variables to node (MCMC)
 	
 PARAMETER_SECTION
 		
 	// -- Estimated parameters --
-	init_bounded_vector lnR0(1,np,8.,18.,1);                    // Unfished recruitment
-	init_bounded_matrix selpar(1,nsel,1,seltype,-3.,3.,1);      // Selectivity parameters
-	init_bounded_matrix lnRD(1,np,1,nRD,-6.,6.,2);              // Recruitment deviations
+	init_bounded_vector lnR0(1,np,11.,17.,1);                    // Unfished recruitment
+	init_bounded_matrix selpar(1,nsel,1,seltype,-2.,2.,1);      // Selectivity parameters
+	init_bounded_matrix lnRD(1,np,1,nRD,-8.,8.,1);              // Recruitment deviations
 	init_bounded_vector movest(1,nMP,-6.,6.,1);                 // Movement parameters
-	init_bounded_vector lnqCPUE(1,nCPUE,-9.,2,1);               // q estimates for CPUE fleets UB mu F=0.3
+	init_bounded_vector lnqCPUE(1,nCPUE,-9.,0.5,1);             // q estimates for CPUE fleets UB mu F=0.3
         init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. Indices
 	
-	vector nodes(1,np+sum(seltype)+np*nRD+nMP+nCPUE+nI);        // Paramter values stored in nodes vector for mcmc output
+	LOCAL_CALCS
+	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUE+nI;
+	  //cout<<nodemax<<endl;
+	  
+	END_CALCS
+	
+	vector nodes(1,nodemax);                    // Parameter values stored in nodes vector for mcmc output
+	
+	LOCAL_CALCS
+	   //exit(1);
+	END_CALCS
+	
 	// -- Objective function values --
 	objective_function_value objG;              // Global objective function value
         number objC;                                // Catch observations
@@ -313,7 +331,7 @@ PARAMETER_SECTION
         6darray CLpred(1,np,1,ny,1,ns,1,nr,1,nf,1,nl); // Catches by fleet (weight) and stock
         5darray CLtotpred(1,ny,1,ns,1,nr,1,nf,1,nl);   // Catch composition by fleet
         5darray CLtotfrac(1,ny,1,ns,1,nr,1,nf,1,nl);   // Catch composition by fleet fraction
-       	sdreport_number R0(1);                       // Requirement of mceval for producing posterior estimates of model parameters/variables                   
+       	sdreport_number temp;                          // Requirement of mceval for producing posterior estimates of model parameters/variables                   
 
 
 PROCEDURE_SECTION
@@ -324,9 +342,9 @@ PROCEDURE_SECTION
 	calcSurvival();                  // Calculate survival
 	
 	calcMovement();                  // Calculate movement
-                 
+         
         calcSelectivities();             // Calculate selectivities
-		
+	
 	assignPars();                    // Assigns estimates of R0, F, iRD, RD, qCPUE, qI
 
         if(debug)cout<<"Pars assigned"<<endl; 
@@ -358,13 +376,14 @@ PROCEDURE_SECTION
 	if(verbose)simsam();             // Print out simulated values versus estimated values for each function evaluation
 		
 	if(debug==1) exit(1);            // Exit prior to first function evaluation if in debugging mode
-
+	
         popnodes();                      // populate a vector of parameters for mcmc output
         
         if(mceval_phase()){
           ofstream nodesout("nodes.cha", ios::app);
           nodesout<<nodes<<"\n";
         }
+        
 
 FUNCTION assignPars
   {
@@ -467,7 +486,6 @@ FUNCTION calcMovement
 	
 	}                                          // End of stock
 	
-	
 	switch(movtype){                           // What type of movement model?
 	
 	  case 1:                                  // -- Gravity model ---------------------------------------------------------------------
@@ -514,7 +532,7 @@ FUNCTION calcMovement
 	          
 	          for(int rr=1;rr<=nr;rr++){                     // Loop over areas
 	          	          
-	            movcalc(pp,ss,aa,rr,rr)+=mfexp(movest(mi))/3;      // Add viscosity
+	            movcalc(pp,ss,aa,rr,rr)+=mfexp(movest(mi)/24);      // Add viscosity
 	      
 	          }
 	        
@@ -660,23 +678,26 @@ FUNCTION calcSelectivities
 	         
 	      } 
 	      
-	      msel(ss)=msel(ss)/max(msel(ss)); // Need to normalize at least one index to max 1 or face counfounding with q
+	      msel(ss)/=max(msel(ss)); // Need to normalize at least one index to max 1 or face counfounding with q
 	      // End of length classes
 	    
 	    break;                                                                         // End of logistic selectivity
 		   
             case 3: // Thompson dome-shaped selectivity
 	      
-	      spar(1)=0.2*mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)));                     // Dome-shape parameter I(0|0.2)
-	      spar(2)=0.1+(0.15*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));              // Precision as the ratio of the inflection point I(0.1|0.7)
-	      spar(3)=ml(nl)*(0.15+(0.65*mfexp(selpar(ss,3))/(1+mfexp(selpar(ss,3)))));    // Inflection point as a fraction of largest length I(0.15|0.9)
+	      spar(1)=(selpar(ss,1)+2.01)/20.;                      // Dome-shape parameter I(0|0.2)
+	      spar(2)=0.03+(selpar(ss,2)+2)/2.;              // Precision as the ratio of the inflection point I(0.1|0.7)
+	      spar(3)=ml(nl)*(0.1+0.8*(selpar(ss,3)+2)/4);    // Inflection point as a fraction of largest length I(0.15|0.9)
 	     
 	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
 	        
-	        msel(ss,ll)=(1/(1-spar(1)))*pow(((1-spar(1))/spar(1)),spar(1)) * mfexp(spar(2)*spar(1)*(spar(3)-ml(ll)))/(1+mfexp(spar(2)*(spar(3)-ml(ll))));	// Thompson selectivity function	
+	        msel(ss,ll)=(1/(1-spar(1)))*pow(
+	        ((1-spar(1))/spar(1)),spar(1)) * mfexp(spar(2)*spar(1)*(spar(3)-ml(ll)))/(1+mfexp(spar(2)*(spar(3)-ml(ll))));	// Thompson selectivity function	
 	      
-	      }                                                                            // End of length classes
-	       
+	      }									           // End of length classes
+	      
+	      msel(ss)/=max(msel(ss));                                             // Need to normalize to max 1 or face counfounding with q
+	      
 	    break;									   // End of Thompson selectivity
 		      
 	  }
@@ -1254,7 +1275,8 @@ FUNCTION calcObjective
 	  int rr=Cobs(i,3); // Region
   	  int ff=Cobs(i,4); // Fleet
   	  
-  	  LHtemp=dnorm(log(CWtotpred(yy,ss,rr,ff)+tiny),log(Cobs(i,5)+tiny),CobsCV(ff)); // Log-normal LHF
+  	  LHtemp=dnorm(log(CWtotpred(yy,ss,rr,ff)+tiny),
+  	  log(Cobs(i,5)+tiny),CobsCV(ff)); // Log-normal LHF
   	  //LHtemp=pow(log(CWtotpred(yy,ss,rr,ff)+tiny)-log(Cobs(i,5)+tiny),2);// SSQ test
   	  objC+=LHtemp*LHw(1);                                                           // Weighted likelihood contribution
   	  objG+=LHtemp*LHw(1);  
@@ -1456,8 +1478,8 @@ FUNCTION calcObjective
 	
 	for(int i=1;i<=nsel;i++){ 
 	  
-	  objsel+=dnorm(selpar(i),0,2.)*LHw(10);  
-	  objG+=dnorm(selpar(i),0,2.)*LHw(10);   // Weak prior on selectivity
+	  objsel+=dnorm(selpar(i),0,1.)*LHw(10);  
+	  objG+=dnorm(selpar(i),0,1.)*LHw(10);   // Weak prior on selectivity
 	
 	}
 	
@@ -1488,27 +1510,33 @@ FUNCTION simsam
         // If working with simulated data do some printing
         cout<<"R0 sim = "<<log(R0_ini)<<endl;                // Simulated R0
         cout<<"R0 sam = "<<log(R0)<<endl;                    // Estimated R0
-        cout<<"sel sim f1= "<<sel_ini(1)<<endl;              // Simulated selectivity fleet 1
-        cout<<"sel sam f1= "<<sel(1)<<endl;                  // Estimated selectivity fleet 1
-        cout<<"sel sim f2= "<<sel_ini(2)<<endl;              // Simulated selectivity fleet 2
-	cout<<"sel sam f2= "<<sel(2)<<endl;                  // Estimated selectivity fleet 2
-	cout<<"RD sim= "<<exp(lnRD_ini(1))<<endl;            // Simulated recruitment deviations 
-        cout<<"RD sam= "<<RD(1)<<endl;                       // Estimated recruitment deviations
-	cout<<"mov sim p1 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 1 in subyear 1
-	cout<<mov_ini(1)(2)(2)<<endl;                           // Simulated movement probabilities for stock 1 in subyear 1
+        cout<<"selpar = "<<selpar<<endl;                    // Estimated R0
+        for(int ff=1;ff<=nf;ff++){
+          //cout<<"sel sim f1= "<<sel_ini(1)<<endl;              // Simulated selectivity fleet 1
+          cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;                  // Estimated selectivity fleet 1
+        }
+        cout<<"lnRD= "<<lnRD<<endl;
+        cout<<"RD sam 1 = "<<RD(1)<<endl;                       // Estimated recruitment deviations
+	cout<<"RD sam 2 = "<<RD(2)<<endl;                       // Estimated recruitment deviations
+	cout<<"movest= "<<movest<<endl;                       // Estimated recruitment deviations
+	
+	//cout<<"mov sim p1 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 1 in subyear 1
+	//cout<<mov_ini(1)(2)(2)<<endl;                           // Simulated movement probabilities for stock 1 in subyear 1
 	cout<<"mov sam p1 s2 m2= "<<endl;                       // Estimated movement probabilities for stock 1 in subyear 1
 	cout<<mov(1)(2)(2)<<endl;                               // Estimated movement probabilities for stock 1 in subyear 1
-	cout<<"mov sim p2 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 2 in subyear 1
-	cout<<mov_ini(2)(2)(2)<<endl;                           // Simulated movement probabilities for stock 2 in subyear 1
+	cout<<"mov sam p1 s3 m2= "<<endl;                       // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<mov(1)(3)(2)<<endl;                               // Estimated movement probabilities for stock 1 in subyear 1
+	//cout<<"mov sim p2 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 2 in subyear 1
+	//cout<<mov_ini(2)(2)(2)<<endl;                           // Simulated movement probabilities for stock 2 in subyear 1
 	cout<<"mov sam p2 s2 m2= "<<endl;                       // Estimated movement probabilities for stock 2 in subyear 1
 	cout<<mov(2)(2)(2)<<endl;                               // Estimated movement probabilities for stock 2 in subyear 1
-	cout<<"qCE sim= "<<exp(lnqCPUE_ini)<<endl;           // Simulated catchabilities
+	cout<<"mov sam p2 s3 m2= "<<endl;                       // Estimated movement probabilities for stock 2 in subyear 1
+	cout<<mov(2)(3)(2)<<endl;                               // Estimated movement probabilities for stock 2 in subyear 1
+	//cout<<"qCE sim= "<<exp(lnqCPUE_ini)<<endl;           // Simulated catchabilities
 	cout<<"qCE sam= "<<qCPUE<<endl;                      // Estimated catchabilities
-	cout<<"qI sim= "<<exp(lnqI_ini)<<endl;               // Simulated FI index catchability
+	//cout<<"qI sim= "<<exp(lnqI_ini)<<endl;               // Simulated FI index catchability
 	cout<<"qI sam= "<<qI<<endl;                          // Estimated FI index catchability
 	cout<<"D sim= "<<D_ini<<endl;                        // Simulated depletion
-	
-	
 	cout<<"D sam= "<<D<<endl;			     // Estimated depletion	
 	
   }
@@ -1518,7 +1546,7 @@ FUNCTION simsam
 FUNCTION popnodes
   {
 	// -- Populate nodes for mcmc output --
-	j.initialize();
+	j=0;
 	
 	for(int pp=1;pp<=np;pp++){
 	  j+=1;
