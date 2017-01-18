@@ -5,7 +5,7 @@ library(plotrix)
 labels<-    c("Update OM meta database","Link repositories (M3 v1.0)","Complete SDP","Finalize data for OM","Finalize Trial Spec.","Establish prelim. Perf. Metrc.","Incorporate alternative MPs", "Demonstration MSE 1","Demonstration MSE 2","Report/paper writing")
 starts<-   c("2016/7/26",              "2016/8/1",                    "2016/8/1",    "2016/7/26",          "2016/7/26",           "2016/10/1",                     "2016/10/1",                     "2016/8/1",          "2016/12/01",       "2016/12/01")
 starts<-as.Date(starts, format = "%Y/%m/%d")
-Duration<-c(67,                       31,                             61,           37,                    37,                    60,                              92,                              31,                  65,                 65)
+Duration<-c(37,                       31,                             61,           37,                    37,                    60,                              92,                              31,                  65,                 65)
 ends<-starts+Duration
 priorities<-c(1,                       3,                              3,            1,                     1,                     2,                               4,                              3,                   4,                  4)
 

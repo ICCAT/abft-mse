@@ -1,0 +1,256 @@
+---
+title: "ABT-MSE: Atlantic Bluefin Tuna Management Strategy Evaluation (v1.2)"
+subtitle: "ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP)"
+author: "Tom Carruthers (<t.carruthers@fisheries.ubc.ca>)"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    toc: true
+    number_sections: true
+  rmarkdown::pdf_vignette:
+    toc: true
+    number_sections: true    
+vignette: >
+  %\VignetteIndexEntry{ABT-MSE}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+# Contributors and remit
+
+The Atlantic Bluefin Tuna Management Strategy Evaluation is funded by the ICCAT GBYP (coordinated by Antonio DiNatale <antonio.dinatale@iccat.int>). The technical aspects of this modelling work are overseen by the GBYP Core Modelling Group: David Die, Clay Porch, Laurie Kell, Antonio Di Natale, Doug Butterworth, Harritz Arrizabalaga, Yukio Takeuchi, Sylvain Bonhommeau, Toshi Kitakado, Miguel Santos, Paul de Bruyn, Polina Levontin and Richard Hillary (previous collaborators include Joe Powers and Campbell Davies). This research benefits from the contributions of a large number of scientists from ICCAT contracting parties and public institutions.  
+
+This R package and documentation were produced by Tom Carruthers (technical assistant) under the provision of the ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP), funded by the European Union, several ICCAT CPCs, the ICCAT Secretariat and by other entities (see: http://www.iccat.int/GBYP/en/Budget.htm). The contents of this document do not necessarily reflect the point of view of ICCAT or other funders and in no way anticipates future ICCAT policy in this area.
+
+
+# Version Notes
+
+The package is subject to ongoing testing. If you find a bug or a problem please send a report to <t.carruthers@fisheries.ubc.ca> so that it can be fixed!  
+
+## New Additions to this Version (2.1)
+
+
+## Coming soon to v2.11 
+
+Worm plots (likelihood of obtaining biomass reference levels)
+
+State-space data-rich assessment MPs (for comparison)
+
+
+
+
+# Introduction
+
+## Management strategy evaluation
+
+
+ 
+ 
+## The operating model
+
+A spatial, multi-stock statistical catch-at-length assessment model was developed as a basis for defining operating models for Atlantic bluefin tuna. The modifiable multi-stock model (M3)(Carruthers et al. ) aims to improve upon previous multi-stock models such as MAST (Taylor et al. 2011) in three core areas. The first iteration of the model: (1) makes use of indices of abundance specific to time-area strata (e.g. for a given ocean area and month of the year), (2) does not use conventional tagging data to inform exploitation rates, (3) is fitted to samples of length composition data and therefore avoids established problems related to ageing individuals based on a growth curve and length data only.
+
+In this paper we provide a full account of preliminary M3 model equations and discuss the results of simulation evaluations of model estimation performance. Limitations of the current approach and future areas for model development are also discussed. 
+
+
+## Software design 
+
+
+
+
+## Objective of this document
+
+
+# Quick start: run an MSE with pre-specified operating models, management procedures and performance metrics
+
+## Loading the library
+```{r loadlibrary}
+library(ABTMSE)
+```
+
+
+## Loading the data required by the MSE analysis
+```{r loaddata}
+LoadABT()
+```
+
+## Initiating the cluster
+Note that most computers make use of hyperthreading technology so a quad-core PC has 8 threads, this is set to detect the maximum number of threads available on your computer using the detectCores() function of the 'parallel' package but you can specify a smaller number yourself if you require you computer to be usable while the MSE is running. 
+
+```{r sfinit, eval=FALSE}
+sfInit(parallel=TRUE, cpus=detectCores()) 
+
+```
+ 
+
+ 
+ 
+# Seven steps of MSE in the contect of ABT
+
+The R demonstration / tutorial first requires establishing appropriate steps of MSE development. For example Punt and Donovan (2006) describe an MSE conceptual framework with 7 parts. A demonstration MSE will be set up in R for advanced users that addresses the core components of such a framework: 
+
+(1) qualitative specification and prioritization of the management objectives, as derived from legislation, legal decisions, and international standards and agreements;
+
+(2) quantification of the qualitative management objectives in the form of performance measures;
+
+(3) development and parameterization of a set of "operating models" that represent different plausible alternatives to the dynamics of the "true" resource and fishery being managed; 
+
+(4) identification of candidate management procedures, including monitoring strategies;
+
+(5) simulation of the future use of each candidate management procedure, involving for each time-step during the projection period: (a) generation of assessment data; (b) determination of the management action (i.e. assessment and application of some HCR); and (c) evaluation of the biological implications of the management action by removing the catch from the population as represented in the operating model;
+
+(6) summary of the performance of the candidate management procedures in terms of values for the performance measures; and
+
+(7) selection of the management procedure that best meets the specified objectives.
+
+
+
+## Step 1: Prioritization of management objectives
+
+Although it may be desirable to quantify management objectives in the intial phase of MSE (Punt et al. 2015). In the context of Atlantic bluefin tuna this is less appropriate since MSE is a novel approach and requires iterative feedback from managers to shape the analysis and interpret outputs (ie Nakatsuka 2016). In this and the next steps I use illustrative examples from other MSE applications to demonstrate approaches to the process of identifying management objectives and then quantifying these. In no way are these intended to guide Atlantic bluefin tuna management in the direction of specific management objectives or limits. 
+
+
+## Step 2: Quantification of management objectives
+
+
+
+
+## Step 3: Establishing operating models
+
+
+
+
+
+
+
+## Step 4: Identifying management procedures
+
+
+
+
+## Step 5: Simulation testing management procedures
+
+
+
+
+## Step 6: Performance evaluation
+
+
+
+
+## Step 7: Selection of Management procedures
+
+
+# Other outcomes
+
+## Value of information analysis
+
+# Value of additional data
+
+Not only valuable for the specific objective of prioritizing data collection and processing taks but also the more general problem of steering meetings towards those subject areas most critical in determining management success. 
+
+# Value of new data
+
+# Cost of current uncertainties
+
+
+
+## Loading the library
+```{r loadlibrary}
+library(DLMtool)
+```
+
+
+### Initiating the cluster
+Note that most computers make use of hyperthreading technology so a quad-core PC has 8 threads, this is set to 2 here to meet CRAN-R package submission requirements. 
+
+```{r sfinit, eval=FALSE}
+sfInit(parallel=TRUE, cpus=2) 
+
+```
+
+You can automatically detect the number of threads using `detectCores()`. Ie type `sfInit(parallel=T,detectCores())`. 
+
+## Exporting all data and objects to the cluster
+In order to make all DLMtool functions and objects available for parallel processing we export them to the cluster. 
+
+```{r, eval=FALSE}
+sfExportAll()
+```
+
+## Set a random seed
+In order to make results presented here reproducible, we set a random seed for this R session. 
+```{r seed}
+set.seed(1) 
+```
+
+
+```{r}
+OM <- new('OM', Blue_shark, Generic_fleet, Imprecise_Biased)
+```
+
+
+The generic plot method provides (1) overfishing trajectories (2) Kobe plots and (3) trade-off plots of expected (mean) performance of the MPs in terms of stock status, overfishing and yield.  
+```{r, fig.show='asis', fig.width=7, fig.height=7}
+plot(SnapMSE)
+```
+
+You can access these plots individually: trade-offs - `Tplot()`, overfishing trajectories - `Pplot()` and Kobe plots - `Kplot()` 
+
+
+# Limitations
+
+## Idealised observation models for catch composition data
+Currently, DLMtool simulates catch-composition data from the true simulated catch composition data via a multinomial distribution and some effective sample size. This observation model may be unrealistically well-behaved and favour those approaches that use these data. We (and by that I mean Adrian) is adding a growth-type-group model to improve the realism of simulated length composition data. 
+
+## Harvest control rules must be integrated into data-limited MPs
+In this version of DLMtool, harvest control rules (e.g. the 40-10 rule) must be written into a data-limited MP. There is currently no ability to do a factorial comparison of say 4 harvest controls rules against 3 MPs (the user must describe all 12 combinations). The reason for this is that it would require further subclasses. For example the 40-10 rule may be appropriate for the output of DBSRA but it would not be appropriate for some of the simple management procedures such as DynF that already incorporate throttling of TAC recommendations according to stock depletion.
+
+## Natural mortality rate at age
+The current simulation assumes constant M with age. Age-specific M will be added soon. 
+
+## Ontogenetic habitat shifts
+Since the operating model simulated two areas, it is possible to prescribe a log-linear model that moves fish from one area to the other as they grow older. This could be used to simulate the ontogenetic shift of groupers from near shore waters to offshore reefs. Currently this feature is in development. 
+
+##Implementation error
+In this edition of DLMtool there is no implementation  error. The only imperfection between a management recommendation and the simulated TAC comes in the form of the MaxF argument that limits the maximum fishing mortality rate on any given age-class in the operating model. The default is 0.8 which is high for all but the shortest living fish species.
+
+
+# Future additions
+
+
+
+#References
+
+
+Taylor et al. 2011
+
+Punt and Donovan 2006
+
+
+Carruthers, T.R., Punt, A.E., Walters, C.J., MacCall, A., McAllister, M.K., Dick, E.J., Cope, J. 2014. Evaluating methods for setting catch-limits in data-limited fisheries. Fisheries Research. 153, 48-68.
+
+Carruthers, T.R., Kell, L., Butterworth, D., Maunder, M., Geromont, H., Walters, C., McAllister, M., Hillary, R., Kitakado, T., Davies, C. 2015a. Performance review of simple management procedures. ICES Journal of Marine Science; doi:10.1093/icesjms/fsv212.  
+
+Carruthers, T.R., Kimoto, A., Powers, J., Kell, L., Butterworth, D., Lauretta, M. and Kitakado, T. 2015b. Structure and estimation framework for Atlantic bluefin tuna operating models. ICCAT SCRS/2015/179. 
+
+Carruthers, T.R., Powers, J., Lauretta, M., Di Natale, A., Kell, L. 2015c. A summary of data to inform operating models in management strategy evaluation of Atlantic bluefin tuna. ICCAT SCRS/2015/180. 
+
+
+Deriso, R. B., 1980. Harvesting Strategies and Parameter Estimation for an Age-Structured Model. Can. J. Fish. Aquat. Sci. 37, 268-282.
+
+Geromont, H.F. and Butterworth, D.S. 2014. Complex assessment or simple management procedures for efficient fisheries management: a comparative study. ICES J. Mar. Sci. 
+
+MacCall, A.D., 2009. Depletion-corrected average catch: a simple formula for estimating sustainable yields in data-poor situations. ICES J. Mar. Sci. 66, 2267-2271.
+
+```{r, echo=FALSE, eval=FALSE}
+sfStop()                            
+```
+
+
+
+ 

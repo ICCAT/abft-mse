@@ -4,7 +4,7 @@
 
 # --- Matt Lauretta --- GBYP - DFO - NOAA - WWF - Unimar - FCP - CB - IEO - AZTI - UCA 
 
-dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_08032016.csv",sep="")) # 
+dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_09292016.csv",sep="")) # 
 
 #dat<-AssignAge(dat,Base) # assign approximate ages bases on cohort slicing from eastern growth (needs only to get at rough age groups)
 
@@ -112,8 +112,22 @@ Tracks<-Tracks[apply(Tracks,1,anyna),] # remove any line with unknown stock, sub
 PSAT<-aggregate(rep(1,nrow(Tracks)),by=list(Tracks$p,Tracks$a,Tracks$s,Tracks$t,Tracks$fr,Tracks$tr),sum)
 names(PSAT)<-c("p","a","s","t","fr","tr","N")
 
-#tmov<-array(NA,c(Base@ns,Base@nr,Base@nr))
-#tmov[as.matrix(Tagg[,1:3])]<-Tagg[,4]
+fortrialspec=F
+if(fortrialspec){
+  tmov<-array(NA,c(Base@np,Base@ns,Base@nr,Base@nr))
+  tmov[as.matrix(PSAT[,c(1,3,5,6)])]<-PSAT[,7]
+  restab<-array("",c(Base@ns*Base@nr+Base@ns-1,Base@nr*Base@np+1))
+  for(pp in 1:Base@np){
+    for(ss in 1:Base@ns){
+      restab[(Base@nr+1)*(ss-1)+(1:Base@nr),(Base@nr+1)*(pp-1)+(1:Base@nr)]<-tmov[pp,ss,,]
+     }
+  }
+  restab<-cbind(c(Base@areanams,"",Base@areanams,"",Base@areanams,"",Base@areanams),restab)
+  restab<-as.data.frame(restab)
+  names(restab)<-c("",Base@areanams,"",Base@areanams)
+  write.csv(restab,file="G:/BFT MSE/Data/PSATtable.csv")
+  
+}
 
 
 PSAT2<- as.integer(PSAT[PSAT$N==max(PSAT$N),]) # something uncontroversial good chance of eastern residency (western med) for a most likely eastern stock

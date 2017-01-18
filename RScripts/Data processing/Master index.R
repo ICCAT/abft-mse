@@ -11,6 +11,8 @@ T2cpue<-assign_area(T2cpue,Base@area_defs)
 
 #T2cpue<-subset(T2cpue,T2cpue$Area==10)
 test0<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$CatchUnit),sum)
+cond<-test0$Group3=="nr"
+test0$x[cond]<-test0$x[cond]*70 # a daft guess at mean weight just to prioritize fleets by catch weight
 test0[order(test0$x,decreasing=T),]
 test<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$CatchUnit,T2cpue$Area),sum)
 test[order(test$x,decreasing=T),]
@@ -36,28 +38,25 @@ for(i in 1:Base@nr)AreaSize[i,is.na(AreaSize[i,])]<-mean(AreaSize[i,],na.rm=T)
 # === Define a list of Master indices for trial specifications ======================================
 
 MI<-new('list')
-MI[[1]]<-MI[[2]]<-MI[[3]]<-MI[[4]]<-array(NA,c(Base@ny,Base@ns,Base@nr)) # ESLL1%, ESLL2%, 1%, 2%
+MI[[1]]<-MI[[2]]<-MI[[3]]<-array(NA,c(Base@ny,Base@ns,Base@nr)) # 
 
 
 # === First scenario set ===================
 
-FleetID<-c("012JP00","025US00","004CA00","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",     "LL",       "RR",     "LL",   "LL",     "TP",     "TP",     "HL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',     'nr',       'kg',     "kg",   "kg",     "kg",     "kg",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+FleetID<-c("012JP00","025US00","004CA00","004CA00","016MA00","021ES00","021ES00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-
-FleetID<-c("012JP00","025US00","004CA00","016MA00","021ES00","021ES00")#,"031MX00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",     "LL",       "RR",   "TP",     "TP",     "HL"    )#,     "LL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',     'nr',       'kg',   "kg",     "kg",     "kg"     )#,     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+Fnam<-c("JP LL", "USA LL", "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL")   # Fleet names for graphing
 
 cpue<-new('list')
 
 ploty=1
 if(ploty==1){
-  par(mfrow=c(length(FleetID),4),mai=c(0.25,0.2,0.05,0.05),omi=c(0.5,1.5,0.5,0.01))
+  par(mfrow=c(length(FleetID),4),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
 }
 if(ploty==2){
-  par(mfrow=c(length(FleetID),Base@nr),mai=c(0.25,0.2,0.05,0.05),omi=c(0.5,1.5,0.5,0.01))
+  par(mfrow=c(length(FleetID),Base@nr),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
 }
 
 xlimy<-c(-100,25)
@@ -68,7 +67,6 @@ prettyaxis<-function(lims){
   pretty(seq(lims[1]-inc,lims[2]+inc,length.out=12))
 }
 
-Fnam<-paste(FleetID, Gear)#c("JP LL","US LL","CAN RR")
 for(i in 1:length(FleetID)){
   
   temp<-T2cpue[T2cpue$FleetID==FleetID[i]&T2cpue$GearGrpCode==Gear[i]&T2cpue$Eff1>0&T2cpue$BFT>0&T2cpue$CatchUnit==type[i],]
@@ -96,9 +94,9 @@ for(i in 1:length(FleetID)){
       
       for(rr in 1:Base@nr){
         polygon(Base@area_defs[[rr]],col="#ffffff60",lwd=1.7)
-        text(mean(Base@area_defs[[rr]]$x),mean(Base@area_defs[[rr]]$y),rr)
+        #text(mean(Base@area_defs[[rr]]$x),mean(Base@area_defs[[rr]]$y),rr)
       }
-      if(qq==1)mtext(Fnam[i],2,las=2,line=2)
+      if(qq==1)mtext(Fnam[i],2,las=2,line=3)
       if(i==1)mtext(paste("Quarter",qq),3,line=1)
       if(i==(length(FleetID))){ axis(1,prettyaxis(xlimy),prettyaxis(xlimy))
       }else{axis(1,prettyaxis(xlimy))}
@@ -162,7 +160,8 @@ CPUE<-cbind(CPUE,Parea)
 
 for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
 wt<-as.numeric(as.character(CPUE$N))
-out<-glm(log(CPUE)~Year*Parea+Subyear*Area+Fleet,data=CPUE,weights=wt)
+#out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Area+Area*Subyear+Fleet*Area,data=CPUE,weights=wt)
 
 
 newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)
@@ -171,33 +170,51 @@ names(newdat)<-c("Year","Subyear","Area","Fleet","Parea")
 for(i in 1:ncol(newdat))newdat[,i]<-as.factor(as.character(newdat[,i]))
 pred<-predict(out,newdat)
 
+#newdat2<-newdat
+#newdat2$Fleet<-as.factor("1")
+#pred<-predict(out,newdat2)
+
 
 ind<-as.matrix(expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr))
-MI[[1]][ind]<-MI[[2]][ind]<-exp(pred)*AreaSize[ind[,3:2]]
+MI[[1]][ind]<-exp(pred)*AreaSize[ind[,3:2]]
+
+plotindex(Base,MI[[1]]) # Figure 4
+
 
 for(a in 1:Base@nr){for(q in 1:Base@ns){
   MI[[1]][,q,a]<-smooth.spline(MI[[1]][,q,a],all.knots=T,spar=0.6)$y
-  MI[[2]][,q,a]<-smooth.spline(MI[[1]][,q,a],all.knots=T,spar=0.6)$y/(1.02^(0:(Base@ny-1)))
+  #MI[[2]][,q,a]<-smooth.spline(MI[[1]][,q,a],all.knots=T,spar=0.6)$y/(1.02^(0:(Base@ny-1)))
 }}
 
-#plotindex(Base,MI[[1]])
+plotindex(Base,MI[[1]]) # Figure 5
 
 
 # === Second scenario set (no ES LL data) ========================
 
+FleetID<-c("012JP00","025US00","004CA00","004CA00","016MA00","021ES00","021ES00","021ES00","021ES02") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL",  "LL",     "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg",  "nr",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-FleetID<-c("012JP00","025US00","004CA00","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",     "LL",       "RR",     "LL",   "LL",     "TP",     "TP",     "HL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',     'nr',       'kg',     "kg",   "kg",     "kg",     "kg",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
-
-
-FleetID<-c("012JP00","025US00","004CA00","004CA00","021ES00","021ES00")#,"031MX00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",     "LL",       "RR",   "LL",      "TP",     "HL"    )#,     "LL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',     'nr',       'kg',   "kg",      "kg",     "kg"     )#,     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+Fnam<-c("JP LL", "CA RR",   "MA TP",  "ES HL")   # Fleet names for graphing
 
 cpue<-new('list')
 
-Fnam<-paste(FleetID, Gear)#c("JP LL","US LL","CAN RR")
+ploty=1
+if(ploty==1){
+  par(mfrow=c(length(FleetID),4),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
+}
+if(ploty==2){
+  par(mfrow=c(length(FleetID),Base@nr),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
+}
+
+xlimy<-c(-100,25)
+ylimy<-c(-40,65)
+
+prettyaxis<-function(lims){
+  inc<-(lims[2]-lims[1])/5
+  pretty(seq(lims[1]-inc,lims[2]+inc,length.out=12))
+}
+
 for(i in 1:length(FleetID)){
   
   temp<-T2cpue[T2cpue$FleetID==FleetID[i]&T2cpue$GearGrpCode==Gear[i]&T2cpue$Eff1>0&T2cpue$BFT>0&T2cpue$CatchUnit==type[i],]
@@ -208,6 +225,53 @@ for(i in 1:length(FleetID)){
   temp<-subset(temp,cond)
   print(paste(i,Fnam[i],mean(temp$Eff1)))
   
+  if(ploty==1){
+    eff<-aggregate(temp$Eff1,by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    cat<-aggregate(temp$BFT,by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    N<-aggregate(rep(1,nrow(temp)),by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    
+    for(qq in 1:4){
+      datyE<-subset(eff,eff$Group.1==qq)
+      datyC<-subset(cat,eff$Group.1==qq)
+      CPE<-datyC$x/datyE$x
+      CPE[CPE>(mean(CPE)+3*sd(CPE))]<-0
+      CPE<-CPE[datyC$x>10]
+      CPE<-CPE^0.5
+      CPE<-CPE/mean(CPE)
+      plot(datyE$Group.3,datyE$Group.2,cex=CPE,xlim=xlimy,ylim=ylimy,pch=19,col="#0000ff60",axes=F)
+      
+      for(rr in 1:Base@nr){
+        polygon(Base@area_defs[[rr]],col="#ffffff60",lwd=1.7)
+        #text(mean(Base@area_defs[[rr]]$x),mean(Base@area_defs[[rr]]$y),rr)
+      }
+      if(qq==1)mtext(Fnam[i],2,las=2,line=3)
+      if(i==1)mtext(paste("Quarter",qq),3,line=1)
+      if(i==(length(FleetID))){ axis(1,prettyaxis(xlimy),prettyaxis(xlimy))
+      }else{axis(1,prettyaxis(xlimy))}
+      if(qq==1){axis(2,prettyaxis(ylimy),prettyaxis(ylimy))
+      }else{axis(2,prettyaxis(ylimy))}
+    }  
+    
+  }
+  if(ploty==2){
+    
+    eff<-aggregate(temp$Eff1,by=list(temp$Year,temp$Area),sum)
+    cat<-aggregate(temp$BFT,by=list(temp$Year,temp$Area),sum)
+    
+    CPE<-(cat$x/eff$x)*AreaSize[cat[,2]]
+    
+    CPE<-CPE/mean(CPE)
+    for(rr in 1:Base@nr){
+      if(length(eff[eff[,2]==rr,1])>0){
+        plot(eff[eff[,2]==rr,1],CPE[eff[,2]==rr],type='l')
+      }else{
+        plot(1, type="n", axes=F, xlab="", ylab="")
+      }
+      if(rr==1)mtext(Fnam[i],2,las=2,line=2)
+      if(i==1)mtext(Base@areanams[rr],3,line=1)
+    }
+    
+  }
   eff<-aggregate(temp$Eff1,by=list(temp$Year,temp$Subyear,temp$Area),sum)
   cat<-aggregate(temp$BFT,by=list(temp$Year,temp$Subyear,temp$Area),sum)
   N<-  aggregate(rep(1,nrow(temp)),by=list(temp$Year,temp$Subyear,temp$Area),sum)
@@ -244,7 +308,8 @@ CPUE<-cbind(CPUE,Parea)
 
 for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
 wt<-as.numeric(as.character(CPUE$N))
-out<-glm(log(CPUE)~Year*Parea+Subyear*Area+Fleet,data=CPUE,weights=wt)
+#out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Area+Area*Subyear+Fleet*Area,data=CPUE,weights=wt)
 
 
 newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)
@@ -253,16 +318,177 @@ names(newdat)<-c("Year","Subyear","Area","Fleet","Parea")
 for(i in 1:ncol(newdat))newdat[,i]<-as.factor(as.character(newdat[,i]))
 pred<-predict(out,newdat)
 
+#newdat2<-newdat
+#newdat2$Fleet<-as.factor("1")
+#pred<-predict(out,newdat2)
+
 
 ind<-as.matrix(expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr))
-MI[[3]][ind]<-MI[[4]][ind]<-exp(pred)*AreaSize[ind[,3:2]]
+MI[[2]][ind]<-exp(pred)*AreaSize[ind[,3:2]]
+
+plotindex(Base,MI[[2]]) # Figure 4
+
+
+for(a in 1:Base@nr){for(q in 1:Base@ns){
+  MI[[2]][,q,a]<-smooth.spline(MI[[2]][,q,a],all.knots=T,spar=0.6)$y
+}}
+
+plotindex(Base,MI[[2]]) # Figure 5
+
+
+
+# === Third scenario set ===================
+
+
+
+FleetID<-c("012JP00","025US00","004CA00","004CA00","016MA00","021ES00","021ES00") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+
+Fnam<-c("JP LL",    "USA LL",   "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL", "ES LL", "ES BB ")   # Fleet names for graphing
+
+cpue<-new('list')
+
+ploty=1
+if(ploty==1){
+  par(mfrow=c(length(FleetID),4),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
+}
+if(ploty==2){
+  par(mfrow=c(length(FleetID),Base@nr),mai=c(0.25,0.2,0.05,0.05),omi=c(0.05,1,0.5,0.01))
+}
+
+xlimy<-c(-100,25)
+ylimy<-c(-40,65)
+
+prettyaxis<-function(lims){
+  inc<-(lims[2]-lims[1])/5
+  pretty(seq(lims[1]-inc,lims[2]+inc,length.out=12))
+}
+
+for(i in 1:length(FleetID)){
+  
+  temp<-T2cpue[T2cpue$FleetID==FleetID[i]&T2cpue$GearGrpCode==Gear[i]&T2cpue$Eff1>0&T2cpue$BFT>0&T2cpue$CatchUnit==type[i],]
+  temp<-assign_area(temp,Base@area_defs)
+  temp<-assign_quarter(temp)
+  temp<-assign_year(temp,years)
+  cond<-temp$Eff1>quantile(temp$Eff1,0.1)&temp$BFT>100
+  temp<-subset(temp,cond)
+  print(paste(i,Fnam[i],mean(temp$Eff1)))
+  
+  if(ploty==1){
+    eff<-aggregate(temp$Eff1,by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    cat<-aggregate(temp$BFT,by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    N<-aggregate(rep(1,nrow(temp)),by=list(temp$Subyear,temp$Lat,temp$Lon),sum)
+    
+    for(qq in 1:4){
+      datyE<-subset(eff,eff$Group.1==qq)
+      datyC<-subset(cat,eff$Group.1==qq)
+      CPE<-datyC$x/datyE$x
+      CPE[CPE>(mean(CPE)+3*sd(CPE))]<-0
+      CPE<-CPE[datyC$x>10]
+      CPE<-CPE^0.5
+      CPE<-CPE/mean(CPE)
+      plot(datyE$Group.3,datyE$Group.2,cex=CPE,xlim=xlimy,ylim=ylimy,pch=19,col="#0000ff60",axes=F)
+      
+      for(rr in 1:Base@nr){
+        polygon(Base@area_defs[[rr]],col="#ffffff60",lwd=1.7)
+        #text(mean(Base@area_defs[[rr]]$x),mean(Base@area_defs[[rr]]$y),rr)
+      }
+      if(qq==1)mtext(Fnam[i],2,las=2,line=3)
+      if(i==1)mtext(paste("Quarter",qq),3,line=1)
+      if(i==(length(FleetID))){ axis(1,prettyaxis(xlimy),prettyaxis(xlimy))
+      }else{axis(1,prettyaxis(xlimy))}
+      if(qq==1){axis(2,prettyaxis(ylimy),prettyaxis(ylimy))
+      }else{axis(2,prettyaxis(ylimy))}
+    }  
+    
+  }
+  if(ploty==2){
+    
+    eff<-aggregate(temp$Eff1,by=list(temp$Year,temp$Area),sum)
+    cat<-aggregate(temp$BFT,by=list(temp$Year,temp$Area),sum)
+    
+    CPE<-(cat$x/eff$x)*AreaSize[cat[,2]]
+    
+    CPE<-CPE/mean(CPE)
+    for(rr in 1:Base@nr){
+      if(length(eff[eff[,2]==rr,1])>0){
+        plot(eff[eff[,2]==rr,1],CPE[eff[,2]==rr],type='l')
+      }else{
+        plot(1, type="n", axes=F, xlab="", ylab="")
+      }
+      if(rr==1)mtext(Fnam[i],2,las=2,line=2)
+      if(i==1)mtext(Base@areanams[rr],3,line=1)
+    }
+    
+  }
+  eff<-aggregate(temp$Eff1,by=list(temp$Year,temp$Subyear,temp$Area),sum)
+  cat<-aggregate(temp$BFT,by=list(temp$Year,temp$Subyear,temp$Area),sum)
+  N<-  aggregate(rep(1,nrow(temp)),by=list(temp$Year,temp$Subyear,temp$Area),sum)
+  crtemp<-(cat$x/eff$x)
+  var<-3*sd(log(crtemp))
+  mu<-mean(log(crtemp))
+  cond<-log(crtemp)<(mu+var)&log(crtemp)>(mu-var)
+  crtemp<-crtemp[cond]
+  crtemp<-crtemp/mean(crtemp)
+  cpue[[i]]<-as.data.frame(cbind(eff[cond,],cat$x[cond],crtemp,N$x[cond],rep(i,sum(cond))))
+  names(cpue[[i]])<-c("Year","Subyear","Area","E","C","CPUE","N","Fleet")
+  
+}
+
+
+
+CPUE<-cpue[[1]]
+for(i in 2:length(cpue))CPUE<-rbind(CPUE,cpue[[i]])
+
+
+YAint<-aggregate(rep(1,nrow(CPUE)),by=list(as.numeric(CPUE$Year),as.numeric(CPUE$Area)),sum)
+YA<-array(NA,c(Base@ny,Base@nr))
+YA[as.matrix(YAint[,1:2])]<-YAint[,3]
+
+SAint<-aggregate(rep(1,nrow(CPUE)),by=list(as.numeric(CPUE$Subyear),as.numeric(CPUE$Area)),sum)
+SA<-array(NA,c(Base@ns,Base@nr))
+SA[as.matrix(SAint[,1:2])]<-SAint[,3]
+
+
+# Create a pseudo area for interaction with time PArea 
+Parea_conv<-c(1,1,2,1,3,4,3,5,5,5)
+Parea<-Parea_conv[CPUE$Area]
+CPUE<-cbind(CPUE,Parea)
+
+for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
+wt<-as.numeric(as.character(CPUE$N))
+#out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Area+Area*Subyear+Fleet,data=CPUE,weights=wt)
+
+
+newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)
+newdat<-cbind(newdat,Parea_conv[newdat[,3]])
+names(newdat)<-c("Year","Subyear","Area","Fleet","Parea")
+for(i in 1:ncol(newdat))newdat[,i]<-as.factor(as.character(newdat[,i]))
+pred<-predict(out,newdat)
+
+#newdat2<-newdat
+#newdat2$Fleet<-as.factor("1")
+#pred<-predict(out,newdat2)
+
+
+ind<-as.matrix(expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr))
+MI[[3]][ind]<-exp(pred)*AreaSize[ind[,3:2]]
+
+plotindex(Base,MI[[3]]) # Figure 4
+
 
 for(a in 1:Base@nr){for(q in 1:Base@ns){
   MI[[3]][,q,a]<-smooth.spline(MI[[3]][,q,a],all.knots=T,spar=0.6)$y
-  MI[[4]][,q,a]<-smooth.spline(MI[[4]][,q,a],all.knots=T,spar=0.6)$y/(1.02^(0:(Base@ny-1)))
+  #MI[[2]][,q,a]<-smooth.spline(MI[[1]][,q,a],all.knots=T,spar=0.6)$y/(1.02^(0:(Base@ny-1)))
 }}
 
-#plotindex(Base,MI[[3]])
+plotindex(Base,MI[[1]]) # Figure 5
+
+#jpeg("G:/temp/Index plots for SCRS paper.jpg",res=300,width=7,height=10,units='in')
+#plotMindex(Base,MI)
+#dev.off()
 
 save(MI,file=paste(getwd(),"/Data/Processed/Conditioning/MI",sep=""))
 

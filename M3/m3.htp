@@ -2,6 +2,7 @@
 #  define _M3_
 
 class model_data : public ad_comm{
+  data_int nHy;
   data_int ny;
   data_int ns;
   data_int np;
@@ -12,9 +13,7 @@ class model_data : public ad_comm{
   data_int nRPT;
   data_matrix RPTind;
   data_vector sdur;
-  data_int nZeq;
   data_int nydist;
-  data_int nyeq;
   data_vector ml;
   data_vector RDblock;
   data_int nRD;
@@ -24,17 +23,20 @@ class model_data : public ad_comm{
   data_3array len_age;
   data_3array wt_age;
   data_matrix Fec;
-  data_vector steep;
   data_vector spawns;
   data_matrix canspawn;
   data_matrix Ma;
   data_int nCobs;
   data_matrix Cobs;
-  data_int nCPUE;
+  data_int nCPUEq;
   data_int nCPUEobs;
   data_matrix CPUEobs;
+  data_int nE;
+  data_int nEobs;
+  data_matrix Eobs;
   data_int nCLobs;
   data_matrix CLobs;
+  data_4array HCobs;
   data_3array RAI;
   data_int nI;
   data_int nIobs;
@@ -64,13 +66,14 @@ class model_data : public ad_comm{
   data_vector CPUEobsCV;
   data_vector IobsCV;
   data_number RDCV;
+  data_vector SSBprior;
+  data_number SSBCV;
   data_int nLHw;
   data_vector LHw;
-  data_vector R0_ini;
+  data_vector muR_ini;
   data_matrix sel_ini;
   data_matrix selpars_ini;
   data_vector lnF_ini;
-  data_matrix ilnRD_ini;
   data_matrix lnRD_ini;
   data_5array mov_ini;
   data_vector lnqCPUE_ini;
@@ -83,6 +86,8 @@ class model_data : public ad_comm{
   data_int verbose;
   data_number datacheck;
   int mi;
+  int nodemax;
+  int j;
   ~model_data();
   model_data(int argc,char * argv[]);
   friend class model_parameters;
@@ -124,12 +129,15 @@ public:
 private:
   ivector integer_control_flags;
   dvector double_control_flags;
-  param_init_bounded_vector lnR0;
+  param_init_bounded_vector lnmuR;
   param_init_bounded_matrix selpar;
-  param_init_bounded_matrix lnRD;
+  param_init_bounded_dev_vector lnRD1;
+  param_init_bounded_dev_vector lnRD2;
   param_init_bounded_vector movest;
-  param_init_bounded_vector lnqCPUE;
+  param_init_bounded_vector lnqE;
   param_init_bounded_vector lnqI;
+  param_init_bounded_vector lnqCPUE;
+  param_vector nodes;
   param_number prior_function_value;
   param_number likelihood_function_value;
   objective_function_value objG;
@@ -143,31 +151,40 @@ private:
   param_number objsel;
   param_number objPSAT;
   param_number objPSAT2;
+  param_number objSRA;
+  param_number objSSB;
   param_5array N;
   param_matrix NLA;
   param_matrix surv;
   param_3array SSB;
+  param_3array hSSB;
   param_3array SSBi;
   param_matrix SSBdist;
   param_matrix spawnr;
   param_4array VB;
   param_3array B;
-  param_vector R0;
   param_vector SSB0;
   param_vector D;
-  param_vector SSBpR;
-  param_matrix iRD;
+  param_vector Dt;
+  param_vector SSBnow;
   param_matrix RD;
+  param_matrix Rec;
+  param_vector muR;
   param_5array CTL;
   param_5array CTA;
+  param_matrix Btrend;
+  param_matrix meanF;
   param_vector F;
   param_5array FAT;
+  param_4array hFAT;
+  param_5array hZ;
   param_5array FL;
   param_4array FT;
   param_5array Z;
-  param_4array Zeq;
   param_vector qCPUE;
   param_vector qI;
+  param_vector qE;
+  param_4array Ipred;
   param_matrix msel;
   param_matrix sel;
   param_vector spar;
@@ -179,12 +196,15 @@ private:
   param_3array stemp;
   param_vector sind;
   param_vector NLtemp;
+  param_number Ntemp;
+  param_vector tempR;
   param_5array CWpred;
   param_4array CWtotpred;
   param_4array CNpred;
   param_6array CLpred;
   param_5array CLtotpred;
   param_5array CLtotfrac;
+  param_stddev_number temp;
 public:
   virtual void userfunction(void);
   virtual void report(const dvector& gradients);
@@ -202,6 +222,7 @@ public:
   void calcRecaptureProb(void);
   void calcObjective(void);
   void simsam(void);
+  void popnodes(void);
 
 };
 #endif

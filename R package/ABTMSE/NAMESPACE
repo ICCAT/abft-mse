@@ -1,0 +1,63 @@
+exportMethods(
+    "initialize",
+    "plot"
+)
+export(
+    "avail",
+    "DD",
+    "DD2",
+	  "DD4010",
+    "Fadapt",
+    "Islope1",
+    "LstepCC4",
+    "ZeroC",
+    "UMSY",
+    "UMSY_PI",
+    "Cooke_DD",
+    "XSA",
+    "SPslope",
+    "SBT2",
+    "getperf",
+    "Tplot"
+)
+exportClasses(
+    "OMI",
+    "OM",
+    "MSE",
+    "Obs"
+)
+import(
+    "MASS",
+    "snowfall",
+    "maps",
+    "mapdata",
+    "wordcloud",
+    "abind",
+    "SDMTools",
+    "PBSmapping",
+    "MASS",
+    "shiny",
+    "parallel",
+    "lubridate",
+    "rmarkdown",
+    "knitr",
+    "mvtnorm",
+    "ggplot2"
+)
+importFrom("grDevices", "col2rgb", "rainbow", "rgb", "xy.coords", "colorRampPalette")
+importFrom("graphics", "abline", "hist", "layout", "legend", "lines",
+          "matplot", "mtext", "par", "points", "text","axis","identify",
+			    "polygon", "title", "plot.new", "barplot", "boxplot", "segments")
+importFrom("stats", "coef", "density", "dlnorm", "dnorm", "lm",
+           "loess", "optim", "optimise", "optimize", "predict",
+           "qlnorm", "quantile", "rbeta", "rlnorm", "rmultinom",
+           "rnorm", "runif", "sd", "uniroot", "approx", "dbeta", "nlm",
+			     "pnorm", "loess.smooth", "plogis", "median")
+importFrom("utils", "flush.console", "read.csv", "lsf.str", "packageVersion")
+importFrom("abind", "abind")
+importFrom("Rcpp", "evalCpp")
+#importFrom("readxl", "read_excel", "excel_sheets")
+#useDynLib(DLMtool)
+
+
+
