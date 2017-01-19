@@ -13,26 +13,21 @@
 rm(list=ls(all=TRUE))                             # Remove all existing objects from environment (or they get sent to the cluster and it could take a long time)
 setwd("C:/ABT-MSE/")                              # The working directory
 
+library(ABTMSE)
+loadABT()
 
 # --- Source MSE functions and objects ------
 
-source("Source/MSE_source.r")
-source("Source/Objects.r")
+#source("Source/MSE_source.r")
+#source("Source/Objects.r")
 
 
-# -- Load bad observation model ------
-
-#load(paste0(getwd(),"/Objects/Observation models/Good_Obs"))# make the good obs model!
-load(paste0(getwd(),"/Objects/Observation models/Bad_Obs"))
-MPs="UMSY"
-interval=3
-IE="Umax"
 
 #out<-M3read(OMDir="C:/ABT-MSE/Objects/OMs/1")
 OM<-new('OM',OMd="C:/ABT-MSE/Objects/OMs/1",nsim=8,proyears=30,seed=1,targpop=NA)
 
 sfInit(parallel=T,cpus=detectCores())
-MSE<-new('MSE',OM,Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax")
+MSE<-new('MSE',OM,Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
 
 getperf(MSE)
 plot(MSE)

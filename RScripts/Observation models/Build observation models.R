@@ -25,8 +25,8 @@ Obs@nCALobs<-100
 Obs@Lcv<-c(0.05,0.1)
 Obs@Ibeta<-c(0.5,2)#exp(runif(nsim,log(0.75),log(1.25)))
 Obs@MPind=MPind
-
-save(Obs,file=paste(getwd(),"/Objects/Observation models/Bad_Obs",sep=""))
+Bad_Obs<-Obs
+save(Bad_Obs,file=paste(getwd(),"/Objects/Observation models/Bad_Obs",sep=""))
 
 
 # --- Create a good observation error model
@@ -43,8 +43,8 @@ Obs@nCALobs<-1000
 Obs@Lcv<-c(0.05,0.1)
 Obs@Ibeta<-c(0.75,1.25)#exp(runif(nsim,log(0.75),log(1.25)))
 Obs@MPind=MPind
-
-save(Obs,file=paste(getwd(),"/Objects/Observation models/Good_Obs",sep=""))
+Good_Obs<-Obs
+save(Good_Obs,file=paste(getwd(),"/Objects/Observation models/Good_Obs",sep=""))
 
 
 # --- Create a perfect observation error model
@@ -61,7 +61,7 @@ Obs@nCALobs<-10000
 Obs@Lcv<-c(0.05,0.1)
 Obs@Ibeta<-c(0.99,1.01)#exp(runif(nsim,log(0.75),log(1.25)))
 Obs@MPind=MPind
-
-save(Obs,file=paste(getwd(),"/Objects/Observation models/Perfect_Obs",sep=""))
+Perfect_Obs<-Obs
+save(Perfect_Obs,file=paste(getwd(),"/Objects/Observation models/Perfect_Obs",sep=""))
 
 

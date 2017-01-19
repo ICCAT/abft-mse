@@ -196,13 +196,14 @@ for(i in 1:length(OMnewcodes)){
 
 
 
-# === Make all fit reports =====
+# === Make all fit reports ===== ===============================
 
 OMdir<-paste0(getwd(),"/Objects/OMs/")
 OMdirs<-list.dirs(OMdir)
 OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
 make_fit_reports(dirs=OMdirs)           # make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
 
+make_summary_report(paste0(getwd(),"/Objects/OMs"))
 
 
 # === Step 5: Create the future recruitment scenarios (1, 2, 3) and build operating model objects================================================

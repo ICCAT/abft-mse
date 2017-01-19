@@ -8,11 +8,11 @@ Umax<-function(U,maxU=0.3){
   U[U>maxU]<-maxU
   U
 }
-class(Umax)<-"ABT_IE"
+class(Umax)<-"IE"
 
 Overage<-function(U,over=0.2,maxU=0.3){
   U<-U*(1+over)
   U[U>maxU]<-maxU
   U
 }
-class(Overage)<-"ABT_IE"
+class(Overage)<-"IE"
