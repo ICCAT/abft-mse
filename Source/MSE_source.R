@@ -2417,25 +2417,25 @@ MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c
   # matplot(t(wFM2),type='l',xlab="Age",ylab="F"); legend('topright',legend=c("East","West"),bty='n',text.col=c("black","red"))
 
 
-  res<-array(NA,dim=c(np,8)) # FMSY, UMSY, MSY, BMSY, SSBMSY, BMSY/B0, SSBMSY/SSB0, RMSY/R0
+  reso<-array(NA,dim=c(np,8)) # FMSY, UMSY, MSY, BMSY, SSBMSY, BMSY/B0, SSBMSY/SSB0, RMSY/R0
 
   for(pp in 1:np){
     opt<-optimize(getMSYfast,c(-6,6),tol=toly,Fa=wFM2[pp,],Ma=M_age[pp,],Wa=wt_age[pp,],mat=mat_age[pp,],R0=R0s[pp],fixpar=fixpars[pp],SRtype=SRtypes[pp],mode=1)
-    res[pp,]<-getMSYfast(opt$minimum,Fa=wFM2[pp,],Ma=M_age[pp,],Wa=wt_age[pp,],mat=mat_age[pp,],R0=R0s[pp],fixpar=fixpars[pp],SRtype=SRtypes[pp],mode=2)
+    reso[pp,]<-getMSYfast(opt$minimum,Fa=wFM2[pp,],Ma=M_age[pp,],Wa=wt_age[pp,],mat=mat_age[pp,],R0=R0s[pp],fixpar=fixpars[pp],SRtype=SRtypes[pp],mode=2)
   }
 
-  res<-as.data.frame(res)
-  names(res)<-c("MSY","FMSYap","UMSY","BMSY","SSBMSY","BMSY_B0","SSBMSY_SSB0","RMSY_R0")
-  row.names(res)<-rnams
-  res
+  reso<-as.data.frame(reso)
+  names(reso)<-c("MSY","FMSYap","UMSY","BMSY","SSBMSY","BMSY_B0","SSBMSY_SSB0","RMSY_R0")
+  row.names(reso)<-rnams
+  reso
 }
 
 getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
 
   if(grepl("BH",SRtype)){
-    h=0.2+1/(1+exp(-fixpar))*0.8
+    h=fixpar#0.2+1/(1+exp(-fixpar))*0.8
   }else if(grepl("HS",SRtype)){
-    inflect=1/(1+exp(-fixpar))
+    inflect=fixpar#1/(1+exp(-fixpar))
   }
 
   q<-exp(lnq)

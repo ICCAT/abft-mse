@@ -25,28 +25,33 @@
 
 rm(list=ls(all=TRUE))                  # Remove all existing objects from environment
 setwd("C:/ABT-MSE/")                   # The working location
+
+# Some toggles
 runM3OM<-F                             # Should the operating models be fitted (ie only new OMI and OM objects?)
+reportbuild<-F                         # should the OM reports / summary reports be built?
+OMbuild<-T                             # should the OM objects be built?
 
 # --- Source MSE functions and objects ------
 
-source("Source/MSE_source.r")
-source("Source/Objects.r")
+library(ABTMSE)
+#source("Source/MSE_source.r")
+#source("Source/Objects.r")
 OMDir<-paste(getwd(),"/M3",sep="")
 
 
 # --- Set up the MSE design matrix
 
 all_levs<-list(c("1","2","3"),c("A","B"),c("I","II","III"))
-all_lnams<-list( c("L1: West - Hockey stick, East - '83+ B-H h=0.98",
-                   "L2: West - B-H h estimated, East - '83+ B-H h=0.7",
-                   "L3: West - Hockey stock changes to B-H after 10 yrs, East - 83+ B-H with h=0.98 changes to '50-82 B-H with h=0.98 after 10 years"),
-                 
-                 c("L1: West - Current SSB is best estimate,  East - Current SSB is best estimate",
-                   "L2: West - Current SSB is 75% of best estimate, East - Current SSB is 50% of best estimate"),
-                
-                  c("L1: West - M by age, older maturity, East - M by age, younger maturity",
-                  "L2: West - M by age, older maturity, East - M constant, older maturity",
-                  "L3: West - M by age, younger maturity, East - M by age, younger maturity")
+all_lnams<-list( c("1: West - Hockey stick, East - '83+ B-H h=0.98",
+                   "2: West - B-H h estimated, East - '83+ B-H h=0.7",
+                   "3: West - Hockey stock changes to B-H after 10 yrs, East - 83+ B-H with h=0.98 changes to '50-82 B-H with h=0.98 after 10 years"),
+
+                 c("A: West - Current SSB is best estimate,  East - Current SSB is best estimate",
+                   "B: West - Current SSB is 75% of best estimate, East - Current SSB is 50% of best estimate"),
+
+                  c("I: West - M by age, older maturity, East - M by age, younger maturity",
+                    "II: West - M by age, older maturity, East - M constant, older maturity",
+                    "III: West - M by age, younger maturity, East - M by age, younger maturity")
                )
 
 Design_Ref<-expand.grid(all_levs)                                               # The full design grid (all combinations) of the various factors and their levels
@@ -103,7 +108,7 @@ for(i in 1:3){
 # --- Fit the 1-A-I, 1-A-II and 1-A-III operating models (~ 1 hour)  ----
 
 if(runM3OM){
-  
+
   sfInit(parallel=T,cpus=8)                                                  # Initiate the cluster
 
   foldernos<-match(paste0("1-A-",all_levs[[3]]),OMcodes)                     # Get correct folder numbers
@@ -158,7 +163,7 @@ for(i in 1:3){
 # --- Fit the 1-B-I, 1-B-II and 1-B-III operating models (~ 1 hour) ----
 
 if(runM3OM){
-  
+
   sfInit(parallel=T,cpus=8)                                                  # Initiate the cluster
 
   sfLapply(foldernos,runM3,OMdir=paste0(getwd(),"/Objects/OMs"))             # Run the M3 executables in parallel
@@ -197,17 +202,17 @@ for(i in 1:length(OMnewcodes)){
 
 
 # === Make all fit reports ===== ===============================
-
+if(reportbuild){
 OMdir<-paste0(getwd(),"/Objects/OMs/")
 OMdirs<-list.dirs(OMdir)
 OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
 make_fit_reports(dirs=OMdirs)           # make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
 
 make_summary_report(paste0(getwd(),"/Objects/OMs"))
-
+}
 
 # === Step 5: Create the future recruitment scenarios (1, 2, 3) and build operating model objects================================================
-
+if(OMbuild){
 # --- MSE control variables --------------------------------------------
 
 nsim<-48
@@ -275,10 +280,14 @@ for(j in 1:3){
     OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")
     OM<-new('OM',OMd=OMfolder,nsim=nsim,proyears=proyears,seed=1,targpop=NA,Recruitment=Recs[[j]])
     save(OM,file=paste0(OMfolder,"/OM"))
+    cat(".")
 
+    #print(OM@UMSY)
   }
 
 }
+
+} # end of OMbuild toggle
 
 
 

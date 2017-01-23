@@ -27,7 +27,7 @@ loadABT()
 OM<-new('OM',OMd="C:/ABT-MSE/Objects/OMs/1",nsim=8,proyears=30,seed=1,targpop=NA)
 
 sfInit(parallel=T,cpus=detectCores())
-MSE<-new('MSE',OM,Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
+MSE<-new('MSE',OM,Obs=Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
 
 getperf(MSE)
 plot(MSE)

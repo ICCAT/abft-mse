@@ -48,22 +48,17 @@ for(o in 1:length(OMdirs)){
 
 OMdir<-paste0(getwd(),"/Objects/OMs/")
 OMdirs<-list.dirs(OMdir)
-outdir<-c(datadir,paste0(getwd(),"/Objects/Examples/"))
 
 # Example OMI
 
-from_file<-paste0(OMdirs[2],"/OMI")
-to_file<-paste0(outdir,"OMI_example")
+from_file<-paste0(OMdirs[10],"/OMI")
 load(from_file)
 OMI_example<-OMI
 save(OMI_example,file=paste0(datadir,"OMI_example"))
 
 # Example OM
 
-from_file<-paste0(OMdirs[2],"/OM")
-to_file<-paste0(outdir,"OM_example")
-load(from_file)
-OM_example<-OM
+OM_example<-new('OM',OMdirs[10],nsim=16,proyears=30,seed=1)
 save(OM_example,file=paste0(datadir,"OM_example"))
 
 # Example Allocation
@@ -76,12 +71,16 @@ Cdist<-apply(OM@Cobs[(OM@nyears-2):OM@nyears,,,],3:4,sum)
 for(a in 1:nAss)Allocation_example[a,]<-apply(Cdist[Assess_areas==a,],2,sum)/sum(Cdist[Assess_areas==a,])
 save(Allocation_example,file=paste0(datadir,"Allocation_example"))
 
+MPareas_example<-Assess_areas
+save(MPareas_example,file=paste0(datadir,"MPareas_example"))
+
+
+
 # Example Obs
 
 obsdir<-paste0(getwd(),"/Objects/Observation models/")
 files<-list.files(obsdir)
 from_file<-paste0(obsdir,files[1])
-to_files<-paste0(outdir,"Obs_example")
 load(from_file)
 Obs_example<-Bad_Obs
 save(Obs_example,file=paste0(datadir,"Obs_example"))
@@ -92,22 +91,24 @@ load(paste0(getwd(),"/Objects/Recruitment scenarios/Trial specifications"))
 Recruitment_example<-Recs[[3]]
 save(Recruitment_example,file=paste0(datadir,"Recruitment_example"))
 
-# Example MSE
+# Example MSE (this should match the documentation)
 
+OM_example<-new('OM',OMdirs[10],nsim=48,proyears=30,seed=1)
 load(paste0(getwd(),"/Objects/OMs/1/OM"))
 load(paste0(getwd(),"/Objects/Observation models/Bad_Obs"))
 sfInit(parallel=T,cpus=detectCores())
-MSE_example<-new('MSE',OM,Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
+MSE_example<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=5,IE="Umax_90")
+
 sfStop()
 save(MSE_example,file=paste0(datadir,"MSE_example"))
 
 # Example pset (requires MSE run)
 
-pset_example_East<-pset[[1]]
-pset_example_West<-pset[[2]]
+dset_example_East<-dset[[1]]
+dset_example_West<-dset[[2]]
 
-save(pset_example_East,file=paste0(datadir,"pset_example_East"))
-save(pset_example_West,file=paste0(datadir,"pset_example_West"))
+save(dset_example_East,file=paste0(datadir,"dset_example_East"))
+save(dset_example_West,file=paste0(datadir,"dset_example_West"))
 
 # The MSE design matrix
 

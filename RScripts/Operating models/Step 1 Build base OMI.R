@@ -30,9 +30,9 @@ setwd("C:/ABT-MSE/")
 
 
 # --- Source MSE functions and objects ------
-
-source("Source/MSE_source.r")
-source("Source/Objects.r")
+library(ABTMSE)
+#source("Source/MSE_source.r")
+#source("Source/Objects.r")
 
 
 # --- Define dimensions ------
@@ -42,7 +42,7 @@ Base@Date<-as.character(Sys.time())
 Base@Author<-"T. Carruthers (t.carruthers@oceans.ubc.ca)"
 Base@Notes<-"This object serves as a framework for populating the various Trial Specifications"
 Base@PrimarySource<-"ICCAT Bluefin data prep. meeting July 2016"
-Base@years<-years<-c(1960,2014) 
+Base@years<-years<-c(1960,2014)
 Base@Hyears<-Hyears<-c(1864,1959)
 
 
@@ -106,8 +106,8 @@ Base@nRD<-max(Base@RDblock)
 
 # --- (c) Create iALK ------
 
-Base@lwa<-c(2.95*10^-5,1.96*10^-5)   # length-weight conversion w=al^b   
-Base@lwb<-c(2.899,3.009)             # length-weight conversion w=al^b   
+Base@lwa<-c(2.95*10^-5,1.96*10^-5)   # length-weight conversion w=al^b
+Base@lwb<-c(2.899,3.009)             # length-weight conversion w=al^b
 Base@L1<-c(32.43,32.43)    # Richards growth curve
 Base@L2<-c(263.64,263.64)  # Richards growth curve
 Base@K<-c(0.26,0.26)       # Richards growth curve
@@ -133,7 +133,7 @@ Base@canspawn<-matrix(c(0,0,0,0,0,0,0,0,0,1,  1,0,1,0,0,0,0,0,0,0),ncol=Base@np)
 #Oldsurv<-exp(-cumsum(c(0,OldM)))[1:Base@na]
 #sum(Oldsurv)
 
-#Base@Ma<-c(0.8318,0.864)*wt_age[,,Base@ny]^-0.288 
+#Base@Ma<-c(0.8318,0.864)*wt_age[,,Base@ny]^-0.288
 Base@Ma<-t(array(c(0.49,rep(0.24,4),0.2,0.175,0.15,0.125,rep(0.10,Base@na-9),
         rep(0.14,Base@na)),c(Base@na,Base@np)))
 #surv<-exp(-t(rbind(c(0,0),apply(Base@Ma,1,cumsum)[1:(Base@na-1),])))
@@ -187,7 +187,7 @@ Base@CLobs<-as.matrix(CLobs)
 
 source("Rscripts/Data processing/Historical catches.r") # returns HCobs
 
-Base@HCobs<-HCobs # a 4D array y x s x a x  r 
+Base@HCobs<-HCobs # a 4D array y x s x a x  r
 
 
 # --- (j) Fishery independent indices ------
@@ -223,7 +223,7 @@ Base@Tag<-array(c(2,1,7,1,2,2,7,1,2,1),c(1,10))
 ma<-array(rep(c(rep(1,3),rep(2,5),rep(3,Base@na-8)),each=Base@np),c(Base@np,Base@na))
 nma<-max(ma)
 
-source("Rscripts/Data processing/SOO.r") 
+source("Rscripts/Data processing/SOO.r")
 
 Base@nSOOobs<-nrow(SOOobs)
 Base@SOOobs<-SOOobs
@@ -256,7 +256,7 @@ Base@mov1<-mov1
 # --- Relating to likelihood functions ------
 
 Base@CobsCV<-rep(0.2,Base@nf)         # CV on seasonal catch observations by area
-Base@CPUEobsCV<-rep(0.25,Base@nCPUEq) # CV on seasonal CPUE observations by area 
+Base@CPUEobsCV<-rep(0.25,Base@nCPUEq) # CV on seasonal CPUE observations by area
 Base@IobsCV<-rep(0.25,Base@nI)        # CV on fishery independent indices
 Base@RDCV<-1/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
 Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating models use fractions of other model estimated current SSB)
@@ -275,7 +275,7 @@ Base@selpar_ini[match('LLJPN',Base@Fleets$name),]<- c(1,-1,99)# LL  - logistic -
 Base@lnF_ini<-rep(log(0.001),nrow(Base@Cobs))
 Base@lnRD_ini<-t(array(seq(-0.1,0.1,length.out=Base@ny),c(Base@ny,Base@np)))
 Base@mov_ini<-tomt(array(1/Base@nr,c(Base@np,Base@ns,Base@na,Base@nr,Base@nr)))
-Base@qCPUE_ini<-rep(1,Base@nCPUEq) 
+Base@qCPUE_ini<-rep(1,Base@nCPUEq)
 Base@qI_ini<-rep(1,Base@nI)
 Base@D_ini<-c(sum(Base@RAI[,2,Base@canspawn[,1]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,1]==1][1:3]),sum(Base@RAI[,2,Base@canspawn[,2]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,2]==1][1:3]))# just for comparison with simulations
 Base@complexRD<-as.integer(0)
@@ -289,9 +289,6 @@ Base@datacheck<-as.integer(99999)
 
 
 # Naming the Base operating model according to the various OM factors at level 1 -------
-
-Names_Base<- as.list(c(MatM_Ref(lev="Names")[1],Steep_Ref(lev="Names")[1],Ind_Ref(lev="Names")[1],Dep_Ref(lev="Names")[1]))
-LNames_Base<-as.list(c(MatM_Ref(lev="LongNames")[1],Steep_Ref(lev="LongNames")[1],Ind_Ref(lev="LongNames")[1],Dep_Ref(lev="LongNames")[1])) 
 
 Base@Name<-"Comp1: Comparison with 2014 assessments"#paste(c("Base OM:",Names_Base),collapse=" ")
 Base@OMfactors<-list("Mimicking","the", "2014 assessments")
