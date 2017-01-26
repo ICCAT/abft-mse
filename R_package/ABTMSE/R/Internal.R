@@ -7,12 +7,21 @@
 tomt<-function(arr){
   dim<-new('list')
   dims<-dim(arr)
+  ndims<-length(dims)
   for(i in 1:ndims)dim[[i]]<-1:dims[i]
   ind<-as.matrix(expand.grid(dim))
   out<-array(NA,dims[ndims:1])
   out[ind[,ndims:1]]<-arr[ind]
   out
 }
+
+TEG<-function(arr){ # make index for list calculation
+  dim<-new('list')
+  ndims<-length(arr)
+  for(i in 1:ndims)dim[[i]]<-1:arr[i]
+  as.matrix(expand.grid(dim))
+}
+
 
 #' Calculate coefficient of variance
 #'
@@ -79,6 +88,7 @@ sampCatch<-function(Csamp,nSamp){
     for(yy in 1:nyears){
 
       Csampo<-Csamp[ss,,yy]
+      Csampo[Csampo<0]<-0.00000001
       #assign("Csampot",Csampo,envir=globalenv()) # debugging
       #assign("nsampt",nSamp[ss],envir=globalenv()) # debugging
       if(sum(Csampo)==0)Csampo<-rep(1/nages,nages)
@@ -106,9 +116,613 @@ makeCAL<-function(CAA,Linf,K,t0,CAL_bins,CALsd=0.05){
 }
 
 
+makeCAL2<-function(CAA,iALK){
+  ny<-dim(CAA)[3]
+  na<-dim(CAA)[2]
+  ns<-dim(CAA)[1]
+  nl<-dim(iALK)[5]
+  CAL<-array(NA,dim=c(ns,nl,ny))
+  for(i in 1:ns){
+    for(j in 1:ny){
+      CAL[i,,j]<-apply(CAA[i,,j]*iALK[i,1,j,,],2,sum)
+    }
+  }
+  CAL
+}
+
+makeCAL3<-function(CAA,iALK){
+  ny<-dim(CAA)[3]
+  na<-dim(CAA)[2]
+  ns<-dim(CAA)[1]
+  nl<-dim(iALK)[4]
+  CAL<-array(NA,dim=c(ns,nl,ny))
+  for(i in 1:ns){
+    for(j in 1:ny){
+      CAL[i,,j]<-apply(CAA[i,,j]*iALK[i,1,,],2,sum) # currently
+    }
+  }
+  CAL
+}
+
+
 makeTrans<-function(someColor, alpha=100){
   newColor<-col2rgb(someColor)
   apply(newColor, 2, function(curcoldata){rgb(red=curcoldata[1], green=curcoldata[2],
                                               blue=curcoldata[3],alpha=alpha, maxColorValue=255)})
 }
+
+makeTransparent<-function(someColor, alpha=100){
+  newColor<-col2rgb(someColor)
+  apply(newColor, 2, function(curcoldata){rgb(red=curcoldata[1], green=curcoldata[2],
+                                              blue=curcoldata[3],alpha=alpha, maxColorValue=255)})
+}
+
+
+domov<-function(Ntemp,movtemp){ # S P A R  x  S P A R R
+  #Ntemp<-Idist
+  #movtemp<-.Object@mov[,,,1,1,,]
+  nareas<-dim(movtemp)[5]
+  apply(array(Ntemp, c(dim(Ntemp),nareas))*movtemp,c(1,2,3,5),sum)
+}
+
+domov2<-function(Ntemp,movtemp){ # P A R  x  P A R R
+  #Ntemp<-Idist
+  #movtemp<-.Object@mov[,,,1,1,,]
+  nareas<-dim(movtemp)[4]
+  apply(array(Ntemp, c(dim(Ntemp),nareas))*movtemp,c(1,2,4),sum)
+}
+
+domov3<-function(Ntemp,movtemp){ # S P R  x  S P R R
+  #Ntemp<-Idist
+  #movtemp<-.Object@mov[,,,1,1,,]
+  nareas<-dim(movtemp)[3]
+  apply(array(Ntemp, c(dim(Ntemp),nareas))*movtemp,c(1,2,4),sum)
+}
+
+
+ADMBrep<-function(repfile,st,ADMBdim,quiet=T)  tomt(array(scan(repfile,skip=st,nlines=prod(ADMBdim[1:(length(ADMBdim)-1)]),quiet=quiet),ADMBdim[length(ADMBdim):1]))
+
+
+MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c("East","West"),SRtypes=c('BH','BH')){
+  # FML                                    # s, r, f, l
+  # iALK                                   # p, a, l
+  np<-dim(wt_age)[1]
+  Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
+  Find<-TEG(dim(Ftot))
+  Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
+  FM<-apply(Ftot,c(1,2,3,4,6), sum) # p, s, r, f, a    (sum over lengths)
+  Nr<-N/apply(N,1,mean)             # p, s, a, r      (normalized to mean 1)
+  wFM<-array(NA,dim(FM))            # p, s, r, f, a (weighted fishing mortality rate at age)
+  FMind<-TEG(dim(FM))
+  wFM[FMind]<-FM[FMind]*Nr[FMind[,c(1,2,5,3)]]
+  wFM2<-apply(wFM,c(1,2,4,5),mean)
+  wFM2<-apply(wFM2,c(1,4),sum) #what is the F at age profile?
+  # matplot(t(wFM2),type='l',xlab="Age",ylab="F"); legend('topright',legend=c("East","West"),bty='n',text.col=c("black","red"))
+
+
+  res<-array(NA,dim=c(np,8)) # FMSY, UMSY, MSY, BMSY, SSBMSY, BMSY/B0, SSBMSY/SSB0, RMSY/R0
+
+  for(pp in 1:np){
+    opt<-optimize(getMSYfast,c(-6,6),tol=toly,Fa=wFM2[pp,],Ma=M_age[pp,],Wa=wt_age[pp,],mat=mat_age[pp,],R0=R0s[pp],fixpar=fixpars[pp],SRtype=SRtypes[pp],mode=1)
+    res[pp,]<-getMSYfast(opt$minimum,Fa=wFM2[pp,],Ma=M_age[pp,],Wa=wt_age[pp,],mat=mat_age[pp,],R0=R0s[pp],fixpar=fixpars[pp],SRtype=SRtypes[pp],mode=2)
+  }
+
+  res<-as.data.frame(res)
+  names(res)<-c("MSY","FMSYap","UMSY","BMSY","SSBMSY","BMSY_B0","SSBMSY_SSB0","RMSY_R0")
+  row.names(res)<-rnams
+  res
+}
+
+getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
+
+  if(grepl("BH",SRtype)){
+    h=0.2+1/(1+exp(-fixpar))*0.8
+  }else if(grepl("HS",SRtype)){
+    inflect=1/(1+exp(-fixpar))
+  }
+
+  q<-exp(lnq)
+  na<-length(Ma)
+
+  N0<-exp(-(cumsum(Ma)-Ma/2))*R0
+  B0<-sum(N0*Wa)
+  SSB0<-sum(N0*Wa*mat)
+  SSBpR<-SSB0/R0
+
+  Z<-q*Fa+Ma
+  surv<-exp(-(cumsum(Z)-Z/2))
+  Rtemp<-R0/3
+
+  # Rs<-Bs<-rep(NA,nits)
+
+  for(i in 1:nits){ # run to equilibrium recruitment conditions
+
+    N<-surv*Rtemp
+    SSBMSY<-sum(N*Wa*mat)
+    BMSY<-sum(N*Wa)
+
+    if(grepl("BH",SRtype)){
+      Rtemp<-((0.8*R0*h*SSBMSY)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSBMSY))
+    }else if(grepl("HS",SRtype)){
+      SSBref<-SSB0*inflect
+      if(SSBMSY<SSBref){
+        Rtemp=R0*SSBMSY/SSBref
+      }else{
+        Rtemp=R0
+      }
+    }
+
+    #Bs[i]<-SSBMSY/SSB0;
+    #Rs[i]<-Rtemp/R0
+  }
+
+  MSY<-sum(Wa*N*exp(Z/2)*(1-exp(-Z))*(q*Fa)/Z)
+  #MSY<-sum(Wa*N*(1-exp(-Z))*(q*Fa)/Z)
+
+  #print(c(max(Fa),MSY/BMSY,MSY,BMSY/B0))
+
+  if(mode==1){
+    return(-MSY)
+  }else{
+    return(c(MSY,max(q*Fa),MSY/BMSY,BMSY,SSBMSY,BMSY/B0,SSBMSY/SSB0,Rtemp/R0))
+  }
+
+}
+
+SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
+
+  blocksize<-out$ny/max(out$RDblock)
+
+  yrs1<-yrs<-match(1:max(out$RDblock),out$RDblock)+floor(blocksize/2)
+  if(!is.null(years))yrs<-yrs[yrs1>=years[1]&yrs1<=years[2]]
+  paryrs<-match(yrs,yrs1)
+
+  opt<-new('list')
+  resid<-new('list') #array(NA,c(out$np,3))
+  pnam<-c("East","West")
+
+  if(plot)par(mfrow=c(1,out$np),mai=c(0.4,0.5,0.1,0.05),omi=c(0.5,0.5,0.01,0.01))
+
+  for(pp in out$np:1){
+
+    R0temp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
+
+    SSBpR=sum(exp(-cumsum(c(0,out$M_age[1:(out$na-1)])))*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
+    SSB=out$SSB[pp,yrs,out$spawns[pp]]
+    rec=out$muR[pp]*exp(out$lnRD[pp,paryrs])
+
+    #fscale<-getSteepness(pars,SSB=SSB,rec=rec, SSBpR=SSBpR,mode=1,plot=F)
+    #opt<-nlm(getSR,p=pars,typsize=c(0.5,log(R0temp)),fscale=fscale,hessian=T,print.level=2,
+
+    if(type=="BH"){
+
+      if(just_R0){
+        pars<-log(R0temp) # guess / starting values
+        opt[[pp]]<-optim(pars,getBH_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50),hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1,plot=F)
+        devs<-getBH_R0(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }else{
+        pars<-c(0.5,log(R0temp)) # guess / starting values
+        opt[[pp]]<-optim(pars,getBH,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
+
+        devs<-getBH(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+      }
+
+    }else if(type=="HS"){
+
+      if(just_R0){
+
+        pars<-log(R0temp) # guess / starting values
+        opt[[pp]]<-optim(pars,getHS_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1, plot=F)
+
+        devs<-getHS_R0(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }else{
+
+        pars<-c(-0.5,log(R0temp)) # guess / starting values
+        opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
+
+        devs<-getHS(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }
+
+    }
+
+    if(plot)legend('topleft',legend=pnam[pp],bty='n')
+
+  }
+
+  if(plot)  mtext("Spawning Biomass (kg)",1,line=0.8,outer=T);mtext("Recruits (n)",2,line=0.8,outer=T)
+
+  if(type=="BH"){
+
+    if(just_R0){
+
+      logith<-rep(-log(1/((h-0.2)/0.8)-1),out$np)
+      lnR0<-sapply(opt,FUN=function(x)x$par[1])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
+
+    }else{
+
+      logith<-sapply(opt,FUN=function(x)x$par[1])#0.2+1/(1+exp(-sapply(opt,FUN=function(x)x$par[1])))*0.8
+      lnR0<-sapply(opt,FUN=function(x)x$par[2])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
+
+    }
+  }else if(type=="HS"){
+
+    if(just_R0){
+
+      inflect<-0.2/rep(h,out$np)
+      logitinflect<--log(1/inflect-1)
+      lnR0<-sapply(opt,FUN=function(x)x$par[1])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
+
+    }else{
+
+      logitinflect<-sapply(opt,FUN=function(x)x$par[1])
+      lnR0<-sapply(opt,FUN=function(x)x$par[2])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
+
+    }
+
+  }
+
+}
+
+
+getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F){
+
+  h<-0.2+1/(1+exp(-pars[1]))*0.8
+  R0<-exp(pars[2])
+
+  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
+    abline(h=c(R0,R0*h),lty=2,col='red')
+    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,6,log=T)) # add a vague prior on h = 0.6
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+getBH_R0<-function(pars,SSB,rec,SSBpR,h,mode=1,plot=F){
+
+  R0<-exp(pars[1])
+
+  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
+    abline(h=c(R0,R0*h),lty=2,col='red')
+    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T)))
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F){
+
+  inflect<-exp(pars[1])/(1+exp(pars[1]))
+  R0<-exp(pars[2])
+  SSB0<-R0*SSBpR
+
+  recpred<-rep(R0,length(SSB))
+  cond<-SSB<inflect*SSB0
+  recpred[cond]<-R0*SSB[cond]/(SSB0*inflect)
+
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-rep(R0,length(SSB2))
+    cond<-SSB2<inflect*SSB0
+    recpred2[cond]<-R0*SSB2[cond]/(SSB0*inflect)
+
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*SSB0,inflect*SSB0,SSB0),lty=2,col='red')
+    h<-0.2/inflect
+    R0h<-R0*h
+    abline(h=c(R0,R0h),lty=2,col='red')
+
+    legend('topright',legend=c(paste0("Inflec. = ",round(inflect,3)),paste0("lnR0 = ",round(log(R0),3)),paste0("eqiv h = ",round(h,3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,4,log=T))
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+getHS_R0<-function(pars,SSB,rec,SSBpR,h=0.98,mode=1,plot=F){
+
+  inflect<-0.2/h#exp(pars[1])/(1+exp(pars[1]))
+  R0<-exp(pars[1])
+  SSB0<-R0*SSBpR
+
+  recpred<-rep(R0,length(SSB))
+  cond<-SSB<inflect*SSB0
+  recpred[cond]<-R0*SSB[cond]/(SSB0*inflect)
+
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-rep(R0,length(SSB2))
+    cond<-SSB2<inflect*SSB0
+    recpred2[cond]<-R0*SSB2[cond]/(SSB0*inflect)
+
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*SSB0,inflect*SSB0,SSB0),lty=2,col='red')
+    h<-0.2/inflect
+    R0h<-R0*h
+    abline(h=c(R0,R0h),lty=2,col='red')
+
+    legend('topright',legend=c(paste0("Inflec. = ",round(inflect,3)),paste0("lnR0 = ",round(log(R0),3)),paste0("eqiv h = ",round(h,3))),bty='n')
+  }
+
+  if(mode==1){
+    return(sum(((recpred-rec)/10000)^2))
+    #return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T)))
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+
+DesignEffect<-function(Sres1,Sres2,Design){
+
+  nfac<-length(Design$all_levs)
+
+  par(mfrow=c(nfac,4),mai=c(0.2,0.4,0.5,0.01),omi=c(0.5,0.4,0.4,0.05))
+  cols=c("#ff000050","#0000ff50","#00ff0050")
+  lcols<-c('red','blue','green')
+
+  facnam<-paste("-----",c("Mort. / Mat.","Steepness","Index type","Depletion"),"-----")
+
+  nams<-c("UMSY","MSY","D","OFL")
+  toplabline<-3.5
+  cexp<-1
+
+  for(i in 1:nfac){
+
+    col<-cols[Design$Design_Ref[,i]]
+
+    plot(Sres1[,4],Sres2[,4],col=col,pch=19,cex=1,xlab="",ylab="")
+    legend('topleft',legend=Design$all_nams[[i]],text.col=lcols[1:max(Design$all_levs[[i]])],bty='n',cex=0.8)
+
+    if(i==1)mtext("UMSY",3,outer=F,line=toplabline)
+
+    plot(Sres1[,2],Sres2[,2],col=col,pch=19,cex=1,xlab="",ylab="")
+    if(i==1)mtext("MSY",3,outer=F,line=toplabline)
+
+    mtext(facnam[i],3,line=1,adj=0.8,cex=0.9)
+
+    plot(Sres1[,11],Sres2[,11],col=col,pch=19,cex=1,xlab="",ylab="")
+    if(i==1)mtext("Depln.",3,outer=F,line=toplabline)
+
+    plot(Sres1[,13],Sres2[,13],col=col,pch=19,cex=1,xlab="",ylab="")
+    if(i==1)mtext("OFL",3,outer=F,line=toplabline)
+
+  }
+
+  mtext("Eastern stock",1,outer=T,line=1.6)
+  mtext("Western stock",2,outer=T,line=0.8)
+
+}
+
+
+build_OMs<-function(dir="C:/M3",nsim=32,proyears=30,seed=1,targpop=NA){
+
+  if(!file.exists(dir)){
+    print(paste('Directory:',dir,'does not exist'))
+    stop()
+  }
+
+  OMdirs<-list.dirs(dir)
+
+  if(length(OMdirs)>1){
+    OMdirs<-OMdirs[2:length(OMdirs)]
+    nOMs<-length(OMdirs)
+    fileind<-rep(NA,nOMs)
+    foldnams<-strsplit(OMdirs,"/")
+    lastfolder<-length(foldnams[[1]])
+    lfnams<-unlist(lapply(foldnams,FUN=function(X)X[lastfolder]))
+    OMdirs<-OMdirs[order(as.numeric(lfnams))]
+  }else{
+    nOMs<-1
+  }
+
+  for(i in 1:nOMs){
+    OM<-new('OM',OMd=OMdirs[i],nsim=nsim, proyears=proyears,seed=seed,targpop=targpop)
+    save(OM,file=paste0(OMdirs[i],"/OM"))
+  }
+  #
+}
+
+makeCAL2<-function(CAA,iALK){
+  ny<-dim(CAA)[3]
+  na<-dim(CAA)[2]
+  ns<-dim(CAA)[1]
+  nl<-dim(iALK)[5]
+  CAL<-array(NA,dim=c(ns,nl,ny))
+  for(i in 1:ns){
+    for(j in 1:ny){
+      CAL[i,,j]<-apply(CAA[i,,j]*iALK[i,1,j,,],2,sum)
+    }
+  }
+  CAL
+}
+
+makeCAL3<-function(CAA,iALK){
+  ny<-dim(CAA)[3]
+  na<-dim(CAA)[2]
+  ns<-dim(CAA)[1]
+  nl<-dim(iALK)[4]
+  CAL<-array(NA,dim=c(ns,nl,ny))
+  for(i in 1:ns){
+    for(j in 1:ny){
+      CAL[i,,j]<-apply(CAA[i,,j]*iALK[i,1,,],2,sum) # currently
+    }
+  }
+  CAL
+}
+
+calcVBpars<-function(La,plot=F){
+
+  pars<-c(0,log(La[1]/La[length(La)]),log(max(La)))
+  opt<-optim(pars,getVBpars,method="L-BFGS-B",
+             lower=c(-3.,log(0.05),log(max(La))),
+             upper=c(1,log(0.8),log(max(La))*1.2), hessian=T,
+             La=La,plot=F)
+  if(plot)getVBpars(opt$par,La,plot=T)
+  list(t0=opt$par[1],K=exp(opt$par[2]),Linf=exp(opt$par[3]))
+
+}
+
+getVBpars<-function(pars,La,plot=F){
+
+  t0<-pars[1]
+  K<-exp(pars[2])
+  Linf<-exp(pars[3])
+  Lapred<-Linf*(1-exp(-K*((1:length(La))-t0)))
+  if(plot){
+    plot(La)
+    lines(Lapred,col='green')
+  }
+  return(sum((Lapred-La)^2))
+
+}
+
+calcABpars<-function(La,Wa,plot=F){
+
+  na<-length(Wa)
+  ga<-Wa[na]/La[na]^3
+  pars<-c(log(ga),log(3))
+
+
+  opt<-optim(pars,getABpars,method="L-BFGS-B",
+             lower=c(log(ga/10),log(2.7)),
+             upper=c(log(ga*10),log(3.3)), hessian=T,
+             La=La,Wa=Wa,plot=F)
+  if(plot)getABpars(opt$par,La,Wa,plot=T)
+  list(a=exp(opt$par[1]),b=exp(opt$par[2]))
+
+}
+
+getABpars<-function(pars,La,Wa,plot=F){
+
+  Wapred<-exp(pars[1])*La^exp(pars[2])
+  if(plot){
+    plot(Wa)
+    lines(Wapred,col='green')
+  }
+  return(sum((Wapred-Wa)^2))
+
+}
+getclass <- function(x,classy) inherits(get(x),classy)
+
+musmooth<-function(vec){
+  vec2<-c(NA,NA,vec,NA,NA)
+  pos<-3:(length(vec2)-2)
+  val<-cbind(vec2[pos-2],vec2[pos-1],vec2[pos],vec2[pos+1],vec2[pos+2])
+  apply(val,1,mean,na.rm=T)
+}
+
+
+meanFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East","West")){
+  # FML                                    # s, r, f, l
+  # iALK                                   # p, a, l
+  np<-dim(wt_age)[1]
+  Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
+  Find<-TEG(dim(Ftot))
+  Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
+  FM<-apply(Ftot,c(1,2,3,4,6), sum) # p, s, r, f, a    (sum over lengths)
+  Nr<-N/apply(N,1,mean)             # p, s, a, r      (normalized to mean 1)
+  wFM<-array(NA,dim(FM))            # p, s, r, f, a (weighted fishing mortality rate at age)
+  FMind<-TEG(dim(FM))
+  wFM[FMind]<-FM[FMind]*Nr[FMind[,c(1,2,5,3)]]
+  wFM2<-apply(wFM,c(1,2,4,5),mean)
+  wFM2<-apply(wFM2,c(1,4),sum) #what is the F at age profile?
+  matplot(t(wFM2),type='l',xlab="Age",ylab="F")
+  legend('topright',legend=rnams,bty='n',text.col=c("black","red"))
+
+}
+
+
+timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East","West")){
+  # FML                                    # y, s, r, f, l
+  # iALK                                   # p, y, a, l
+  # N                                      # p, y, s, a, r
+  np<-dim(wt_age)[1]
+  ny<-dim(FML)[1]
+  ns<-dim(FML)[2]
+  nr<-dim(FML)[3]
+  nf<-dim(FML)[4]
+  nl<-dim(FML)[5]
+  na<-dim(iALK)[3]
+  Ftot<-array(NA,c(ny,np,ns,nr,nf,nl,na)) # y, p, s, r, f, l, a
+  Find<-TEG(dim(Ftot))
+  Ftot[Find]<-FML[Find[,c(1,3:6)]]*iALK[Find[,c(2,1,7,6)]] # y p s r f a x p a l
+  FM<-apply(Ftot,c(1:5,7), sum) # y, p, s, r, f, a    (sum over lengths)
+  Cat<-array(NA,dim(FM))            # y, p, s, r, f, a (weighted fishing mortality rate at age)
+  FMind<-TEG(dim(FM))
+  Cat[FMind]<-(1-exp(-FM[FMind]))*N[FMind[,c(2,1,3,6,4)]] # y, p, s, r, f, a
+  sumCat<-apply(Cat,c(2,1,3,6),sum) # p, y, s, a
+  sumN<-apply(N,1:4,sum)            # p, y, s, a
+  UbyS<-sumCat/sumN
+  muU<-apply(UbyS,c(1,2,4),mean)   # p, y, a # not ideal mean U across seasons but very close to best
+  -log(1-apply(muU,1:2,max))  # p, y
+
+}
+
 

@@ -3,270 +3,246 @@
 # === Management Procedures for ABT MSE==========================================================================
 # ===============================================================================================================
 
-#' No catches (actually very small catches) (a management procedure of class ABT_MP).
+#' No catches (actually very small catches) (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' ZeroC(1,pset_example)
-#' sapply(1:10,ZeroC,pset_example)
-ZeroC <- function(x,pset)C_hist<-mean(pset$Cobs[x,],na.rm=T)*1E-10
-class(ZeroC)<-"ABT_MP"
+#' ZeroC(1,dset_example_West)
+#' sapply(1:10,ZeroC,dset_example_West)
+ZeroC <- function(x,dset)C_hist<-mean(dset$Cobs[x,],na.rm=T)*1E-10
+class(ZeroC)<-"MP"
 
-#' Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class ABT_MP).
+#' Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' UMSY(1,pset_example)
-#' sapply(1:10,UMSY,pset_example)
-UMSY<-function(x,pset,Urat=1) pset$UMSY[x]*pset$Bt[x]*Urat
-class(UMSY)<-"ABT_MP"
+#' UMSY(1,dset_example_West)
+#' sapply(1:10,UMSY,dset_example_West)
+UMSY<-function(x,dset,Urat=1) dset$UMSY[x]*dset$Bt[x]*Urat
+class(UMSY)<-"MP"
 
-#' Fish at MSY harvest rate with perfect information of UMSY and current biomass (a management procedure of class ABT_MP).
+#' Fish at MSY harvest rate with perfect information of UMSY and current biomass (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' UMSY_PI(1,pset_example)
-#' sapply(1:10,UMSY_PI,pset_example)
-UMSY_PI<-function(x,pset) pset$UMSY_PI[x]*pset$Bt_PI[x]
-class(UMSY_PI)<-"ABT_MP"
+#' UMSY_PI(1,dset_example_West)
+#' sapply(1:10,UMSY_PI,dset_example_West)
+UMSY_PI<-function(x,dset) dset$UMSY_PI[x]*dset$Bt_PI[x]
+class(UMSY_PI)<-"MP"
 
-#' A rapid 2 parameter observation error only delay difference model conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class ABT_MP).
+#' A rapid 3 parameter observation error only delay difference model FOR INDEX 4 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param checkfit logical: should fitting diagnostics be plotted
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' DD(1,pset_example)
-#' sapply(1:10,DD,pset_example)
-DD<-function(x,pset){
-  Linfc<-pset$Linf[x]
-  Kc<-pset$K[x]
-  t0c<-pset$t0[x]
-  Mc<-sum((pset$M[x,]*exp(-cumsum(pset$M[x,])))/(sum(exp(-cumsum(pset$M[x,]))))) # M average weighted by survival
-  ac<-pset$a[x]
-  bc<-pset$b[x]
-  nages<-pset$nages
+#' DD_i4(1,dset_example_West)
+#' sapply(1:10,DD_i4,dset_example_West)
+DD_i4<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=4,checkfit=checkfit)
+class(DD_i4)<-"MP"
+
+#' A rapid 3 parameter observation error only delay difference model FOR INDEX 2 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param checkfit logical: should fitting diagnostics be plotted
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' DD_i2(1,dset_example_West)
+#' sapply(1:10,DD_i2,dset_example_West)
+DD_i2<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=2,checkfit=checkfit)
+class(DD_i2)<-"MP"
+
+
+#' A rapid 3 parameter observation error only delay difference model linked to 40-10 harvest control rule FOR INDEX 4 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param checkfit logical: should fitting diagnostics be plotted
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' DD_i4_4010(1,dset_example_West)
+#' sapply(1:10,DD_i4_4010,dset_example_East)
+DD_i4_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=4,checkfit=checkfit,fortyten=T)
+class(DD_i4_4010)<-"MP"
+
+
+#' A rapid 3 parameter observation error only delay difference model linked to 40-10 harvest control rule FOR INDEX 2 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param checkfit logical: should fitting diagnostics be plotted
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' DD_i2_4010(1,dset_example_East)
+#' sapply(1:10,DD_i2_4010,dset_example_East)
+DD_i2_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=2,checkfit=checkfit,fortyten=T)
+class(DD_i2_4010)<-"MP"
+
+
+DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
+
+  Linfc<-dset$Linf[x]
+  Kc<-dset$K[x]
+  t0c<-dset$t0[x]
+  Mc<-sum((dset$M[x,]*exp(-cumsum(dset$M[x,])))/(sum(exp(-cumsum(dset$M[x,]))))) # M average weighted by survival
+  ac<-dset$a[x]
+  bc<-dset$b[x]
+  nages<-dset$nages
   Winf=ac*Linfc^bc
   age<-1:nages
   la<-Linfc*(1-exp(-Kc*((age-t0c))))
   wa<-ac*la^bc
-  a50V<-pset$ageM[x]
+  a50V<-dset$ageM[x]
 
+  ny<-dim(dset$Iobs)[3]
+  I_hist<-dset$Iobs[x,ii,]
+  years<-(1:ny)[!is.na(I_hist)]
+  C_hist<-dset$Cobs[x,years]
 
-  C_hist<-pset$Cobs[x,]
-  I_hist<-pset$Iobs[x,]
-
-  E_hist<-C_hist/I_hist
+  E_hist<-C_hist/I_hist[years]
   E_hist<-E_hist/mean(E_hist)
   ny_DD<-length(C_hist)
-  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc))
+  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc/2))
   k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
   k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
   Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
   Alpha_DD<-Winf*(1-Rho_DD)
   So_DD<-exp(-Mc) # get So survival rate
   wa_DD<-wa[k_DD]
-  UMSYprior<-c(1-exp(-Mc*0.5),0.3)
+  UMSYprior<-c(1-exp(-Mc*0.5),0.5)
   opt<-optim(params,DD_R,opty=1,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,
              ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,
-             C_hist=C_hist,UMSYprior=UMSYprior,
+             C_hist=C_hist,UMSYprior=UMSYprior,startD=startD,
              method="L-BFGS-B",
              lower=log(exp(params)/20),upper=log(exp(params)*20),
              hessian=TRUE)
 
-  #Catfit<-DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-  #plot(Catfit[,1],ylim=c(0,max(Catfit)))
-  #lines(Catfit[,2],col="red")
- DD_R(opt$par,opty=2,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
+  posdef<-sum(eigen(solve(opt$hessian))$values>0)==3 # is the hessian positive-definite, ie has convergence been achieved?
 
-}
-class(DD)<-"ABT_MP"
+  if(checkfit){                            # Plot fit to catches for model testing
+    fit<-DD_R(opt$par,opty=99,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
 
-#' A rapid 2 parameter observation error only delay difference model conditioned on effort and parameterized with UMSY and MSY leading similar to DD but removes all NA values from data history (a management procedure of class ABT_MP).
-#'
-#' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
-#' @examples
-#' DD2(1,pset_example)
-#' sapply(1:10,DD2,pset_example)
-DD2<-function(x,pset){
-  Linfc<-pset$Linf[x]
-  Kc<-pset$K[x]
-  t0c<-pset$t0[x]
-  Mc<-sum((pset$M[x,]*exp(-cumsum(pset$M[x,])))/(sum(exp(-cumsum(pset$M[x,]))))) # M average weighted by survival
-  ac<-pset$a[x]
-  bc<-pset$b[x]
-  nages<-pset$nages
-  Winf=ac*Linfc^bc
-  age<-1:nages
-  la<-Linfc*(1-exp(-Kc*((age-t0c))))
-  wa<-ac*la^bc
-  a50V<-pset$ageM[x]
-
-  years<-(1:dim(pset$Cobs)[2])[!is.na(pset$Iobs[x,2,])]
-
-  C_hist<-pset$Cobs[x,years]
-  I_hist<-pset$Iobs[x,2,years]
-
-  E_hist<-C_hist/I_hist
-  E_hist<-E_hist/mean(E_hist)
-  ny_DD<-length(C_hist)
-  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc))
-  k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
-  k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
-  Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
-  Alpha_DD<-Winf*(1-Rho_DD)
-  So_DD<-exp(-Mc) # get So survival rate
-  wa_DD<-wa[k_DD]
-  UMSYprior<-c(1-exp(-Mc*0.5),0.3)
-  opt<-optim(params,DD_R,opty=1,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,
-             ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,
-             C_hist=C_hist,UMSYprior=UMSYprior,
-             method="L-BFGS-B",
-             lower=log(exp(params)/20),upper=log(exp(params)*20),
-             hessian=TRUE)
-
-  #Catfit<-DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-  #plot(Catfit[,1],ylim=c(0,max(Catfit)))
-  #lines(Catfit[,2],col="red")
-  DD_R(opt$par,opty=2,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-
-}
-class(DD)<-"ABT_MP"
-
-#' A rapid 2 parameter observation error only delay difference model conditioned on effort and parameterized with UMSY and MSY leading similar to DD but include a 40-10 harvest control rule (a management procedure of class ABT_MP).
-#'
-#' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
-#' @examples
-#' DD4010(1,pset_example)
-#' sapply(1:10,DD4010,pset_example)
-DD4010<-function(x,pset){
-  #for(x in 1:8){
-  Linfc<-pset$Linf[x]
-  Kc<-pset$K[x]
-  t0c<-pset$t0[x]
-  Mc<-sum((pset$M[x,]*exp(-cumsum(pset$M[x,])))/(sum(exp(-cumsum(pset$M[x,]))))) # M average weighted by survival
-  ac<-pset$a[x]
-  bc<-pset$b[x]
-  nages<-pset$nages
-  Winf=ac*Linfc^bc
-  age<-1:nages
-  la<-Linfc*(1-exp(-Kc*((age-t0c))))
-  wa<-ac*la^bc
-  a50V<-pset$ageM[x]
-
-
-  C_hist<-pset$Cobs[x,]
-  I_hist<-pset$Iobs[x,]
-
-  E_hist<-C_hist/I_hist
-  E_hist<-E_hist/mean(E_hist)
-  ny_DD<-length(C_hist)
-  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc))
-  k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
-  k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
-  Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
-  Alpha_DD<-Winf*(1-Rho_DD)
-  So_DD<-exp(-Mc) # get So survival rate
-  wa_DD<-wa[k_DD]
-  UMSYprior<-c(1-exp(-Mc*0.5),0.3)
-  opt<-optim(params,DD_R,opty=1,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,
-             ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,
-             C_hist=C_hist,UMSYprior=UMSYprior,
-             method="L-BFGS-B",
-             lower=log(exp(params)/20),upper=log(exp(params)*20),
-             hessian=TRUE)
-
-  #Catfit<-DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-  #plot(Catfit[,1],ylim=c(0,max(Catfit)))
-  #lines(Catfit[,2],col="red")
-  DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-  #}
-}
-class(DD4010)<-"ABT_MP"
-
-#' A delay difference model linked to Justin Cooke's harvest control rule (a management procedure of class ABT_MP).
-#'
-#' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, pset}.
-#' @examples
-#' DD4010(1,pset_example)
-#' sapply(1:10,DD4010,pset_example)
-Cooke_DD<-function(x,pset){
-  #for(x in 1:8){
-  Linfc<-pset$Linf[x]
-  Kc<-pset$K[x]
-  t0c<-pset$t0[x]
-  Mc<-sum((pset$M[x,]*exp(-cumsum(pset$M[x,])))/(sum(exp(-cumsum(pset$M[x,]))))) # M average weighted by survival
-  ac<-pset$a[x]
-  bc<-pset$b[x]
-  nages<-pset$nages
-  Winf=ac*Linfc^bc
-  age<-1:nages
-  la<-Linfc*(1-exp(-Kc*((age-t0c))))
-  wa<-ac*la^bc
-  a50V<-pset$ageM[x]
-
-
-  C_hist<-pset$Cobs[x,]
-  I_hist<-pset$Iobs[x,]
-
-  E_hist<-C_hist/I_hist
-  E_hist<-E_hist/mean(E_hist)
-  ny_DD<-length(C_hist)
-  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc))
-  k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
-  k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
-  Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
-  Alpha_DD<-Winf*(1-Rho_DD)
-  So_DD<-exp(-Mc) # get So survival rate
-  wa_DD<-wa[k_DD]
-  UMSYprior<-c(1-exp(-Mc*0.5),0.3)
-  opt<-optim(params,DD_R,opty=1,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,
-             ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,
-             C_hist=C_hist,UMSYprior=UMSYprior,
-             method="L-BFGS-B",
-             lower=log(exp(params)/20),upper=log(exp(params)*20),
-             hessian=TRUE)
-
-  #Catfit<-DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-  #plot(Catfit[,1],ylim=c(0,max(Catfit)))
-  #lines(Catfit[,2],col="red")
-  UMSY<-exp(opt$par[1])
-  MSY<-exp(opt$par[2])
-  BMSY<-MSY/UMSY
-
-  B09<-BMSY*1.25
-  F09<-0.72*UMSY
-
-  Bcur<-DD_R(opt$par,opty=5,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior)
-
-  # Harvest control rule of Cooke
-  if((Bcur/B09)<0.1){
-    mult<-0
-  }else if((Bcur/B09)>1){
-    mult<-1
-  }else{
-    mult<-((Bcur/B09)-0.1)/0.9
+    plot(fit[,1],xlab='Model year',ylab="Catches",col='blue')
+    lines(fit[,2],col='red')
+    legend('topright',legend=c("Observed","Predicted"),text.col=c("blue","red"),bty='n')
+    legend('topleft',legend=paste0("Converged: ",posdef),bty='n')
   }
 
-  mult*F09*Bcur
+  if(posdef){   # if model converged return new TAC
+    if(fortyten){
+      DD_R(opt$par,opty=2,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
+    }else{
+      DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
+    }
+  }else{         # otherwise return previous TAC subject to a 5 percent downward adjustment
+    dset$MPrec[x]*0.95
+  }
 
 }
-class(Cooke_DD)<-"ABT_MP"
+
+
+#' A delay difference model fitted to INDEX 2 linked to Justin Cooke's harvest control rule (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' CDD_i2(1,dset_example_West)
+#' sapply(1:10,CDD_i2,dset_example_West)
+CDD_i2<-function(x,dset)CDD(x,dset,ii=2)
+class(CDD_i2)<-"MP"
+
+#' A delay difference model fitted to INDEX 4 linked to Justin Cooke's harvest control rule (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' CDD_i4(1,dset_example_West)
+#' sapply(1:10,CDD_i4,dset_example_West)
+CDD_i4<-function(x,dset)CDD(x,dset,ii=4)
+class(CDD_i4)<-"MP"
+
+CDD<-function(x,dset,startD=0.2,ii){
+
+  Linfc<-dset$Linf[x]
+  Kc<-dset$K[x]
+  t0c<-dset$t0[x]
+  Mc<-sum((dset$M[x,]*exp(-cumsum(dset$M[x,])))/(sum(exp(-cumsum(dset$M[x,]))))) # M average weighted by survival
+  ac<-dset$a[x]
+  bc<-dset$b[x]
+  nages<-dset$nages
+  Winf=ac*Linfc^bc
+  age<-1:nages
+  la<-Linfc*(1-exp(-Kc*((age-t0c))))
+  wa<-ac*la^bc
+  a50V<-dset$ageM[x]
+
+  ny<-dim(dset$Iobs)[3]
+  I_hist<-dset$Iobs[x,ii,]  # !!!!!!!!!!!!!!!! INDEX
+  years<-(1:ny)[!is.na(I_hist)]
+  C_hist<-dset$Cobs[x,years]
+
+  E_hist<-C_hist/I_hist[years]
+  E_hist<-E_hist/mean(E_hist)
+  ny_DD<-length(C_hist)
+  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc/2))
+  k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
+  k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
+  Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
+  Alpha_DD<-Winf*(1-Rho_DD)
+  So_DD<-exp(-Mc) # get So survival rate
+  wa_DD<-wa[k_DD]
+  UMSYprior<-c(1-exp(-Mc*0.5),0.5)
+  opt<-optim(params,DD_R,opty=1,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,
+             ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,
+             C_hist=C_hist,UMSYprior=UMSYprior,startD=startD,
+             method="L-BFGS-B",
+             lower=log(exp(params)/20),upper=log(exp(params)*20),
+             hessian=TRUE)
+
+  posdef<-sum(eigen(solve(opt$hessian))$values>0)==3 # is the hessian positive-definite, ie has convergence been achieved?
+
+  if(posdef){
+    UMSY<-exp(opt$par[1])
+    MSY<-exp(opt$par[2])
+    BMSY<-MSY/UMSY
+
+    B09<-BMSY*1.25
+    F09<-0.72*UMSY
+
+    Bcur<-DD_R(opt$par,opty=5,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
+
+    # Harvest control rule of Cooke
+    if((Bcur/B09)<0.1){
+      mult<-0
+    }else if((Bcur/B09)>1){
+      mult<-1
+    }else{
+      mult<-((Bcur/B09)-0.1)/0.9
+    }
+
+    mult*F09*Bcur
+
+  }else{
+
+    dset$MPrec[x]*0.95
+
+  }
+
+}
+
 
 # Internal function for delay-difference management procedure
-DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,UMSYprior){
+DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,UMSYprior,startD){
   UMSY_DD=exp(params[1])
   MSY_DD=exp(params[2])
   q_DD=exp(params[3])
@@ -285,9 +261,9 @@ DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,
   R_DD<-rep(NA,ny_DD+k_DD)
   Cpred_DD<-rep(NA,ny_DD)
 
-  B_DD[1]=Bo_DD
-  N_DD[1]=No_DD
-  R_DD[1:k_DD]=Ro_DD
+  B_DD[1]=Bo_DD*startD
+  N_DD[1]=No_DD*startD
+  R_DD[1:k_DD]=Ro_DD # bit of a fudge to assume R0 when stock depleted
 
   for(tt in 1:ny_DD){
 
@@ -324,16 +300,16 @@ DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,
   }
 }
 
-XSA<-function(x,pset){
+XSA<-function(x,dset){
   #for(x in 1:8){
-  maxage<-pset$nages
-  nyears<-dim(pset$Iobs)[2]
-  Lage<-pset$Linf[x]*(1-exp(-pset$K[x]*((1:maxage)-pset$t0[x])))
-  Wage<-pset$a[x]*Lage^pset$b[x]
+  maxage<-dset$nages
+  nyears<-dim(dset$Iobs)[2]
+  Lage<-dset$Linf[x]*(1-exp(-dset$K[x]*((1:maxage)-dset$t0[x])))
+  Wage<-dset$a[x]*Lage^dset$b[x]
   plusg<-20
   vpaCAA<-array(NA,c(plusg,nyears))
-  vpaCAA[1:(plusg-1),]<-pset$CAA[x,1:(plusg-1),1:nyears]
-  vpaCAA[plusg,]<-apply(pset$CAA[x,plusg:maxage,1:nyears],2,sum)
+  vpaCAA[1:(plusg-1),]<-dset$CAA[x,1:(plusg-1),1:nyears]
+  vpaCAA[plusg,]<-apply(dset$CAA[x,plusg:maxage,1:nyears],2,sum)
 
   iage<-7
   Idx<-FLIndex()
@@ -353,7 +329,7 @@ XSA<-function(x,pset){
                      dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
 
   Idx@index.var[]<-0.2
-  Idx@index[]<-rep(pset$Iobs[x,],each=iage)
+  Idx@index[]<-rep(dset$Iobs[x,],each=iage)
   Idx@range[1:7]<-c(1,iage,iage,1,nyears,0,1)
   Idx@name<-"simulated"
 
@@ -363,8 +339,8 @@ XSA<-function(x,pset){
   Stk@catch.n<-FLQuant(vpaCAA,dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age",units="thousands")
   Stk@catch.n[Stk@catch.n==0] <- 0.0000001
   #Idx@catch.n<-Stk@catch.n
-  Stk@m<-FLQuant(array(pset$M[x,1:plusg],dim=c(plusg,nyears)),dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
-  Stk@mat<-FLQuant(pset$Mat[x,1:plusg,],dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
+  Stk@m<-FLQuant(array(dset$M[x,1:plusg],dim=c(plusg,nyears)),dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
+  Stk@mat<-FLQuant(dset$Mat[x,1:plusg,],dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
   Stk@range[1:7]<-c(1,plusg,plusg,1,nyears,0,1)
 
   #xsa.control  <- FLXSA.control(tol = 1e-10, maxit = 500,  min.nse = 0.3,  fse  = 2.5,
@@ -389,9 +365,9 @@ XSA<-function(x,pset){
 
   # Calculate some reference points
   Wta<-Wage[1:plusg]
-  Wta[plusg]<-sum(exp(cumsum(-pset$M[x,plusg:maxage]))*Wage[plusg:maxage])/sum(exp(cumsum(-pset$M[x,plusg:maxage])))
-  SSBnow<-sum(as.vector(xsa@stock.n[,ncol(xsa@stock.n)])*Wta*pset$Mat[x,1:plusg,nyears])
-  SSB0<-sum(as.vector(xsa@stock.n[,1])*Wta*pset$Mat[x,1:plusg,nyears])
+  Wta[plusg]<-sum(exp(cumsum(-dset$M[x,plusg:maxage]))*Wage[plusg:maxage])/sum(exp(cumsum(-dset$M[x,plusg:maxage])))
+  SSBnow<-sum(as.vector(xsa@stock.n[,ncol(xsa@stock.n)])*Wta*dset$Mat[x,1:plusg,nyears])
+  SSB0<-sum(as.vector(xsa@stock.n[,1])*Wta*dset$Mat[x,1:plusg,nyears])
   B0<-sum(as.vector(xsa@stock.n[,1])*Wta)
 
   refy<-getrefs(xsa,Stk,Wta=Wta,plusg,nyears)                  # Optimize for FMSY reference points
@@ -410,11 +386,11 @@ XSA<-function(x,pset){
   # Refs indexing is:  (1) FMSY  (2) BMSY  (3) MSY   (4) depletion   (5) F/FMSY    (6) B/BMSY
   refs<-c(round(refy[1],4),round(refy[2]/1000,0),round(refy[3]/1000,0),Bnow/B0,round(Fnow/refy[1],8),round(Bnow/refy[2],8))
   return(refy[1]*Bnow)
-  #print(c(refy[1],pset$UMSY_PI[x]))
-  #print(c(Bnow,pset$Bt_PI[x]))
+  #print(c(refy[1],dset$UMSY_PI[x]))
+  #print(c(Bnow,dset$Bt_PI[x]))
   #}
 }
-class(XSA)<-"ABT_MP"
+class(XSA)<-"MP"
 
 # internal function for XSA
 getrefs<-function(xsa,Stk,Wta,maxage,nyears){
@@ -430,7 +406,7 @@ getrefs<-function(xsa,Stk,Wta,maxage,nyears){
   SSB<-as.vector(apply(N*Mat*Wt,2,sum,na.rm=T)[,1:(ncol(N)-1)] )
   SSB[SSB==Inf]<-NA
   rec<-as.vector(N[1,2:ncol(N)])
-  opt<-optim(c(0,log(rec[1])),getBH,lower=c(-15, log(rec[1]/50)), upper=c(15, log(rec[1]*10)), method = "L-BFGS-B",SSB=SSB,rec=rec)
+  opt<-optim(c(0,log(rec[1])),getBHmp,lower=c(-15, log(rec[1]/50)), upper=c(15, log(rec[1]*10)), method = "L-BFGS-B",SSB=SSB,rec=rec)
   #getBH(opt$par,SSB,rec,opty=F,namey=Stk@name)
   hh<-0.2+(exp(opt$par[1])/(1+exp(opt$par[1])))*0.8
   R0<-exp(opt$par[2])
@@ -497,7 +473,7 @@ getMSYrefs2<-function(Fmult,Nna,Wt,sel,Fapical,M,mature,hh,R0,SSBpR,nprojy=50,op
 }
 
 # internal function for XSA
-getBH<-function(parm,SSB,rec,opty=T,namey=""){
+getBHmp<-function(parm,SSB,rec,opty=T,namey=""){
   hh<-0.2+(exp(parm[1])/(1+exp(parm[1])))*0.8
   R0<-exp(parm[2])
   SSBpR<-SSB[1]/R0
@@ -522,28 +498,28 @@ getBH<-function(parm,SSB,rec,opty=T,namey=""){
   }
 }
 
-#' A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class ABT_MP).
+#' A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
+#' @param dset a list of simulated data for use by management procedures.
 #' @param yrsmth the number of years over which to compare length observations
 #' @param xx alters target catch as a fraction of historical catch TACstar = (1-xx)muC
 #' @param stepsz the maximum fractional change in TAC between MP updates
 #' @param llim a vector of three ratios that determine whether the TAC should be reduced by 2 steps, 1 steps and increased by 1 step
-#' @return a TAC recommendation arising from \code{x, pset, yrsmth, xx, stepsz, llim}.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' LstepCC4(1,pset_example)
-#' sapply(1:10,LstepCC4,pset_example)
-LstepCC4<-function(x,pset,yrsmth=5,xx=0.3,stepsz=0.05,llim=c(0.96,0.98,1.05)){
-  ny<-length(pset$Cobs[x,])
+#' LstepCC4(1,dset_example_East)
+#' sapply(1:10,LstepCC4,dset_example_East)
+LstepCC4<-function(x,dset,yrsmth=5,xx=0.3,stepsz=0.05,llim=c(0.96,0.98,1.05)){
+  ny<-length(dset$Cobs[x,])
   ind<-(ny-(yrsmth-1)):ny
-  C_dat<-pset$Cobs[x,]
-  if(is.na(pset$MPrec[x])){TACstar<-(1-xx)*mean(C_dat)
-  }else{TACstar<-pset$MPrec[x]}
+  C_dat<-dset$Cobs[x,]
+  if(is.na(dset$MPrec[x])){TACstar<-(1-xx)*mean(C_dat)
+  }else{TACstar<-dset$MPrec[x]}
   step<-stepsz*TACstar
-  binval<-pset$CAL_bins[1:(length(pset$CAL_bins)-1)]+(pset$CAL_bins[2]-pset$CAL_bins[1])/2
-  CALdat<-pset$CAL[x,,]*rep(binval,dim(pset$CAL)[3])
-  avCAL<-apply(CALdat,2,sum)/apply(pset$CAL[x,,],2,sum)
+  binval<-dset$CAL_bins[1:(length(dset$CAL_bins)-1)]+(dset$CAL_bins[2]-dset$CAL_bins[1])/2
+  CALdat<-dset$CAL[x,,]*rep(binval,dim(dset$CAL)[3])
+  avCAL<-apply(CALdat,2,sum)/apply(dset$CAL[x,,],2,sum)
   Lrecent<-mean(avCAL[ind])
   Lave<-mean(avCAL[(ny-(yrsmth*2-1)):ny])
   rat<-Lrecent/Lave
@@ -554,50 +530,87 @@ LstepCC4<-function(x,pset,yrsmth=5,xx=0.3,stepsz=0.05,llim=c(0.96,0.98,1.05)){
   }
   OFL
 }
-class(LstepCC4)<-"ABT_MP"
+class(LstepCC4)<-"MP"
 
-#' An index-based management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class ABT_MP).
+#' An index-based (INDEX 2) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
+#' @param dset a list of simulated data for use by management procedures.
 #' @param yrsmth the number of years over which to compare index observations
 #' @param xx alters target catch as a fraction of historical catch TACstar = (1-xx)muC
 #' @param lambda a scalar which determines the responsiveness of the adjustment
-#' @return a TAC recommendation arising from \code{x, pset, yrsmth, lamba, xx}.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' Islope1(1,pset_example)
-#' sapply(1:10,Islope1,pset_example)
-Islope1<-function(x,pset,yrsmth=5,lambda=0.4,xx=0.2){
-  ny<-length(pset$Cobs[x,])
+#' Islope1_i2(1,dset_example_East)
+#' sapply(1:10,Islope1_i2,dset_example_East)
+Islope1_i2<-function(x,dset)Islope1(x,dset,ii=2)
+class(Islope1_i2)<-"MP"
+
+
+#' An index-based (INDEX 4) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param yrsmth the number of years over which to compare index observations
+#' @param xx alters target catch as a fraction of historical catch TACstar = (1-xx)muC
+#' @param lambda a scalar which determines the responsiveness of the adjustment
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' Islope1_i4(1,dset_example_East)
+#' sapply(1:10,Islope1_i4,dset_example_East)
+Islope1_i4<-function(x,dset)Islope1(x,dset,ii=4)
+class(Islope1_i4)<-"MP"
+
+
+Islope1<-function(x,dset,yrsmth=5,lambda=0.4,xx=0.2,ii){
+  ny<-length(dset$Cobs[x,])
   ind<-(ny-(yrsmth-1)):ny
-  C_dat<-pset$Cobs[x,]
-  if(is.na(pset$MPrec[x])){TACstar<-(1-xx)*mean(C_dat)
-  }else{TACstar<-pset$MPrec[x]}
-  I_hist<-pset$Iobs[x,ind]
+  C_dat<-dset$Cobs[x,]
+  if(is.na(dset$MPrec[x])){TACstar<-(1-xx)*mean(C_dat)
+  }else{TACstar<-dset$MPrec[x]}
+  I_hist<-dset$Iobs[x,ii,ind]
   yind<-1:yrsmth
   slppar<-summary(lm(I_hist~yind))$coefficients[2,1:2]
   Islp <-slppar[1]
   TACstar*(1+lambda*Islp)
 }
-class(Islope1)<-"ABT_MP"
 
-#' A surplus production management procedure that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class ABT_MP).
+#' A surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
+#' @param dset a list of simulated data for use by management procedures.
 #' @param yrsmth the number of years over which to quantify slope in surplus production with biomass
 #' @param alp the SP gradient limits that lead to TAC changes
 #' @param bet the degree of responsiveness of the MP
-#' @return a TAC recommendation arising from \code{x, pset, yrsmth, alp, bet}.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' SPslope(1,pset_example)
-#' sapply(1:10,SPslope,pset_example)
-SPslope<-function(x,pset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9)){
-  ny<-length(pset$Cobs[x,])
+#' SPslope_i2(1,dset_example_East)
+#' sapply(1:10,SPslope_i2,dset_example_East)
+SPslope_i2<-function(x,dset)SPslope(x,dset,ii=2)
+class(SPslope_i2)<-"MP"
+
+
+#' A surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param yrsmth the number of years over which to quantify slope in surplus production with biomass
+#' @param alp the SP gradient limits that lead to TAC changes
+#' @param bet the degree of responsiveness of the MP
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' SPslope_i4(1,dset_example_East)
+#' sapply(1:10,SPslope_i4,dset_example_East)
+SPslope_i4<-function(x,dset)SPslope(x,dset,ii=4)
+class(SPslope_i4)<-"MP"
+
+
+SPslope<-function(x,dset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9),ii){
+  ny<-length(dset$Cobs[x,])
   ind<-(ny-(yrsmth-1)):ny
   yind<-1:yrsmth
-  C_dat<-pset$Cobs[x,ind]
-  B_dat<-pset$Iobs[x,ind]/pset$Iobs[x,ind[yrsmth]]*pset$Bt[x]
+  C_dat<-dset$Cobs[x,ind]
+  B_dat<-dset$Iobs[x,ii,ind]/dset$Iobs[x,ii,ind[yrsmth]]*dset$Bt[x] #!!! INDEX
   Pt_mu<-B_dat[yrsmth]-B_dat[yrsmth-1]+C_dat[yrsmth-1]
   It<-exp(predict(lm(log(B_dat)~yind),newdat=list(yind=yrsmth+1)))
   Ilast<-B_dat[1]
@@ -606,34 +619,52 @@ SPslope<-function(x,pset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9)){
   if(rat<alp[1])OFL<-(1-bet[1]*(Ilast-It)/Ilast)*Ct_1
   if(rat>alp[1]&rat<alp[2])OFL<-Ct_1
   if(rat>alp[2])OFL<-bet[2]*Pt_mu
-  if(OFL<0)OFL<-pset$Cobs[x,ny]/2
+  if(OFL<0)OFL<-dset$Cobs[x,ny]/2
   OFL
 }
-class(SPslope)<-"ABT_MP"
 
-#' An adaptive surplus production management procedure that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class ABT_MP).
+
+#' An adaptive surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
+#' @param dset a list of simulated data for use by management procedures.
 #' @param yrsmth the number of years over which to quantify slope in surplus production with biomass
 #' @param gg the responsiveness of the MP with respect to the slope
 #' @param FMSY_M the assumed ratio of FMSY to M
-#' @return a TAC recommendation arising from \code{x, pset, yrsmth, alp, bet}.
+#' @return a TAC recommendation arising from \code{x, dset}.
 #' @examples
-#' Fadapt(1,pset_example)
-#' sapply(1:10,Fadapt,pset_example)
-Fadapt<-function(x,pset,yrsmth=7,gg=1,FMSY_M=0.5){
-  ny<-length(pset$Cobs[x,])
+#' Fadapt_i2(1,dset_example_East)
+#' sapply(1:10,Fadapt_i2,dset_example_East)
+Fadapt_i2<-function(x,dset)Fadapt(x,dset,ii=2)
+class(Fadapt_i2)<-"MP"
+
+#' An adaptive surplus production management procedure using INDEX 4 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @param yrsmth the number of years over which to quantify slope in surplus production with biomass
+#' @param gg the responsiveness of the MP with respect to the slope
+#' @param FMSY_M the assumed ratio of FMSY to M
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' Fadapt_i4(1,dset_example_East)
+#' sapply(1:10,Fadapt_i4,dset_example_East)
+Fadapt_i4<-function(x,dset)Fadapt(x,dset,ii=4)
+class(Fadapt_i4)<-"MP"
+
+
+Fadapt<-function(x,dset,yrsmth=7,gg=1,FMSY_M=0.5,ii){
+  ny<-length(dset$Cobs[x,])
   ind<-(ny-(yrsmth-1)):ny
-  C_dat<-log(pset$Cobs[x,ind])
-  B_dat<-log(pset$Iobs[x,ind]/pset$Iobs[x,ind[yrsmth]]*pset$Bt[x])
+  C_dat<-log(dset$Cobs[x,ind])
+  B_dat<-log(dset$Iobs[x,ii,ind]/dset$Iobs[x,ii,ind[yrsmth]]*dset$Bt[x])
   C_hist<-exp(predict(loess(C_dat~ind,degree=1)))
   B_hist<-exp(predict(loess(B_dat~ind,degree=1)))
 
   ind<-2:yrsmth
   ind1<-1:(yrsmth-1)
   SP_hist<-B_hist[ind]-B_hist[ind1]+C_hist[ind1]
-  Mc<-sum((pset$M[x,]*exp(-cumsum(pset$M[x,])))/(sum(exp(-cumsum(pset$M[x,]))))) # M average weighted by survival
+  Mc<-sum((dset$M[x,]*exp(-cumsum(dset$M[x,])))/(sum(exp(-cumsum(dset$M[x,]))))) # M average weighted by survival
 
   Frat<-Mc*FMSY_M
   Flim<-Frat*c(0.5,2)
@@ -657,32 +688,190 @@ Fadapt<-function(x,pset,yrsmth=7,gg=1,FMSY_M=0.5){
   newF<-Flim[1]+(exp(Fmod2)/(1+exp(Fmod2)))*Flimr
   newF*B_hist[yrsmth]
 }
-class(Fadapt)<-"ABT_MP"
 
 
-#' One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class ABT_MP).
+#' One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class MP).
 #'
 #' @param x a simulation number.
-#' @param pset a list of simulated data for use by management procedures.
+#' @param dset a list of simulated data for use by management procedures.
 #' @param epsB currently unused
 #' @param epsR resposiveness of the MP to recruitment gradient
 #' @param tauR the time lag (years) for evaluating trend in recruitment
 #' @param tauB currently unused
 #' @param gamma currently unused
-#' @return a TAC recommendation arising from \code{x, pset, epsB, epsR, tauR, tauB, gamma}.
+#' @return a TAC recommendation arising from \code{x, dset, epsB, epsR, tauR, tauB, gamma}.
 #' @examples
-#' SBT2(1,pset_example)
-#' sapply(1:10,SBT2,pset_example)
-SBT2<-function(x,pset,epsB=0.25,epsR=0.75,tauR=5,tauB=7,gamma=1){
-  ny<-length(pset$Cobs[x,])
-  Ctarg<-pset$MSY[x]
-  Rec<-pset$CAA[x,3,]/mean(pset$CAA[x,3,])
+#' SBT2(1,dset_example_East)
+#' sapply(1:10,SBT2,dset_example_East)
+SBT2<-function(x,dset,epsB=0.25,epsR=0.75,tauR=5,tauB=7,gamma=1){
+  ny<-length(dset$Cobs[x,])
+  Ctarg<-dset$MSY[x]
+  Rec<-dset$CAA[x,3,]/mean(dset$CAA[x,3,])
   muR<-mean(Rec[(ny-tauR+1):ny])
   phi<-mean(Rec[(ny-9):ny])
   Rrat<-muR/phi
 
   if(Rrat>1)deltaR<-Rrat^(1-epsR)
   if(Rrat<1|Rrat==1)deltaR<-Rrat^(1+epsR)
-  0.5*(pset$Cobs[x,ny]+Ctarg*deltaR)
+  0.5*(dset$Cobs[x,ny]+Ctarg*deltaR)
 }
-class(SBT2)<-"ABT_MP"
+class(SBT2)<-"MP"
+
+
+
+#' A 3 parameter surplus production assessmetn using INDEX 2 (observation error only)(a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' SP_i2(1,dset_example_East)
+#' sapply(1:10,SP_i2,dset_example_East)
+SP_i2<-function(x,dset)SP(x,dset,ii=2)
+class(SP_i2)<-"MP"
+
+#' A 3 parameter surplus production assessmetn using INDEX 4 (observation error only)(a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' SP_i4(1,dset_example_East)
+#' sapply(1:10,SP_i4,dset_example_East)
+SP_i4<-function(x,dset)SP(x,dset,ii=4)
+class(SP_i4)<-"MP"
+
+
+SP<-function(x,dset,startD=0.5,checkfit=F,ii){                  # a very simple surplus production model, r, K and q leading
+
+  nyears<-dim(dset$Iobs)[3]               # get the number of years of data (the 3rd dimension of Iobs)
+  Ind<-dset$Iobs[x,ii,1:nyears]            # get the index
+  yind<-(1:nyears)[!is.na(Ind)]           # find the years where the index is available (ie not NA)
+
+  C_hist <- dset$Cobs[x,yind]             # store catches for this time period
+  E_hist <- C_hist/dset$Iobs[x,ii,yind]    # store standardized effort (partial F)
+  E_hist <- E_hist/mean(E_hist)           # normalize the effort to mean 1
+
+  surv<-exp(-cumsum(dset$M[x,]))          # survival at age
+  muM<-sum(dset$M[x,]*surv)/sum(surv)     # mean natural mortality rate accounting for survival
+  ny <- length(C_hist)                    # record the total number of years of data
+  params<-c(muM,sum(C_hist),0.05)         # initial values for r, K and q (Effort covariate has been standardized to mean 1)
+  rprior<-c(muM,0.5)                      # a vague prior on r based on the assumption that FMSY ~ 0.5 x M and FMSY = r/2
+
+  opt<-optim(log(params),SP_R,opty=1,
+             C_hist=C_hist,E_hist=E_hist,
+             rprior=rprior,ny=ny, # run an optimization to fit the data
+             startD=startD,                # starting depletion according to function argument above
+             method = "L-BFGS-B",
+             lower=log(params/c(3,20,20)), # the first parameter, r, is bounded more tightly as K and q
+             upper=log(params*c(3,20,20)), # the greater constraint on r is to prevent chaotic model behavior above 1.3
+             hessian = TRUE,               # return a hessian matrix for simple testing of convergence
+             control=list(maxit=100))      # optimization can't run for more than 100 iterations
+
+  posdef<-sum(eigen(solve(opt$hessian))$values>0)==3 # is the hessian positive-definite, ie has convergence been achieved?
+
+  if(checkfit){                            # Plot fit to catches for model testing
+    fit<-SP_R(opt$par,opty=4,C_hist=C_hist,E_hist=E_hist,rprior=rprior,ny=ny,startD=startD);
+    plot(fit[,1],xlab='Model year',ylab="Catches",col='blue')
+    lines(fit[,2],col='red')
+    legend('topright',legend=c("Observed","Predicted"),text.col=c("blue","red"),bty='n')
+    legend('topleft',legend=paste0("Converged: ",posdef),bty='n')
+  }
+
+  if(posdef){   # if model converged return new TAC
+    SP_R(opt$par,opty=2,C_hist=C_hist,E_hist=E_hist,rprior=rprior,ny=ny,startD=startD)  # opty = 2 returns FMSY x cur biomass
+  }else{         # otherwise return previous TAC subject to a 5 percent downward adjustment
+    dset$MPrec[x]*0.95
+  }
+}
+
+
+SP_R<-function(logparams, opty, C_hist, E_hist, rprior,ny,startD){   # simple surplus production model r, K and q leading
+
+  r<-exp(logparams[1])                                # Intrinsic rate of increase
+  K<-exp(logparams[2])                                # Carrying capacity
+  qq<-exp(logparams[3])                               # Catchability (F=qE)
+  B<-K*startD                                         # Starting biomass level
+
+  Cpred<-rep(NA,ny)                                   # A predicted catch vector
+  Bpred<-rep(NA,ny)                                   # A predicted biomass vector
+
+  for(i in 1:ny){                                     # loop over years
+    Cpred[i]<-B*(1-exp(-qq*E_hist[i]))                # Predicted catches
+    B<-B+r*B*(1-B/K)-Cpred[i]                         # update biomass according to SP dynamics
+    Bpred[i]<-B                                       # Record biomass
+  }
+
+  if(opty==1){                                         # return objective function
+
+    test<-dnorm(log(Cpred),log(C_hist),0.2,log=T)      # observed versus predicted log catches
+    #test<-dnorm(Cpred,C_hist,0.2*Cpred,log=T)         # observed versus predicted catches
+    test2<-dlnorm(r,log(rprior[1]),rprior[2],log=T)    # a weak  lognormal prior on r
+    test[is.na(test)|test==(-Inf)]<--1000              # some robustification
+    if(is.na(test2)|test2==-Inf|test2==Inf)test2<-1000 # some more robustification
+    return(-sum(test,test2))                           # objective function
+
+  }else if(opty==2){                                   # return MLE FMSY * current biomass estimate
+
+    r/2*Bpred[ny]
+
+  }else if(opty==3){
+
+    B[ny]/K                                            # return depletion
+
+  }else{
+
+    cbind(C_hist,Cpred)                                # return observations vs predictions
+
+  }
+
+}
+
+
+#' A simple MP that uses an index (INDEX 2) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' MCD_i2(1,dset_example_East)
+#' sapply(1:10,MCD_i2,dset_example_East)
+MCD_i2<-function(x,dset)MCD(x,dset,ii=2)
+class(MCD_i2)<-"MP"
+
+
+#' A simple MP that uses an index (INDEX 2) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' MCD_i2(1,dset_example_East)
+#' sapply(1:10,MCD_i2,dset_example_East)
+MCD_i4<-function(x,dset)MCD(x,dset,ii=4)
+class(MCD_i4)<-"MP"
+
+
+MCD<-function(x,dset,startD=0.1,ii){
+
+  nyears<-dim(dset$Iobs)[3]                 # Most recent year
+  mean(dset$Cobs[x,],na.rm=T)*              # Average historical catches
+    mean(dset$Iobs[,ii,(nyears-2):nyears])* # Mean index over last three years
+    2*startD                                # Adjusted for starting depletion and MSY production at depletion = 0.5
+
+}
+
+#' A simple average catch MP.
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' MeanC(1,dset_example_East)
+MeanC<-function(x,dset) mean(dset$Cobs[x,],na.rm=T)
+class(MeanC)<-"MP"
+
+
+
+
+

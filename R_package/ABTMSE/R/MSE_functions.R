@@ -117,8 +117,8 @@ Tplot<-function(MSE){
 TOplt<-function(x,y,MPs,xlab,ylab,xref=NA,yref=NA,main=""){
   MPcols<-rep(c("black","blue","orange","green","red","grey"),20)
   plot(x,y,col='white',xlab="",ylab="",
-       xlim=range(x)+(max(x)-min(x))/15*c(-1,1),
-       ylim=range(y)+(max(y)-min(y))/15*c(-1,1))
+       xlim=range(x)+(max(x)-min(x))/10*c(-1,1),
+       ylim=range(y)+(max(y)-min(y))/10*c(-1,1))
   abline(h=yref,lty=2,col="grey")
   abline(v=xref,lty=2,col="grey")
   text(x,y,MPs,col=MPcols)
@@ -127,7 +127,54 @@ TOplt<-function(x,y,MPs,xlab,ylab,xref=NA,yref=NA,main=""){
   mtext(main,3,line=0.4,cex=0.85,font=2)
 }
 
+TOPNTplt<-function(x,y,MPs,xlab,ylab,xref=NA,yref=NA,main=""){
+  MPcols<-makeTransparent(rep(c("black","blue","orange","green","red","grey"),20),95)
+  plot(x,y,col='white',xlab="",ylab="",
+       xlim=range(x)+(max(x)-min(x))/10*c(-1,1),
+       ylim=range(y)+(max(y)-min(y))/10*c(-1,1))
+  abline(h=yref,lty=2,col="grey")
+  abline(v=xref,lty=2,col="grey")
+  for(mp in 1:nrow(x))points(x[mp,],y[mp,],pch=19,col=MPcols[mp])
+  mtext(xlab,1,line=2,cex=0.85)
+  mtext(ylab,2,line=2,cex=0.85)
+  mtext(main,3,line=0.4,cex=0.85,font=2)
+}
 
+
+
+#' A generic tradeoff plot based on two functions of class PM
+#'
+#' @param MSE an object of class MSE
+#' @param PMs a list of named functions of class PM
+#' @return a trade-off figure \code{classy}
+#' @examples
+#' loadABT()
+#' tradeoff(MSE_example,list(POF=POF,Y10=Y10))
+tradeoff<-function(MSE,PMs){
+
+  MPnams<-matrix(unlist(MSE@MPs),nrow=2)
+  MPnamsj<-paste(MPnams[(1:MSE@nMPs)*2-1],MPnams[(1:MSE@nMPs)*2],sep="-")
+  nPMs<-length(PMs)
+  perf<-array(NA,c(nPMs,MSE@npop,MSE@nMPs,MSE@nsim))
+  pmnams<-names(PMs)
+
+  for(pm in 1:nPMs){
+
+    for(pp in 1:MSE@npop){
+
+      perf[pm,pp,,]<-do.call(PMs[[pm]],list(MSE=MSE,pp=pp))
+
+    }
+
+  }
+
+  par(mfrow=c(2,2),mai=c(0.5,0.6,0.4,0.05),omi=c(0.01,0.01,0.01,0.01))
+
+  for(i in 1:2)    TOplt(apply(perf[1,i,,],1,mean),apply(perf[2,i,,],1,mean),MPnamsj,pmnams[1],pmnams[2],main=MSE@Snames[i])
+  for(i in 1:2)    TOPNTplt(perf[1,i,,],perf[2,i,,],MPnamsj,pmnams[1],pmnams[2],main=MSE@Snames[i])
+
+
+}
 
 
 
