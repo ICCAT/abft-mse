@@ -7,7 +7,7 @@
 # - Re-run M3 operating models
 # - Create OMs
 
-# --- Data ------------------------
+# --- Data / examples -------------
 
 setwd("C:/ABT-MSE/")
 source(paste0(getwd(),"/R Scripts/Packaging/Copy data to package.R"))
@@ -17,4 +17,14 @@ source(paste0(getwd(),"/R Scripts/Packaging/Copy data to package.R"))
 library(roxygen2)
 roxygen2::roxygenize()
 
-# --- 
+
+# --- Package ---------------------
+
+# !!! build source
+
+
+# --- Website ---------------------
+
+source(paste0(getwd(),"/R Scripts/Packaging/pkgdown.R"))
+
+# !!! copy/docs to root
