@@ -3,8 +3,8 @@
 \docType{data}
 \name{PGK}
 \alias{PGK}
-\title{Probability of being in the Green Kobe region (F<FMSY AND B>BMSY) over all projected years (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Probability of being in the Green Kobe region (F<FMSY AND B>BMSY) over all projected years (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 PGK
 }
@@ -15,7 +15,7 @@ PGK
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Probability of being in the Green Kobe region (F<FMSY AND B>BMSY) over all projected years (a performance metrics function of class ABT_PM)
+Probability of being in the Green Kobe region (F<FMSY AND B>BMSY) over all projected years (a performance metrics function of class PM)
 }
 \examples{
 loadABT()

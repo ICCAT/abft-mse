@@ -3,8 +3,8 @@
 \docType{data}
 \name{Y10}
 \alias{Y10}
-\title{Yield over the first 10 projected years (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Yield over the first 10 projected years (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 Y10
 }
@@ -15,7 +15,7 @@ Y10
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Yield over the first 10 projected years (a performance metrics function of class ABT_PM)
+Yield over the first 10 projected years (a performance metrics function of class PM)
 }
 \examples{
 loadABT()

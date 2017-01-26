@@ -9,7 +9,7 @@
 \item{Name}{The name of the operating model input}
 \item{Date}{The date and time the object was created}
 \item{Author}{Who made the object}
-\item{Notes}{Anything noteworth}
+\item{Notes}{Anything noteworthy}
 \item{PrimarySource}{The primary origins of these data}
 \item{nsim}{The number of simulations}
 \item{npop}{number of stocks (e.g. 2, East-West)}
@@ -69,6 +69,8 @@
 \item{SSBMSY_SSB0}{a matrix of spawning biomass at MSY relative to unfished, values per simulation and stock [sim x stock]}
 \item{nydist}{the number of years used to determine equilibrium spatial distribution}
 \item{Snames}{a vector nstock long naming each stock}
+\item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
+\item{areanams}{a character vector of area names}
 \item{seed}{a random seed for generation of simulations to ensure reproducibility}
 }
 }

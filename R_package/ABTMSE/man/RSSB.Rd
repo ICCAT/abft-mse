@@ -3,8 +3,8 @@
 \docType{data}
 \name{RSSB}
 \alias{RSSB}
-\title{Relative SSB (SSB relative to zero fishing) in final projection year (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Relative SSB (SSB relative to zero fishing) in final projection year (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 RSSB
 }
@@ -15,7 +15,7 @@ RSSB
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Relative SSB (SSB relative to zero fishing) in final projection year (a performance metrics function of class ABT_PM)
+Relative SSB (SSB relative to zero fishing) in final projection year (a performance metrics function of class PM)
 }
 \examples{
 loadABT()

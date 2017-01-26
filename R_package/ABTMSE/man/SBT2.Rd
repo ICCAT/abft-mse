@@ -3,15 +3,15 @@
 \docType{data}
 \name{SBT2}
 \alias{SBT2}
-\title{One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class ABT_MP).}
-\format{An object of class \code{ABT_MP} of length 1.}
+\title{One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class MP).}
+\format{An object of class \code{MP} of length 1.}
 \usage{
 SBT2
 }
 \arguments{
 \item{x}{a simulation number.}
 
-\item{pset}{a list of simulated data for use by management procedures.}
+\item{dset}{a list of simulated data for use by management procedures.}
 
 \item{epsB}{currently unused}
 
@@ -24,14 +24,14 @@ SBT2
 \item{gamma}{currently unused}
 }
 \value{
-a TAC recommendation arising from \code{x, pset, epsB, epsR, tauR, tauB, gamma}.
+a TAC recommendation arising from \code{x, dset, epsB, epsR, tauR, tauB, gamma}.
 }
 \description{
-One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class ABT_MP).
+One of two Southern Bluefin Tuna management procedures that uses recruitment trajectory to adjust TAC (a management procedure of class MP).
 }
 \examples{
-SBT2(1,pset_example)
-sapply(1:10,SBT2,pset_example)
+SBT2(1,dset_example_East)
+sapply(1:10,SBT2,dset_example_East)
 }
 \keyword{datasets}
 

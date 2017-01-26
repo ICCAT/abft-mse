@@ -3,8 +3,8 @@
 \docType{data}
 \name{D20}
 \alias{D20}
-\title{Depletion (SSB relative to unfished SSB given current recruitment dynamics) for projected years 11-20 (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Depletion (SSB relative to unfished SSB given current recruitment dynamics) for projected years 11-20 (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 D20
 }
@@ -15,7 +15,7 @@ D20
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Depletion (SSB relative to unfished SSB given current recruitment dynamics) for projected years 11-20 (a performance metrics function of class ABT_PM)
+Depletion (SSB relative to unfished SSB given current recruitment dynamics) for projected years 11-20 (a performance metrics function of class PM)
 }
 \examples{
 loadABT()

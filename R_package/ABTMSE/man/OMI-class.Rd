@@ -9,14 +9,14 @@
 \item{Name}{The name of the operating model input}
 \item{Date}{The date and time the object was created}
 \item{Author}{Who made the object}
-\item{Notes}{Anything noteworth}
+\item{Notes}{Anything noteworthy}
 \item{PrimarySource}{The primary origins of these data}
 \item{OMfactors}{The various levels and factors of this operating model}
-\item{Years}{The real year range of the operating model}
+\item{years}{The real year range of the operating model}
 \item{Hyears}{The historical year range of the operating model}
 \item{areas}{The codes of the various geographical areas of the model}
 \item{areanams}{Full names of the various geographical areas}
-\item{areadefs}{A list of the polygons representing each of the areas (for plotting)}
+\item{area_defs}{A list of the polygons representing each of the areas (for plotting)}
 \item{Fleets}{A list object containing the definitions of the fleets}
 \item{L1}{Richards growth curve parameter}
 \item{L2}{Richards growth curve parameter}

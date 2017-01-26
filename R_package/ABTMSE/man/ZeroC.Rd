@@ -3,25 +3,25 @@
 \docType{data}
 \name{ZeroC}
 \alias{ZeroC}
-\title{No catches (actually very small catches) (a management procedure of class ABT_MP).}
-\format{An object of class \code{ABT_MP} of length 1.}
+\title{No catches (actually very small catches) (a management procedure of class MP).}
+\format{An object of class \code{MP} of length 1.}
 \usage{
 ZeroC
 }
 \arguments{
 \item{x}{a simulation number.}
 
-\item{pset}{a list of simulated data for use by management procedures.}
+\item{dset}{a list of simulated data for use by management procedures.}
 }
 \value{
-a TAC recommendation arising from \code{x, pset}.
+a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-No catches (actually very small catches) (a management procedure of class ABT_MP).
+No catches (actually very small catches) (a management procedure of class MP).
 }
 \examples{
-ZeroC(1,pset_example)
-sapply(1:10,ZeroC,pset_example)
+ZeroC(1,dset_example_West)
+sapply(1:10,ZeroC,dset_example_West)
 }
 \keyword{datasets}
 

@@ -3,25 +3,25 @@
 \docType{data}
 \name{UMSY}
 \alias{UMSY}
-\title{Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class ABT_MP).}
-\format{An object of class \code{ABT_MP} of length 1.}
+\title{Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).}
+\format{An object of class \code{MP} of length 1.}
 \usage{
 UMSY
 }
 \arguments{
 \item{x}{a simulation number.}
 
-\item{pset}{a list of simulated data for use by management procedures.}
+\item{dset}{a list of simulated data for use by management procedures.}
 }
 \value{
-a TAC recommendation arising from \code{x, pset}.
+a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class ABT_MP).
+Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
 }
 \examples{
-UMSY(1,pset_example)
-sapply(1:10,UMSY,pset_example)
+UMSY(1,dset_example_West)
+sapply(1:10,UMSY,dset_example_West)
 }
 \keyword{datasets}
 

@@ -3,15 +3,15 @@
 \docType{data}
 \name{LstepCC4}
 \alias{LstepCC4}
-\title{A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class ABT_MP).}
-\format{An object of class \code{ABT_MP} of length 1.}
+\title{A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class MP).}
+\format{An object of class \code{MP} of length 1.}
 \usage{
 LstepCC4
 }
 \arguments{
 \item{x}{a simulation number.}
 
-\item{pset}{a list of simulated data for use by management procedures.}
+\item{dset}{a list of simulated data for use by management procedures.}
 
 \item{yrsmth}{the number of years over which to compare length observations}
 
@@ -22,14 +22,14 @@ LstepCC4
 \item{llim}{a vector of three ratios that determine whether the TAC should be reduced by 2 steps, 1 steps and increased by 1 step}
 }
 \value{
-a TAC recommendation arising from \code{x, pset, yrsmth, xx, stepsz, llim}.
+a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class ABT_MP).
+A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class MP).
 }
 \examples{
-LstepCC4(1,pset_example)
-sapply(1:10,LstepCC4,pset_example)
+LstepCC4(1,dset_example_East)
+sapply(1:10,LstepCC4,dset_example_East)
 }
 \keyword{datasets}
 

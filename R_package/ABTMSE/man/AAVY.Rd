@@ -3,8 +3,8 @@
 \docType{data}
 \name{AAVY}
 \alias{AAVY}
-\title{Average Annual Variability in Yield over the first 30 projection years (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Average Annual Variability in Yield over the first 30 projection years (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 AAVY
 }
@@ -15,7 +15,7 @@ AAVY
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Average Annual Variability in Yield over the first 30 projection years (a performance metrics function of class ABT_PM)
+Average Annual Variability in Yield over the first 30 projection years (a performance metrics function of class PM)
 }
 \examples{
 loadABT()

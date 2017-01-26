@@ -3,7 +3,7 @@
 \docType{class}
 \name{Obs-class}
 \alias{Obs-class}
-\title{An S4 class object that contains all observation Model attributes for generating simulated data}
+\title{An S4 class object that contains all observation model}
 \description{
 \describe{
 \item{Name}{The name of the observation model object}

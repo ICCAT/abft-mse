@@ -3,8 +3,8 @@
 \docType{data}
 \name{POFed}
 \alias{POFed}
-\title{Probability of Over-Fished status (B<BMSY) over all projected years (a performance metrics function of class ABT_PM)}
-\format{An object of class \code{ABT_PM} of length 1.}
+\title{Probability of Over-Fished status (B<BMSY) over all projected years (a performance metrics function of class PM)}
+\format{An object of class \code{PM} of length 1.}
 \usage{
 POFed
 }
@@ -15,7 +15,7 @@ POFed
 a matrix with n Management procedures (MSE@nMP) and nsim (MSE@nsim) columns from \code{MSE}
 }
 \description{
-Probability of Over-Fished status (B<BMSY) over all projected years (a performance metrics function of class ABT_PM)
+Probability of Over-Fished status (B<BMSY) over all projected years (a performance metrics function of class PM)
 }
 \examples{
 loadABT()
