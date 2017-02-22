@@ -211,7 +211,7 @@ The full file structure looks like this:
       /Fleet structure              Fleet definition guides
       /Misc                         Some old tagging data
       /PSAT                         Electronic tagging data
-      /SOO			                    Stock of origin data (courtesy of D. Secor et al. )
+      /SOO                          Stock of origin data (courtesy of D. Secor et al. )
       /SSB                          Larval indices (hypothesized to be indicative of SSB)
       /Task1                        ICCAT Task I catch and effort data
       /Task2                        ICCAT Task II catch and effort data (finer scale)
@@ -357,7 +357,7 @@ avail('Obs')
 Bad_Obs
 ```
 
-As you can see the slot *MPind* is quite large.
+As you can see the observation error model is quite lengthy, an in particular the slot *MPind*.
 
 These are real abundance indices proposed for use by management procedures (the raw data are available [here](https://github.com/ICCAT/abft-mse/tree/master/Data/Processed/MP%20Indices)). These real indices are compared with operating model predictions to characterize their statistical properties so that realistic data can be generated in future projections. 
 
@@ -409,7 +409,7 @@ myMPs<-list(c('UMSY','UMSY'),
 
 ```
 
-This code will test three management systems. One where UMSY is used in both the West and the East, a second where a stock reduction analysis DBSRA is used in the West and the East and a third management system where UMSY is used in the West and DBSRA is used in the East. The principal motivation for choosing these MPs in this tutorial is that they run quickly. 
+This code will test three management systems. One where UMSY is used in both the West and the East, a second where a delay-difference model is applied in the West and the East and a third management system where the TAC is set to mean historical catches in both the West and the East. The principal motivation for choosing these MPs in this tutorial is that they run quickly. 
 
 ### Operating models
 
@@ -451,7 +451,7 @@ To run an MSE it is necessary to specify the:
 * implementation error model and 
 * the interval over which MPs will re-run (how often new TAC advice is calculated). 
 
-In this preliminary run we select the example operating model *OM\_example*, the bad observation error model *Bad_Obs*, our custom MPs above, an update interval of 3 years (ie MPrun1 TAC1, TAC1, TAC1, MPrun2, TAC2, TAC2, TAC2, MPrun3 etc) and an implementation error model that includes 10% overages.
+In this preliminary run we select the example operating model *OM\_example*, the bad observation error model *Bad_Obs*, our custom MPs above, an update interval of 3 years (ie MPrun1 TAC1, TAC1, TAC1, MPrun2 TAC2, TAC2, TAC2, MPrun3... etc) and an implementation error model that includes 10% overages.
 
 *Note that this will take a few minutes to run*
 
@@ -495,7 +495,7 @@ plot(MSE_example)
 
 Each row of this plot represents an MP. Projections of catch and SSB are shown in terms of their median (solid black line), 5th and 95th percentiles (the shaded region) and ten individual simulations (the multicolored lines). 
 
-Note that among MPs, each simulation has identical future biological conditions (recruitment, growth etc). In order words a red projected line (a simulation) for one MP corresponds with the red projected line for the other MPs. By keeping background simulation conditions the same among MP runs the relative performance of MPs is revealed in much fewer simulations (one MP cannot outperform another due to sampling a more productive future by chance). 
+Note that among MPs, each simulation has identical future biological conditions (recruitment, growth etc). In order words a red projected line (a simulation) for one MP corresponds with the red projected line for the other MPs. By keeping background simulation conditions the same among MP runs, the relative performance of MPs is revealed in much fewer simulations (one MP cannot outperform another due to sampling a more productive future by chance). 
 
 A principal objective of MSE is to reveal the trade-offs among management objectives. The package includes a standard trade-off plot:
 
@@ -569,13 +569,13 @@ For example, the probability of overfishing metric *POF* calculated for the `r M
 round(POF(MSE=MSE_example,pp=1),0)
 ```
 
-This convention allows statistics to be generated for any metric. The Tplot function of the [quick-start section](#QS_Tplot) just plotted point values that were the mean values of the MPs. Lets calculate some other quantities for long term yield (*Y30*) and Final depletion (*D30*):
+This convention allows statistics to be generated for any metric. The Tplot function of the [quick-start section](#QS_Tplot) just plotted point values that were the mean values of the MPs. Lets calculate some other quantities for long term yield (*Y30*) and Final depletion (*D30*) and plot the simulation by simulation tradeoff in median (percentile = 0.5,second column) estimates of Yield and Depletion:
 
 ```{r qs_PMs_det, fig.width=3, fig.height=3.5}
 Y30arr<-Y30(MSE_example)
 D30arr<-D30(MSE_example)
 apply(Y30arr,1,quantile,c(0.025,0.5,0.975)) # median and percentiles by MP (column)
-plot(Y30arr[2,],D30arr[2,],xlab="Yield",ylab="Depletion",col="#0000ff95",pch=19) # plot of individual simulations
+plot(Y30arr[2,],D30arr[2,],xlab="Median yield",ylab="Median depletion",col="#0000ff95",pch=19) # plot of individual simulations
 ```
 
 Lets take a closer look at the probability of overfishing (*POF*) function. 
@@ -662,9 +662,9 @@ The top row of panels in *tradeoff* are mean values, the bottom row shows indivi
 
 ### The OMI class object
 
-The estimation 'engine' behind the ABTMSE R framework is M3, a multi-stock population dynamics model written in ADMB. Your ABT-MSE folder contains a subfolder "Manuals\_and\_design_documents" that contains further information about M3 including model equations and software design documents (they can be found online [here](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents). 
+The estimation 'engine' behind the ABTMSE R framework is M3, a multi-stock population dynamics model written in ADMB. Your ABT-MSE folder contains a subfolder "Manuals\_and\_design_documents" that contains further information about M3 including model equations and software design documents (they can be found online [here](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents)). 
 
-This model is fitted to data to generate credible operating model scenarios for ABT population and fishery dynamics. The M3 model requires fishery, tagging and biological data formatted in specific way (for example catches in a table where each row is a catch record and the columns represent years, subyears, areas and fleets).
+The M3 model is essentially a multistock assessment model fitted to data to generate credible operating model scenarios for ABT population and fishery dynamics. The M3 model requires fishery, tagging and biological data formatted in specific way (for example catches in a table where each row is a catch record and the columns represent years, subyears, areas and fleets).
 
 To make it easier for other users to modify the operating model data and assumptions, a new class of data object was designed. Named *OMI* (for Operating Model Input), this object class contains all the data in the correct format for input to the M3 model. This organisation of data allows for rapid changes may be made to an object of class OMI and then the M3 model run, with the minimum of code. 
 
@@ -736,6 +736,8 @@ The M3 model can now be run.
 
 *Note that this will take around 30 minutes - 2 hours depending on the speed of your computer.* 
 
+*Running speed of the ADMB M3 model is dependent on the write speed of the computer drive where the M3 executable is stored - try to use a hybrid or a solid-state drive if possible.*
+
 *If you want to stop the runM3() function, you'll have to open Windows Task Manager and stop the Rstudio R session app.*
 
 ```{r Step_3_run_M3,eval=F}
@@ -751,7 +753,7 @@ make_fit_reports(M3dir)              # Make a .pdf report
 
 ```
 
-If you are planning on running this model again it may be beneficial to store the final parameter estimates as initial values so that the optimization starts reasonably close to the solution an therefore is much faster to run. To do this use the pin\_from\_par() function which creates a .pin file in your M3dir directory:
+If you are planning on running this model again it may be beneficial to store the final parameter estimates as initial values so that the optimization starts reasonably close to the solution and therefore reaches convergence (runs) faster. To do this use the pin\_from\_par() function which creates a .pin file in your M3dir directory:
 
 ```{r Step_3_pinfrompar}
 
@@ -764,16 +766,16 @@ Since running M3 models is fairly computationally intensive, it is often benefic
 For each of your operating model folders (that now have an M3.exe and stats.cxx file in them) you can use the M3write() function above to write an M3 data file based on unique OMI objects. Once each folder has an M3.exe, stats.cxx and M3.dat file you can run the M3 model.  
 
 
-*Note: this can be done manually by navigating to the folder and running the executable which while clunky, means you don't have to wait for the runM3() function to stop and you can keep working in R*
+*Note: this can be done manually by navigating to the folder and running the executable which while clunky, means you don't have to wait for the runM3() function to finish before you can keep working in R*
 
 There is a parallel version of *runM3()* called *runM3p()* that will operate on a  on a vector of character names that represent these folders, ie: 
 
 ```{r Step_3_run_M3_parallel,eval=F}
- M3dir<-paste0("C:/myOMfolders/",1:8)  # An example, these folders don't really exist
- M3dir
+ M3dirs<-paste0("C:/myOMfolders/",1:8)          # An example, these folders don't really exist
+ M3dirs
  sfInit(parallel=TRUE, cpus=detectCores()) 
- #sapply(1:length(M3dir),runM3p,OMdir=M3dir)                      # Lets not actually do this!
- #make_fit_reports(M3dir)           # Or this!
+ #sapply(1:length(M3dirs),runM3p,OMdir=M3dirs)  # Lets not actually do this!
+ #make_fit_reports(M3dirs)                      # Or this!
 
 ```
 
@@ -809,7 +811,7 @@ For example, I could create an OM object with 500 simulations and email this to 
 It is easy to specify an operating model with a greater number of simulations for a different projected time period if necessary by modifying the *nsim* and *proyears* arguments. Similarly the stocks can be renamed also using the *Snames* argument:
 
 ```{r Step_3_make_OM_custom_proyears_etc,eval=F}
- OM_example<-new('OM',M3dir,nsim=200,proyears=30,Snames=c("Med","GOM"))
+ OM_example_2<-new('OM',M3dir,nsim=200,proyears=30,Snames=c("Med","GOM"))
 
 ```
 
@@ -842,9 +844,11 @@ Recruitment_example
 names(Recruitment_example)
 ```
 
-The first list item is called *$proyears*. This defines when recruitment changes in the future. *proyears* is an array with n time period rows (in this case 2, projection years 1:11 and 12 onwards) and 2 columns showing when these projection time periods start and end. 
+We're going to go through each list object one-by-one. 
 
-In this case we can see time period 1 running from projection year 1 to projection year 11 and time period 2 (row 2) running from projection year 12 to infinity. 
+The first list item is called *$proyears*. This defines when recruitment changes in the future. *proyears* is an array with n time period rows (in this case there are two proejcted time periods: projection years 1:11 and 12 onwards) and 2 columns showing when these projection time periods start and end. 
+
+In this case we can see time period 1 (row 1) running from projection year 1 to projection year 11 and time period 2 (row 2) running from projection year 12 to infinity. 
 
 The second list item is call *$years* and this defines what historical years of estimated recruitment and SSB are used to calculate the stock-recruitment relationships. This is a 3D array of dimension 2 x Stock x n time periods. The numbers in the array are all relative to the model starting year of 1960. For example:
 
@@ -881,7 +885,7 @@ The fourth list item *fixpar* simply specifies the necessary fixed parameters, i
 Recruitment_example$fixpar
 ```
 
-Lastly the *Recruitment_example* object contains a list item *prob* which specifies the relative likelihood of completing stock recruitment curves that are specified for the same projected time period. Currently there are no completing stock recrutiment curves (one is specified to end, the other start after a given time period) and these all have a value of 1. *prob* is an array with n time period rows and a column for each stock. 
+Lastly the *Recruitment_example* object contains a list item *prob* which specifies the relative likelihood of competing stock recruitment curves that are specified for the same projected time period. Currently there are no competing stock recrutiment curves (one is specified to end, the other start after a given time period) and these all have a value of 1. *prob* is an array with n time period rows and a column for each stock. 
 
 When correctly specified, a future recruitment scenario (a list object) can be added as an argument to the new OM function:
 
@@ -890,7 +894,7 @@ When correctly specified, a future recruitment scenario (a list object) can be a
 
 ```
 
-If *Recruitment* is not specified, the operating model fits Beverton-Holt stock recruitment relationships to all historical years (estimating both steepness and R0) and assumes the same recruitment dynamics in the future (just one time period).
+If *Recruitment* is not specified, by default the operating model fits Beverton-Holt stock recruitment relationships to all historical years (estimating both steepness and R0) and assumes the same recruitment dynamics in the future (just one time period).
 
 ### Creating a new OMI object from scratch
 
@@ -927,7 +931,7 @@ Additionally every time an MSE is run, the most current simulated dataset is pas
 
 Management Procedures (object class *MP*) can vary greatly in their complexity ranging from a constant catch MP to an MP that uses data-filtering algorithms linked to stock assessments coupled to harvest control rules. 
 
-All MPs however have the same basic structure: they operating on a simulation number *x* of a simulated dataset object *dset* and return a single TAC recommendation. 
+All MPs however have the same basic structure: they operate on a simulation number *x* of a simulated dataset object *dset* and return a single TAC recommendation. 
 
 Lets look at a relative simple MP, Islope1:
 
