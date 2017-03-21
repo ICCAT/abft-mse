@@ -59,6 +59,8 @@
 \item{Recdevs}{of historical recruitment deviations [sim, stock, year]}
 \item{R0}{vector nstock long of unfished recruitment (currently unused - recpars)}
 \item{muR}{a vector nstock long of mean recruitment}
+\item{lnHR1}{a vector nstock long of historical recruitment deviation (log) for years prior to the initial year-10}
+\item{lnHR2}{a vector nstock long of historical recruitment deviation (log) for years after to the initial year-10}
 \item{MSY}{a matrix of MSY values per simulation and stock [sim x stock]}
 \item{BMSY}{a matrix of Biomass at MSY values per simulation and stock [sim x stock]}
 \item{VBMSY}{a matrix of vulnerable Biomass at MSY values per simulation and stock [sim x stock]}

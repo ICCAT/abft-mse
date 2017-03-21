@@ -145,6 +145,66 @@ makeCAL3<-function(CAA,iALK){
 }
 
 
+SampCatch2<-function(C,nCAAobs){
+  # sim, year, subyear, area, fleet, age
+  dims<-dim(C)
+  nsim<-dims[1]
+  nages<-dims[3]
+  nyears<-dims[4]
+  nsubyears<-dims[5]
+  nareas<-dims[6]
+  nfleets<-dims[7]
+  
+  out<- array(NA,c(nsim,nyears,nsubyears,nareas,nfleets,nages))
+  
+  for(ss in 1:nsim){
+    for(yy in 1:nyears){
+      for(suby in 1:nsubyears){
+        for(rr in 1:nareas){
+          for(ff in 1:nfleets){
+            
+            Csampo<-apply(C[ss,,,yy,suby,rr,ff],2,sum,na.rm=T)
+            Csampo[Csampo<0]<-0.00000001
+            #assign("Csampot",Csampo,envir=globalenv()) # debugging
+            #assign("nsampt",nSamp[ss],envir=globalenv()) # debugging
+            if(sum(Csampo)==0)Csampo<-rep(1/nages,nages)
+            out[ss,yy,suby,rr,ff,]<-ceiling(rmultinom(1,size=nCAAobs[ss],Csampo))
+            
+          }
+        }
+      }
+    }
+  }
+  out
+}
+
+
+makeCAL4<-function(CAA,iALK){
+  nsim<-dim(CAA)[1]
+  ny<-dim(CAA)[2]
+  ns<-dim(CAA)[3]
+  nr<-dim(CAA)[4]
+  nf<-dim(CAA)[5]
+  na<-dim(CAA)[6]
+  nl<-dim(iALK)[5]
+  CAL<-array(NA,dim=c(nsim,ny,ns,nr,nf,nl))
+  for(ss in 1:nsim){
+    for(yy in 1:ny){
+      for(suby in 1:ns){
+        for(rr in 1:nr){
+          for(ff in 1:nf){
+            CAL[ss,yy,suby,rr,ff,]<-apply(CAA[ss,yy,suby,rr,ff,]*iALK[ss,1,yy,,],2,sum) # currently
+          }
+        }
+      }
+    }
+  }
+  CAL
+}
+
+# year, subyear, area, fleet, length category, N
+
+
 makeTrans<-function(someColor, alpha=100){
   newColor<-col2rgb(someColor)
   apply(newColor, 2, function(curcoldata){rgb(red=curcoldata[1], green=curcoldata[2],
@@ -265,123 +325,6 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
     return(-MSY)
   }else{
     return(c(MSY,max(q*Fa),MSY/BMSY,BMSY,SSBMSY,BMSY/B0,SSBMSY/SSB0,Rtemp/R0))
-  }
-
-}
-
-SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
-
-  blocksize<-out$ny/max(out$RDblock)
-
-  yrs1<-yrs<-match(1:max(out$RDblock),out$RDblock)+floor(blocksize/2)
-  if(!is.null(years))yrs<-yrs[yrs1>=years[1]&yrs1<=years[2]]
-  paryrs<-match(yrs,yrs1)
-
-  opt<-new('list')
-  resid<-new('list') #array(NA,c(out$np,3))
-  pnam<-c("East","West")
-
-  if(plot)par(mfrow=c(1,out$np),mai=c(0.4,0.5,0.1,0.05),omi=c(0.5,0.5,0.01,0.01))
-
-  for(pp in out$np:1){
-
-    R0temp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
-
-    SSBpR=sum(exp(-cumsum(c(0,out$M_age[1:(out$na-1)])))*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
-    SSB=out$SSB[pp,yrs,out$spawns[pp]]
-    rec=out$muR[pp]*exp(out$lnRD[pp,paryrs])
-
-    #fscale<-getSteepness(pars,SSB=SSB,rec=rec, SSBpR=SSBpR,mode=1,plot=F)
-    #opt<-nlm(getSR,p=pars,typsize=c(0.5,log(R0temp)),fscale=fscale,hessian=T,print.level=2,
-
-    if(type=="BH"){
-
-      if(just_R0){
-        pars<-log(R0temp) # guess / starting values
-        opt[[pp]]<-optim(pars,getBH_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50),hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1,plot=F)
-        devs<-getBH_R0(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-
-      }else{
-        pars<-c(0.5,log(R0temp)) # guess / starting values
-        opt[[pp]]<-optim(pars,getBH,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
-
-        devs<-getBH(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-      }
-
-    }else if(type=="HS"){
-
-      if(just_R0){
-
-        pars<-log(R0temp) # guess / starting values
-        opt[[pp]]<-optim(pars,getHS_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1, plot=F)
-
-        devs<-getHS_R0(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-
-      }else{
-
-        pars<-c(-0.5,log(R0temp)) # guess / starting values
-        opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
-
-        devs<-getHS(opt[[pp]]$par,SSB=SSB,rec=rec,SSBpR=SSBpR,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-
-      }
-
-    }
-
-    if(plot)legend('topleft',legend=pnam[pp],bty='n')
-
-  }
-
-  if(plot)  mtext("Spawning Biomass (kg)",1,line=0.8,outer=T);mtext("Recruits (n)",2,line=0.8,outer=T)
-
-  if(type=="BH"){
-
-    if(just_R0){
-
-      logith<-rep(-log(1/((h-0.2)/0.8)-1),out$np)
-      lnR0<-sapply(opt,FUN=function(x)x$par[1])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
-
-    }else{
-
-      logith<-sapply(opt,FUN=function(x)x$par[1])#0.2+1/(1+exp(-sapply(opt,FUN=function(x)x$par[1])))*0.8
-      lnR0<-sapply(opt,FUN=function(x)x$par[2])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
-
-    }
-  }else if(type=="HS"){
-
-    if(just_R0){
-
-      inflect<-0.2/rep(h,out$np)
-      logitinflect<--log(1/inflect-1)
-      lnR0<-sapply(opt,FUN=function(x)x$par[1])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
-
-    }else{
-
-      logitinflect<-sapply(opt,FUN=function(x)x$par[1])
-      lnR0<-sapply(opt,FUN=function(x)x$par[2])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
-
-    }
-
   }
 
 }
@@ -722,6 +665,126 @@ timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East"
   UbyS<-sumCat/sumN
   muU<-apply(UbyS,c(1,2,4),mean)   # p, y, a # not ideal mean U across seasons but very close to best
   -log(1-apply(muU,1:2,max))  # p, y
+
+}
+
+
+SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
+
+  blocksize<-sum(out$RDblock==1)
+
+  yrs1<-match(1:max(out$RDblock),out$RDblock)+floor(blocksize/2)
+  yrs1[yrs1>out$ny]<-out$ny
+  yrs<-yrs1
+  if(!is.null(years))yrs<-yrs[yrs1>=years[1]&yrs1<=years[2]]
+  paryrs<-match(yrs,yrs1)
+
+  opt<-new('list')
+  resid<-new('list') #array(NA,c(out$np,3))
+  pnam<-c("East","West")
+
+  if(plot)par(mfrow=c(1,out$np),mai=c(0.4,0.5,0.1,0.05),omi=c(0.5,0.5,0.01,0.01))
+
+  for(pp in out$np:1){
+
+    R0temp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
+
+    SSBpR=sum(exp(-cumsum(c(0,out$M_age[1:(out$na-1)])))*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
+    SSB=out$SSB[pp,yrs,out$spawns[pp]]
+    rec=out$muR[pp]*exp(out$lnRD[pp,paryrs])
+
+    #fscale<-getSteepness(pars,SSB=SSB,rec=rec, SSBpR=SSBpR,mode=1,plot=F)
+    #opt<-nlm(getSR,p=pars,typsize=c(0.5,log(R0temp)),fscale=fscale,hessian=T,print.level=2,
+
+    if(type=="BH"){
+
+      if(just_R0){
+        pars<-log(R0temp) # guess / starting values
+        opt[[pp]]<-optim(pars,getBH_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50),hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1,plot=F)
+        devs<-getBH_R0(opt[[pp]]$par,SSB,rec,SSBpR,h=h,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }else{
+        pars<-c(0.5,log(R0temp)) # guess / starting values
+        opt[[pp]]<-optim(pars,getBH,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
+
+        devs<-getBH(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+      }
+
+    }else if(type=="HS"){
+
+      if(just_R0){
+
+        pars<-log(R0temp) # guess / starting values
+        opt[[pp]]<-optim(pars,getHS_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1, plot=F)
+
+        devs<-getHS_R0(opt[[pp]]$par,SSB,rec,SSBpR,h=h,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }else{
+
+        pars<-c(-0.5,log(R0temp)) # guess / starting values
+        opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
+
+        devs<-getHS(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot)
+        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+
+      }
+
+    }
+
+    if(plot)legend('topleft',legend=pnam[pp],bty='n')
+
+  }
+
+  if(plot)  mtext("Spawning Biomass (kg)",1,line=0.8,outer=T);mtext("Recruits (n)",2,line=0.8,outer=T)
+
+  if(type=="BH"){
+
+    if(just_R0){
+
+      logith<-rep(-log(1/((h-0.2)/0.8)-1),out$np)
+      lnR0<-sapply(opt,FUN=function(x)x$par[1])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
+
+    }else{
+
+      logith<-sapply(opt,FUN=function(x)x$par[1])#0.2+1/(1+exp(-sapply(opt,FUN=function(x)x$par[1])))*0.8
+      lnR0<-sapply(opt,FUN=function(x)x$par[2])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
+
+    }
+  }else if(type=="HS"){
+
+    if(just_R0){
+
+      inflect<-0.2/rep(h,out$np)
+      logitinflect<--log(1/inflect-1)
+      lnR0<-sapply(opt,FUN=function(x)x$par[1])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
+
+    }else{
+
+      logitinflect<-sapply(opt,FUN=function(x)x$par[1])
+      lnR0<-sapply(opt,FUN=function(x)x$par[2])
+      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+
+      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
+
+    }
+
+  }
 
 }
 

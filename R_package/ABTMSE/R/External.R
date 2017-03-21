@@ -63,7 +63,7 @@ sourceall<-function(ABTdir="C:/ABT-MSE/"){
   if(dir.exists(ABTdir)){
 
     #sourcedir<- paste(searchpaths()[match("package:ABTMSE",search())],"/R/",sep="")
-    sourcedir<- paste0(ABTdir,"R package/ABTMSE/R/")
+    sourcedir<- paste0(ABTdir,"R_package/ABTMSE/R/")
 
     fnams<-list.files(sourcedir)
 

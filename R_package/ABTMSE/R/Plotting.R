@@ -1,7 +1,7 @@
 # Plotting code
 
 
-plotindex<-function(Base,pCPUE){
+plotindex2<-function(Base,pCPUE){
 
   anam<-Base@areanams
   par(mfcol=c(Base@nr,Base@ns),mai=c(0.2,0.2,0.1,0.05),omi=c(0.5,1,0.25,0.01))

@@ -273,7 +273,7 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write(OMI@nLHw,datfile,1,append=T)
 
   write("# LHw,  likelihood components",datfile,1,append=T)
-  write(OMI@LHw,datfile,OMI@nLHw,append=T) # Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA penalty)
+  write(OMI@LHw,datfile,OMI@nLHw,append=T) # Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA penalty, SSB prior)
 
   # -- Initial values
 
@@ -340,8 +340,8 @@ M3write<-function(OMI,OMdir="C:/M3"){
 #' @examples
 #' #runM3p(1,"C:/ABT-MSE/M3")
 runM3p<-function(x,OMdir='C:/M3temp'){
-  setwd(paste(OMdir[x]))
-  system("M3.exe",wait=T,show.output.on.console = F)
+  setwd(paste0(OMdir,"/",x))
+  system("M3.exe -est",wait=T,show.output.on.console = F)
   return(paste("M3 ran at",OMdir[x]))
 }
 
@@ -353,7 +353,7 @@ runM3p<-function(x,OMdir='C:/M3temp'){
 #' #runM3("C:/ABT-MSE/M3")
 runM3<-function(OMdir='C:/ABT-MSE/M3'){
   setwd(OMdir)
-  system("M3.exe",wait=T,show.output.on.console = F)
+  system("M3.exe -est",wait=T,show.output.on.console = F)
   return(paste("M3 ran at",OMdir))
 }
 
@@ -486,6 +486,10 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   out$SSB0<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$muR<-scan(repfile,skip=st,nlines=1,quiet=quiet)
+  st<-st+2
+  out$lnHR1<-scan(repfile,skip=st,nlines=1,quiet=quiet)
+  st<-st+2
+  out$lnHR2<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$nRD<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
@@ -673,7 +677,7 @@ read.hessian<-function(file="C:/M3"){
 
 
 
-make_fit_reports<-function(dirs="C:/M3") {
+make_fit_reports<-function(dirs="C:/M3",addlab=FALSE) {
 
   nOMs<-length(dirs)
   Obs<-Bad_Obs #load(paste0(getwd(),"/Objects/Observation_models/Bad_Obs"))
@@ -693,8 +697,15 @@ make_fit_reports<-function(dirs="C:/M3") {
     dat<-subset(ts,catchScenario=="Reported")
     #getM3res(out,outdir=input_dir,firstyr=1960,fleetnams=c(OMI@Fleets$name,'ALL OTH'),   areanams=OMI@areanams)
     #plotM3fit(out,outdir=input_dir,firstyr=1960, fleetnams=c(OMI@Fleets$name,'ALL OTH'), areanams=OMI@areanams)
-    render(input=system.file("OMreport.Rmd", package="ABTMSE"), output_file=paste(input_dir,"/Report.pdf",sep=""))
-    print(paste0("Report written: ", paste(input_dir,"/Report.pdf",sep="")))
+    if(!addlab){
+      render(input=system.file("OMreport.Rmd", package="ABTMSE"), output_file=paste(input_dir,"/Report.pdf",sep=""))
+      print(paste0("Report written: ", paste(input_dir,"/Report.pdf",sep="")))
+    }else{
+      split<-strsplit(input_dir,"/")[[1]]
+      lab<-split[length(split)]
+      render(input=system.file("OMreport.Rmd", package="ABTMSE"), output_file=paste(input_dir,"/Report_",lab,".pdf",sep=""))
+      print(paste0("Report written: ", paste(input_dir,"/Report_",lab,".pdf",sep="")))
+    }
 
   }
 }

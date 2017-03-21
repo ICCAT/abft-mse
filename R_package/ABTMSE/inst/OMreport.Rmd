@@ -15,10 +15,10 @@ fontsize: 10.5
 `r OMI@OMfactors[[2]]`   
 `r OMI@OMfactors[[3]]`    
 
+###  Fits to CPUE indices of relative abundance
+```{r CPUE fits, fig.width=7, fig.height=6.5,echo=FALSE}
 
-### Fits to CPUE indices of relative abundance
-
-```{r CPUE fits, fig.width=7, fig.height=7,echo=FALSE}
+plab<-c(paste0("(",letters[1:26],")"),paste0("(",paste0(letters[1:26],letters[1:26]),")"),paste0("(",paste0(letters[1:26],letters[1:26],letters[1:26]),")"))
 
 firstrow<-match(1:OMI@nCPUEq,OMI@CPUEobs[,4])
 Fleetnos<-as.vector(OMI@CPUEobs[firstrow,5])
@@ -28,7 +28,7 @@ Areas<-OMI@areanams[as.vector(OMI@CPUEobs[firstrow,3])]
 nrow<-ceiling(OMI@nCPUEq/2)
 ncol<-ceiling(OMI@nCPUEq/nrow)
 
-par(mfcol=c(nrow,ncol),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+par(mfcol=c(nrow,ncol),mai=c(0.3,0.3,0.1,0.01),omi=c(0.3,0.3,0.1,0.05))
 
 for(i in 1:OMI@nCPUEq){
   
@@ -41,6 +41,7 @@ for(i in 1:OMI@nCPUEq){
   legend('topleft',legend=OMI@CPUEnames[i],bty='n')
   legend('topright',legend=c(paste0("Quarter: ",Seasons[i]),
                              paste0("Area: ",Areas[i])),bty='n')
+  mtext(plab[i],3,adj=0.02,line=0.09,cex=0.7)
   
 }
 
@@ -49,8 +50,10 @@ mtext("Year",1,line=1,outer=T)
 
 ```
 
+Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
 
-### Fit to master abundance indices (standardized effort, partial Fs) ###
+
+### Tracking of 'master' abundance indices (for generatingstandardized effort, partial Fs) ###
 
 ```{r indexfit, fig.width=7, fig.height=9.5,echo=FALSE}
 
@@ -92,6 +95,8 @@ mtext("Year",1,line=1,outer=T)
   ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
   xs<-pretty(seq(yrs[1],yrs[ny],length.out=6))
  
+  l<-1
+  
   for(s in 1:ns){
   
     for(r in 1:nr){
@@ -109,7 +114,9 @@ mtext("Year",1,line=1,outer=T)
       if(s==1)mtext(areanams[r],2,line=2.75)
       if(r==1)mtext(subyrnams[s],3,line=-0.5)
       if(r==1&s==ns)legend('topright',legend=popnams,text.font=2,text.col=pcols[1:np],bty='n')
-    
+      
+      mtext(plab[i],3,adj=0.02,line=0.09,cex=0.7)
+      l=l+1
     }
   
   }
@@ -117,8 +124,9 @@ mtext("Year",1,line=1,outer=T)
   mtext("Year",1,outer=T,line=2)
   mtext("Predicted (line) versus observed (point) relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
 ```
-  
-  
+
+Figure 2. 'Master index' tracking (implied fit): grey line is index, the purple line is both stocks combined. 
+
 ### SSB, recruitment and F comparison with 2014 assessment (by East/West area, not East/West stock) 
 
 ```{r 2014comp, fig.width=7, fig.height=3.5,echo=FALSE}
@@ -223,7 +231,10 @@ lines(tdat$Year,as.numeric(as.character(tdat$Val)),col="#00ff0090",lwd=2)
   
 ```
 
+Figure 3.Regional comparisons (45deg W) with 2014 stock assessment.
+
 ### Stock-recruitment relationships (by East/West stock)
+
 ```{r Stock-recruitment, fig.width=5.5, fig.height=2.5,echo=FALSE}
 
  opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",just_R0=FALSE,h=NA)
@@ -231,7 +242,11 @@ lines(tdat$Year,as.numeric(as.character(tdat$Val)),col="#00ff0090",lwd=2)
 
 ```
 
+Figure 4. Model predicted pairs of SSB and recruitment (with a fitted Bev Holt for illustration)
+
 ### MSY reference points (by East/West stock)
+
+Table 1. Reference points by stock.
 
 ```{r refpoints, results='asis',echo=FALSE,fig.width=5}
 
@@ -255,7 +270,10 @@ kable(res)
 ```
 
 
+
 ### 2014 Assessment MSY reference points (by East/West area)
+
+Table 2. Where available, reference points from most recent assessments
 
 ```{r 2014refpoints, results='asis',echo=FALSE,fig.width=5}
 
@@ -278,15 +296,16 @@ mtext("Age",1,outer=T,line=2)
 mtext("Total annual F",2,outer=T,line=1.5)
 ```
 
+Figure 5. The current profile of F at age summed over all fleets. 
 
 ### Estimated size selectivity by fleet
 
-```{r estimatedsels, fig.width=3.5, fig.height=2,echo=FALSE}
+```{r estimatedsels, fig.width=6.5, fig.height=4,echo=FALSE}
   fleetnams=c(OMI@Fleets$name,'OTH')
   nr<-out$nr
   nf<-out$nf
   nl<-out$nl
-  fcols<-rep(c("#99999980","#ff000080","#00ff0080","#0000ff80","#ffff0080","#ff00ff80","#00ffff80"),2)
+  fcols<-rep(c("#99999980","#ff000080","#00ff0080","#0000ff80","#80802080","#ff00ff80","#00ffff80"),2)
   ltys<-rep(c(1,2),each=7)
   
   par(mai=c(0.05,0.15,0.01,0.01),omi=c(0.66,0.5,0.1,0.05))
@@ -298,13 +317,14 @@ mtext("Total annual F",2,outer=T,line=1.5)
     lines(out$ml,out$sel[f,],col=fcols[f],lwd=2,lty=ltys[f])
     
   }
-  legend('topright',legend=fleetnams,text.font=2,text.col=fcols[1:nf],bty='n',col=fcols[1:nf],lty=ltys[1:nf])
+  legend('topright',legend=fleetnams,cex=0.7,text.font=2,text.col=fcols[1:nf],bty='n',col=fcols[1:nf],lty=ltys[1:nf])
   
   mtext("Length (cm)",1,outer=T,line=2)
   mtext("Selectivity",2,outer=T,line=1.5)
 
 ```
 
+Figure 6. 
 
 ### Estimated unfished movement and spatial distribution
 
@@ -313,10 +333,11 @@ plot_mov_dist(out,OMI)
 
 ```
 
+Figure 7. The implied asymptotic distribution of fish under unfished conditions (red-orange-green-white, more to less)
 
 ### Fit to aggregate catches ###
 
-```{r catchaggfit, fig.width=7, fig.height=10,echo=FALSE}
+```{r catchaggfit, fig.width=7, fig.height=9,echo=FALSE}
 
   firstyr=OMI@years[1]
   fleetnams=c(OMI@Fleets$name,'ALL OTH')
@@ -375,9 +396,12 @@ plot_mov_dist(out,OMI)
   
 ```
 
+Figure 8. Fit to a observed total catches aggregated over various axes (lines = predicted, points = observed)
+
+
 ### Fit to aggregate length composition ###
 
-```{r fit to agg length observations, fig.width=7, fig.height=10,echo=FALSE}
+```{r fit to agg length observations, fig.width=7, fig.height=9,echo=FALSE}
   
  
   cexmult<-0.75
@@ -400,8 +424,8 @@ plot_mov_dist(out,OMI)
   cexy<-abs(PR*cexmult)^0.5
   pchy<-array(1,dim=dim(cexy))
   pchy[PR<0]<-19
-  coly<-array('red',dim=dim(cexy))
-  coly[PR<0]<-'blue'
+  coly<-array('blue',dim=dim(cexy))
+  coly[PR<0]<-'red'
   
   par(mfcol=c(7,2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
 
@@ -420,16 +444,11 @@ plot_mov_dist(out,OMI)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
   
   }
-  
-  
-
  
-  
     
 ``` 
 
-
-
+Figure 9.Length composition residuals. Red points are negative Pearson residuals (predicted is higher than observed), blue circles are positive (predicted is lower than observed)
 
 
 ## Other model estimates and fits ##
@@ -456,6 +475,8 @@ plot_mov_dist(out,OMI)
 
 
 ```
+
+Figure 10. 
 
 
 ### Fit to observed catches ###
@@ -527,7 +548,10 @@ plot_mov_dist(out,OMI)
   
 ```
 
+Figure 11. 
 
+
+### Fit to observed size composition ###
 
 ```{r fit to length observations, results='asis',echo=FALSE}
   
@@ -595,4 +619,10 @@ plot_mov_dist(out,OMI)
 #cat('\n') 
 #}
 ```
+
+Figure 12. blue = predicted, orange = observed.
+
+
+
+
 

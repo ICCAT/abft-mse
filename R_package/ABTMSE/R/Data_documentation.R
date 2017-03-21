@@ -3,6 +3,33 @@
 # === Data documentation ==============================================
 # =====================================================================
 
+# Test unit objects ---------------
+
+#' TEST unit object
+#'
+#' @name TEST
+#' @docType data
+#' @author Tom Carruthers \email{t.carruthers@oceans.ubc.ca}
+#' @keywords data
+NULL
+
+#' Operating model input object for test unit
+#'
+#' @name OMI_test
+#' @docType data
+#' @author Tom Carruthers \email{t.carruthers@oceans.ubc.ca}
+#' @keywords data
+NULL
+
+#' Operating model object for test unit
+#'
+#' @name OM_test
+#' @docType data
+#' @author Tom Carruthers \email{t.carruthers@oceans.ubc.ca}
+#' @keywords data
+NULL
+
+
 
 # Observation models ---------------
 

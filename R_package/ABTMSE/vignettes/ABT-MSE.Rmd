@@ -102,7 +102,7 @@ MSE diagnostics
 
 Visualization
 
-* Worm plots (likelihood of obtaining biomass reference levels)
+* Pencil plots (likelihood of obtaining biomass reference levels)
 * Shiny App v2.0
 * R markdown standardized MSE report
 * Updated Genie Bayesian belief network (for evaluation of utility functions)
@@ -167,7 +167,7 @@ The Atlantic bluefin tuna MSE follows an overarching design document coordinated
 
 ## Data 
 
-All of the data that are used in the operational modelling are available [here](https://github.com/ICCAT/abft-mse/tree/master/data/)
+All of the data that are used in the operational modelling are available [here](https://github.com/ICCAT/abft-mse/tree/master/data/) or [here](https://drive.google.com/open?id=13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U)
 
 A meta-data summary of all data available to the ABT-MSE project is available online [here](https://docs.google.com/spreadsheets/d/ 13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U/edit)
 
@@ -357,7 +357,7 @@ avail('Obs')
 Bad_Obs
 ```
 
-As you can see the observation error model is quite lengthy, an in particular the slot *MPind*.
+As you can see the observation error model is quite lengthy, and in particular the slot *MPind*.
 
 These are real abundance indices proposed for use by management procedures (the raw data are available [here](https://github.com/ICCAT/abft-mse/tree/master/Data/Processed/MP%20Indices)). These real indices are compared with operating model predictions to characterize their statistical properties so that realistic data can be generated in future projections. 
 
@@ -666,7 +666,7 @@ The estimation 'engine' behind the ABTMSE R framework is M3, a multi-stock popul
 
 The M3 model is essentially a multistock assessment model fitted to data to generate credible operating model scenarios for ABT population and fishery dynamics. The M3 model requires fishery, tagging and biological data formatted in specific way (for example catches in a table where each row is a catch record and the columns represent years, subyears, areas and fleets).
 
-To make it easier for other users to modify the operating model data and assumptions, a new class of data object was designed. Named *OMI* (for Operating Model Input), this object class contains all the data in the correct format for input to the M3 model. This organisation of data allows for rapid changes may be made to an object of class OMI and then the M3 model run, with the minimum of code. 
+To make it easier for other users to modify the operating model data and assumptions, a new class of data object was designed. Named *OMI* (for Operating Model Input), this object class contains all the data in the correct format for input to the M3 model. This organisation of data allows for simple and rapid changes to OMI class objects and m3 model fitting, with the minimum of code. 
 
 Package documentation covers the various slots of the *OMI* class:
 
@@ -931,9 +931,9 @@ Additionally every time an MSE is run, the most current simulated dataset is pas
 
 Management Procedures (object class *MP*) can vary greatly in their complexity ranging from a constant catch MP to an MP that uses data-filtering algorithms linked to stock assessments coupled to harvest control rules. 
 
-All MPs however have the same basic structure: they operate on a simulation number *x* of a simulated dataset object *dset* and return a single TAC recommendation. 
+All MPs however have the same basic inputs/outputs: they operate on a simulation number *x* of a simulated dataset object *dset* and return a single TAC recommendation. 
 
-Lets look at a relative simple MP, Islope1:
+Lets look at a relativey simple MP, Islope1:
 
 ```{r Step_4_MP_anatomy}
  avail('MP')
@@ -997,7 +997,7 @@ Note that for simple MPs like this, parallel processing isn't necessary and migh
 
 ### Designing a somewhat more complex surplus production MP
 
-Many MPs use numerical optimization to fit models to data. A good example are simple stock assessments such as surplus production models. While very simple, surplus production assessments are very simple and are still used to provide management advice for Atlantic tunas and billfish, for example BSP (McAllister et al. ) and ASPIC. 
+Many MPs use numerical optimization to fit models to data. A good example are stock assessments such as surplus production models. While surplus production assessments are still used to provide management advice for Atlantic tunas and billfish, for example BSP (McAllister et al. ) and ASPIC. 
 
 Here we design relatively simple three parameter, observation error only, surplus production model. The new SP MP requires two functions: 
 
@@ -1415,6 +1415,37 @@ plot(MSE_example@SSB0[,1],Y30(MSE_example,pp=1)[3,],xlab="Unfished spawning biom
 
 ```
 
+
+<br>
+
+# Simulation testing the operating model (Test unit)
+
+It is surprisingly easy to specify fishery population dynamics models that are poorly defined given the types of data that are typically available. A simple way to test whether a model can reliably estimate quantities of management interest, is to simulate data using known quantities using an identical model. 
+
+The ABTMSE package includes a class of objects called *TEST*. This is an object that takes a defined operating model *OM*, its corresponding operating model input object *OMI* and an observation model *Obs* to generate simulated data.
+
+Here is an example using some prebuild objects. These are streamlined to run much faster and use only four fleet, and four areas.
+
+*Note that this can take a long time to run since it is doing many (nsim) simulations*
+
+```{r TEST,eval=F}
+
+sfInit(parallel=TRUE, cpus=detectCores())
+TEST<-new('TEST',OM,OMI,Bad_Obs,Testdir="C:/TEST",M3dir="C:/M3")
+
+```
+
+The object TEST now contains some summary simulation-estimation data in the slots *sim* and *sam*. You can plot these:
+
+```{r plot_TEST, fig.width=6,fig.height=7}
+
+plot(TEST)
+
+```
+
+Two plots have been produced, the second shows the estimation bias for four variables of management interest. The black lines represent zero bias, the solid blue lines are mean bias and the dashed blue lines are the 5th and 95h percentiles among estimation runs. Grey shaded areas present the marginal densities. 
+
+
 <br>
 
 # Other useful functions
@@ -1600,7 +1631,7 @@ Coming soon.
 
 # Appendix 3: Operating model data
 
-A summary can be found [here](https://docs.google.com/spreadsheets/d/ 13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U/edit).
+A summary can be found [here](https://drive.google.com/open?id=13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U).
 
 A description of the various types of data and their role in operational modelling can be found [here](http://www.iccat.int/Documents/CVSP/CV072_2016/n_7/CV07201796.pdf)
 

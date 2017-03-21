@@ -27,8 +27,6 @@ MatM_Ref<-function(OMI,lev=NA){
     matlow<- c(0,0,0,0.25,0.5, 1,rep(1,OMI@na-6)) # both stocks
     mathigh<-c(0,0,0,0,0.08,0.15,0.24,0.33,0.41,0.5,0.58,0.65,0.71,0.82,0.86,0.9,rep(1,OMI@na-16)) #both stocks
     Ma<-c(0.8318,0.864)*OMI@wt_age[,,OMI@ny]^-0.288
-    Mlow<-Ma*c(0.8,0.8)
-    Mhigh<-Ma*c(1.2,1.2)
 
     if(lev==1){      # East,  West
       tmat<-array(c(matlow,mathigh),c(OMI@na,OMI@np))

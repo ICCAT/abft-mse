@@ -91,6 +91,8 @@ export(
     "makeCAL",
     "makeCAL2",
     "makeCAL3",
+    "makeCAL4",
+    "SampCatch2",
     "makeTrans",
     "makeTransparent",
     "musmooth",
@@ -112,7 +114,7 @@ export(
     "exp_agg_CAS",
     "calcarea",
 
-    "plotindex",
+    "plotindex2",
     "plot_mov_dist",
     "vmovplot",
 
@@ -127,6 +129,7 @@ export(
     "read.fit",
     "M3write",
     "runM3",
+    "runM3p",
     "M3read",
 
     "tiny"
@@ -135,7 +138,8 @@ exportClasses(
     "OMI",
     "OM",
     "MSE",
-    "Obs"
+    "Obs",
+    "TEST"
 )
 import(
     "MASS",
