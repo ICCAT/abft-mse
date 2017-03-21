@@ -4,10 +4,10 @@
 
 Catches<-Eobs<-array(NA,c(Base@ny,Base@ns,Base@nr,Base@nf))
 Catches[as.matrix(Base@Cobs[,1:4])]<-Base@Cobs[,5]
-Catches<-(Catches/(mean(Catches,na.rm=T)))*0.01
+Catches<-(Catches/(mean(Catches,na.rm=T)))*0.05
 ind<-TEG(c(Base@ny,Base@ns,Base@nr,Base@nf))
-#CPUEobs[ind]<--log((1-Catches[ind]/Base@RAI[ind[,1:3]]))
-Eobs[ind]<-Catches[ind]/Base@RAI[ind[,1:3]]
+Eobs[ind]<--log((1-Catches[ind]/Base@RAI[ind[,1:3]]))
+#Eobs[ind]<-Catches[ind]/Base@RAI[ind[,1:3]]
 
 
 Eobs<-cbind(ind,ind[,4],Eobs) # y s r f i cpue/pf

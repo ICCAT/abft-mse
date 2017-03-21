@@ -5,7 +5,7 @@ library('ABTMSE')
 loadABT()
 
 setwd("C:/ABT-MSE")
-datadir<-paste0(getwd(),"/R package/ABTMSE/data/")
+datadir<-paste0(getwd(),"/R_package/ABTMSE/data/")
 
 
 # Operating models and operating model input files
@@ -38,7 +38,7 @@ for(o in 1:length(OMdirs)){
 
 # Observation models
 
-obsdir<-paste0(getwd(),"/Objects/Observation models/")
+obsdir<-paste0(getwd(),"/Objects/Observation_models/")
 files<-list.files(obsdir)
 from_files<-paste0(obsdir,files)
 to_files<-paste0(datadir,files)

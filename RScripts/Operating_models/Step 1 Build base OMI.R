@@ -99,7 +99,7 @@ Base@sdur<-rep(1/Base@ns,Base@ns) # the duration of each subyear - we make these
 #Base@nZeq<-as.integer(40)
 Base@nydist<-as.integer(10)
 #Base@nyeq<-as.integer(15)
-yblock<-5 # the duration of recruitment deviation blocks
+yblock<-3 # the duration of recruitment deviation blocks
 Base@RDblock<-rep(1:100,each=yblock)[1:Base@ny]
 Base@nRD<-max(Base@RDblock)
 
@@ -108,9 +108,9 @@ Base@nRD<-max(Base@RDblock)
 
 Base@lwa<-c(2.95*10^-5,1.96*10^-5)   # length-weight conversion w=al^b
 Base@lwb<-c(2.899,3.009)             # length-weight conversion w=al^b
-Base@L1<-c(32.43,32.43)    # Richards growth curve
-Base@L2<-c(263.64,263.64)  # Richards growth curve
-Base@K<-c(0.26,0.26)       # Richards growth curve
+Base@L1<-c(33.0,33.0)      # Richards growth curve
+Base@L2<-c(270.6,270.6)    # Richards growth curve
+Base@K<-c(0.22,0.22)       # Richards growth curve
 Base@p<-c(0.97,0.97)       # Richards growth curve
 
 source("RScripts/Data processing/iALK.r") # returns len_age wt_age iALK
@@ -233,8 +233,11 @@ Base@SOOobs<-SOOobs
 
 Base@nsel<-Base@nf
 
-Base@seltype<-rep(3,Base@nf) # all fleets have thompson (potentially) dome-shaped selectivity
-Base@seltype[Fleets$gearTC=="LL"&Fleets$flag=="JPN"]<-2 # set Japanese longline to asymptotic
+Base@seltype<-c(rep(3,Base@nf-1),2) # all fleets have thompson (potentially) dome-shaped selectivity except the combined other fleet
+Base@seltype[Fleets$gearTC=="LL"]<-2 # set longline to asymptotic
+Base@seltype[Fleets$gearTC=="RR"]<-2 # set rod and reel to asymptotic
+Base@seltype[c(8,10)]<-2 # PSwestold TPwestold are currently estimated to be asymptotic..
+
 Base@selind<-1:Base@nf # No selectivity mirroring - selectivities correspond to fleets
 Base@ratiolim<-c(0.1,0.4) # limits on the logistic slope paramter relative to position of inflection point
 Base@infleclim<-c(4,15) # limits on the location of the inflection point (age)
@@ -256,14 +259,14 @@ Base@mov1<-mov1
 # --- Relating to likelihood functions ------
 
 Base@CobsCV<-rep(0.2,Base@nf)         # CV on seasonal catch observations by area
-Base@CPUEobsCV<-rep(0.25,Base@nCPUEq) # CV on seasonal CPUE observations by area
+Base@CPUEobsCV<-rep(0.1,Base@nCPUEq) # CV on seasonal CPUE observations by area
 Base@IobsCV<-rep(0.25,Base@nI)        # CV on fishery independent indices
-Base@RDCV<-1/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
+Base@RDCV<-2/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
 Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating models use fractions of other model estimated current SSB)
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/200,   1/1000,    1,      1/2000,  5,     1,      1,       10,       2,     1,      200,    0      ) # SSB index for each population
+Base@LHw<-c(1/200,   1/50 ,  1,         1/3000,   50,    1,      1,       5,        2,     1,      20,     0      ) # SSB index for each population
 
 
 # --- Initial Values ------
@@ -298,11 +301,11 @@ Base@OMfactors<-list("Mimicking","the", "2014 assessments")
 
 OMI<-Base
 OMI<-MatM_Ref(OMI,1)
-M3write(OMI,datfile=paste0(getwd(),"/M3/M3.dat"))  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
+M3write(OMI,OMdir=paste0(getwd(),"/M3"))  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 #M3write(OMI,datfile="C:/M3/M3.dat")  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 
 save(OMI,file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
-#save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
+save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
 
 
 # ==== END =======================================================================================
