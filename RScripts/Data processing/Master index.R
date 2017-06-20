@@ -212,7 +212,7 @@ MI[[1]][ind]<-exp(pred)*AS[ind[,3]]#AreaSize[ind[,3:2]]
 #for(i in 1:Base@ns)MI[[1]][,i,]<-MI[[1]][,i,]/mean(MI[[1]][,i,])
 
 
-if(ploto)plotindex2(Base,MI[[1]]) # Figure 4
+if(ploto)plotindex2(Base,pCPUE=MI[[1]]) # Figure 4
 
 
 

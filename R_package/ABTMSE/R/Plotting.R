@@ -11,8 +11,8 @@ plotindex2<-function(Base,pCPUE){
     plot(Base@years[1]:Base@years[2],pCPUE[,q,a],ylim=ylimy,type='l',col='red',axes=F)
     if(a==1)mtext(paste("Quarter",q),3,line=1)
     if(q==1)mtext(anam[a],2,line=3,las=1)
-    if(q==4){axis(1,prettyaxis(years),prettyaxis(years))
-    }else{axis(1,prettyaxis(years))}
+    if(q==4){axis(1,prettyaxis(Base@years),prettyaxis(Base@years))
+    }else{axis(1,prettyaxis(Base@years))}
     if(a==1){axis(2,prettyaxis(ylimy),prettyaxis(ylimy))
     }else{axis(2,prettyaxis(ylimy))}
 
