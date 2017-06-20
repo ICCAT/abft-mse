@@ -28,6 +28,11 @@ test0<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$Cat
 cond<-test0$Group3=="nr"
 test0$x[cond]<-test0$x[cond]*70 # a daft guess at mean weight just to prioritize fleets by catch weight
 test0[order(test0$x,decreasing=T),]
+
+testSpat<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$Area,T2cpue$YearC),sum)
+testSpat<-testSpat[testSpat[,3]==1,]
+
+
 test<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$CatchUnit,T2cpue$Area),sum)
 test[order(test$x,decreasing=T),]
 test2<-test[test[,4]==1,]
@@ -66,11 +71,11 @@ Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL", 
 type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg",  "nr",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 Fnam<-c("JP LL",     "USA LL", "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL","ES LL", "ES BB")   # Fleet names for graphing
 
-FleetID<-c("012",       "004",         "016",      "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",         "RR",           "TP",       "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',          'kg',           "kg",       "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+FleetID<-c("012",      "025",   "025",    "004",      "016",      "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",       "LL",    "RR",     "RR",       "TP",       "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',       "nr",    "nr",     'kg',       "kg",       "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-Fnam<-c("JP LL", "USA LL", "CA RR",  "MA TP",  "ES BB")   # Fleet names for graphing
+Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR",   "MA TP",    "ES BB")   # Fleet names for graphing
 
 cpue<-new('list')
 
@@ -98,7 +103,7 @@ for(i in 1:length(FleetID)){
   #temp<-assign_area(temp,Base@area_defs)
   #temp<-assign_quarter(temp)
   temp<-assign_year(temp,years)
-  cond<-temp$Eff1>quantile(temp$Eff1,0.1)&temp$BFT>10
+  cond<-temp$Eff1>quantile(temp$Eff1,0.1)&temp$BFT>2
   temp<-subset(temp,cond)
   print(paste(i,Fnam[i],mean(temp$Eff1)))
 

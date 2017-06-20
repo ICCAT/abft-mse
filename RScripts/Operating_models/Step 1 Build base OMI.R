@@ -26,7 +26,7 @@
 
 # --- Set working directory ------
 
-setwd("C:/ABT-MSE/")
+setwd("C:/ABT-MSE/") # setwd("C:/Users/Tom/Documents/GitHub/abft-mse")
 
 
 # --- Source MSE functions and objects ------
@@ -42,8 +42,8 @@ Base@Date<-as.character(Sys.time())
 Base@Author<-"T. Carruthers (t.carruthers@oceans.ubc.ca)"
 Base@Notes<-"This object serves as a framework for populating the various Trial Specifications"
 Base@PrimarySource<-"ICCAT Bluefin data prep. meeting July 2016"
-Base@years<-years<-c(1960,2014)
-Base@Hyears<-Hyears<-c(1864,1959)
+Base@years<-years<-c(1983,2014)#c(1960,2014)
+Base@Hyears<-Hyears<-c(1864,1982)#c(1864,1959)
 
 
 # --- (a) Create some prespecified areas (polygons with lons and lats) ------
