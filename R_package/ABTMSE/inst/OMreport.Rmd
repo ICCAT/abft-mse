@@ -33,9 +33,9 @@ par(mfcol=c(nrow,ncol),mai=c(0.3,0.3,0.1,0.01),omi=c(0.3,0.3,0.1,0.05))
 for(i in 1:OMI@nCPUEq){
   
   tempdat<-subset(OMI@CPUEobs,OMI@CPUEobs[,4]==i)  
-  obs<-tempdat[,6]
+  obs<-as.numeric(tempdat[,6])
   pred<-exp(out$lnqCPUE[i])*out$VB[tempdat[,c(1,2,3,5)]]
-  yrs<-tempdat[,1]+OMI@years[1]-1
+  yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
   plot(yrs,obs,pch=19,col="#99999995",ylim=c(0,max(obs,pred)),ylab="",xlab="")
   lines(yrs,pred,lwd=1.5,col="#0000ff95")
   legend('topleft',legend=OMI@CPUEnames[i],bty='n')
@@ -458,16 +458,17 @@ Figure 9.Length composition residuals. Red points are negative Pearson residuals
 ```{r stat_prop, results='asis',fig.width=7, fig.height=3.5,echo=FALSE}
   indnam<-unique(Obs@MPind$Name)
   nind<-length(indnam)
+  
   for(i in 1:nind){
     
     cat('\n')  
     cat("### Index fit and statistical properties for",as.character(indnam[i]),"\n") 
   
-    id<-subset(Obs@MPind,Obs@MPind$Name==indnam[i] & Obs@MPind$Year<(out$ny+1))
-    yrs<-id$Year
+    id<-subset(Obs@MPind,Obs@MPind$Name==indnam[i] & Obs@MPind$Year>=OMI@years[1] & Obs@MPind$Year<=OMI@years[2])
+    yrs<-id$Year-OMI@years[1]+1
     stk<-id$Stock[1]
     
-    indfit(SSB=apply(out$SSB[stk,yrs,],1,mean),ind=id$Index,Year=yrs+1959,sim=F,plot=T)
+    indfit(SSB=apply(out$SSB[stk,yrs,],1,mean),ind=id$Index,Year=yrs+OMI@years[1]-1,sim=F,plot=T)
     cat('\n')  
 
   }
@@ -483,7 +484,7 @@ Figure 10.
 
 ```{r catchfit, results='asis',echo=FALSE}
 
-  firstyr=1960
+  firstyr=OMI@years[1]
   fleetnams=c(OMI@Fleets$name,'ALL OTH')
   areanams=OMI@areanams
   subyrnams=c("Jan-Mar","Apr-Jun","Jul-Sept","Oct-Dec")
@@ -606,7 +607,7 @@ Figure 11.
     
     
     mtext("Length (cm)",1,outer=T,line=2)
-    mtext(paste("Predicted (line) versus observed (point) catch at length for the ",fleetnams[f]," fleet (n=",floor(sum(CLobsA[,,,f,],na.rm=T)/1000),"k)",sep=""),3,line=1.25,outer=T)
+    mtext(paste("Predicted (blue line) versus observed (orange bar) catch at length for the ",fleetnams[f]," fleet (n=",floor(sum(CLobsA[,,,f,],na.rm=T)/1000),"k)",sep=""),3,line=1.25,outer=T)
     
     #dev.off()
     cat('\n') 

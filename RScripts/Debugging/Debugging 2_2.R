@@ -1,0 +1,7 @@
+library(ABTMSE)
+loadABT()
+make_fit_reports(dirs="C:/Users/tcar_/OneDrive/Documents/GitHub/abft-mse/M3")
+
+OMDir<-"C:/Users/tcar_/OneDrive/Documents/GitHub/abft-mse/M3"
+pin_from_par(OMDir)
+quiet=T
