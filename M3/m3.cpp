@@ -106,6 +106,8 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
 {
   initializationfunction();
   lnmuR.allocate(1,np,9.5,18.,1,"lnmuR");
+  lnHR1.allocate(1,np,-3,3,1,"lnHR1");
+  lnHR2.allocate(1,np,-3,3,1,"lnHR2");
   selpar.allocate(1,nsel,1,seltype,-2.,2.,1,"selpar");
   lnRD1.allocate(1,nRD,-8.,8.,1,"lnRD1");
   lnRD2.allocate(1,nRD,-8.,8.,1,"lnRD2");
@@ -119,7 +121,6 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     nodes.initialize();
   #endif
-	   //exit(1);
   objG.allocate("objG");
   prior_function_value.allocate("prior_function_value");
   likelihood_function_value.allocate("likelihood_function_value");
@@ -381,8 +382,6 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
 void model_parameters::userfunction(void)
 {
   objG =0.0;
-	//cout<<datacheck<<endl;
-	//exit(1);
 	if(debug)cout<<"datacheck: "<<datacheck<<endl; // Were the data the correct length?
 	calcSurvival();                  // Calculate survival
 	calcMovement();                  // Calculate movement
@@ -616,7 +615,6 @@ void model_parameters::calcF(void)
   	FT.initialize();      // Total fishing mortality rate = 0
   	FAT.initialize();     // Total fishing mortality rate at age = 0
   	Z.initialize();       // Total mortality = 0
-  	//Zeq.initialize();     // Equilibrium Z = 0
   	meanF.initialize();   // Track average F = 0
   	for(int i=1;i<=nEobs;i++){
 	  int yy=Eobs(i,1);    // Year
@@ -646,10 +644,6 @@ void model_parameters::calcF(void)
 	        meanF(pp,yy)+=sum(FAT(pp)(yy)(ss)(rr))/(na*nr); // Calculate mean fishing mortality rate at age (debugging)
 	        for(int aa=1;aa<=na;aa++){             // Loop over ages
 	          Z(pp)(yy)(ss)(aa)(rr)=FAT(pp)(yy)(ss)(rr)(aa)+(Ma(pp,aa)*sdur(ss)); // Calculate total mortality rate
-	          //Zeq(pp)(ss)(aa)(rr)=(Ma(pp,aa)*sdur(ss))*1.5; // currently this equation runs ny times (not great)
-	          //if(yy<=nZeq){                        // Equilibrium Z calculation
-	           // Zeq(pp)(ss)(aa)(rr)+=Z(pp)(yy)(ss)(aa)(rr)/nZeq; // Sum up equilibrium Z
-	          //}
 	        }                                      // End of ages
 	      }                                        // End of areas
 	    }                                          // End of subyears
@@ -683,9 +677,8 @@ void model_parameters::initModel(void)
 	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
 	for(int pp=1;pp<=np;pp++){
-	  SSB0(pp)=Rec(pp,1)*sum(elem_prod(surv(pp),Fec(pp)));     // Unfished Spawning Stock Biomass
-	  SSB0(pp)+=Rec(pp,1)*Fec(pp,na)*surv(pp,na)*exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // indefinite integral of surv added to get plus group SSB0
-	  //SSBpR(pp)=SSB0(pp)/R0(pp);                            // Unfished SSB per recruit
+	  SSB0(pp)=muR(pp)*mfexp(lnHR1(pp))*sum(elem_prod(surv(pp),Fec(pp)));     // Unfished Spawning Stock Biomass
+	  SSB0(pp)+=muR(pp)*mfexp(lnHR1(pp))*Fec(pp,na)*surv(pp,na)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // indefinite integral of surv added to get plus group SSB0
 	}
 	for(int pp=1;pp<=np;pp++){                              // Loop over stocks
 	  // -- Initial guess at stock distribution -------------------------------------------
@@ -701,33 +694,24 @@ void model_parameters::initModel(void)
 	       //cout<<rowsum(stemp(pp))<<endl;
 	    }                                                   // End of subyears
 	  }                                                     // End of years
-	  //exit(1);
-	  //for(int rr=1;rr<=nr;rr++){
-	    //SSB0(pp)+=sum(elem_prod(surv(pp)*R0(pp),Fec(pp)))*canspawn(pp,rr)*stemp(pp,spawns(pp),rr);     // Unfished Spawning Stock Biomass
-	  //}
-	  //SSBpR(pp)=SSB0(pp)/R0(pp); 
-	  // -- Spool up to equilibrium given total mortality rate over first nZeq years -----------
-	  // -- Initial guess 
+ 	  // -- Initial guess 
 	  for(int rr=1;rr<=nr;rr++){                                // Loop over areas
 	    for(int ss=1;ss<=ns;ss++){ 
 	      for(int aa=1;aa<=na;aa++){
-	        N(pp,1,ss,aa,rr)=Rec(pp,1)*surv(pp,aa)*stemp(pp,ss,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
+	        N(pp,1,ss,aa,rr)=mfexp(lnHR1(pp))*muR(pp)*surv(pp,aa)*stemp(pp,ss,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
 	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);              // Historical spawning stock biomass
 	      }                                                       // end of ages
-	      N(pp,1,ss,na,rr)+=muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // Indefinite intergral for plus group
+	      N(pp,1,ss,na,rr)+=mfexp(lnHR1(pp))*muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // Indefinite intergral for plus group
 	    }                                                       // End of seasons
 	  }                                                         // End of areas 
 	}                                                           // End of stocks
 	// -- Age and movement implications of spool-up
 	for(int yy=2;yy<=nHy;yy++){         // Loop over historical years
-	  //cout<<"--- "<<yy<<" ---"<<endl;
-	  //cout<<N(1)(1)(3)<<endl;
-	  //cout<<"----"<<endl;
 	  for(int ss=1;ss<=ns;ss++){         // Loop over seasons
 	    if(ss==1){                       // First subyear isn't a spawning season  ------------------------------------------------
 	      for(int aa=1;aa<=na;aa++){     // Loop over age classes
 		for(int rr=1;rr<=nr;rr++){// Loop over areas
-		  Ntemp=0.;                    // Keep count
+		  Ntemp=tiny;                    // Keep count, tiny is to prevent zero divided by zero in hFAT calculation
 		  for(int pp=1;pp<=np;pp++){
 		    Ntemp+=N(pp,1,ns,aa,rr)*mfexp(-Ma(pp,aa)*sdur(ss)/2.);   // Sum over populations
 		  }
@@ -762,7 +746,7 @@ void model_parameters::initModel(void)
 		}  
 		for(int aa=1;aa<=na;aa++){     // Loop over age classes
 		  for(int rr=1;rr<=nr;rr++){   // Loop over areas
-		    Ntemp=0.;                    // Keep count
+		    Ntemp=tiny;                    // Keep count
 		    for(int pp=1;pp<=np;pp++){
 		      Ntemp+=N(pp,1,ss-1,aa,rr)*mfexp(-Ma(pp,aa)*sdur(ss)/2.);   // Sum over populations
 		    }
@@ -785,41 +769,29 @@ void model_parameters::initModel(void)
 		      hSSB(pp,yy,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);//*canspawn(pp,rr));    // SSB is summed (+=) over age classes and areas (sum())
 		    }                         // End of areas
 		  }                           // End of ages
-		  N(pp)(1)(ss)(1)=spawnr(pp)*Rec(pp,1); //(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/(0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * sum(SSBdist(pp))); // Recruitment
+		  if(yy<(nHy-10)){
+		    N(pp)(1)(ss)(1)=spawnr(pp)*mfexp(lnHR1(pp))*muR(pp); //(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/(0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * sum(SSBdist(pp))); // Recruitment
+		  }
+		  else{
+		    N(pp)(1)(ss)(1)=spawnr(pp)*mfexp(lnHR2(pp))*muR(pp); //(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/(0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * sum(SSBdist(pp))); // Recruitment
+		  }
 		}                             // End of stocks  
               }else{                          	// Not a spawning season ----------------------------------------------------------------
 		for(int aa=1;aa<=na;aa++){      // Loop over age classes
 		  for(int rr=1;rr<=nr;rr++){    // Loop over areas
-		    Ntemp=0.;                   // Keep count
+		    Ntemp=tiny;                   // Keep count
 		    for(int pp=1;pp<=np;pp++){
 		      Ntemp+=N(pp,1,ss-1,aa,rr)*mfexp(-Ma(pp,aa)*sdur(ss)/2.);   // Sum over populations
 		    }
 		    dvariable pen=0.;		
 		    hFAT(yy,ss-1,aa,rr)=(-log(posfun(1-(HCobs(yy,ss-1,aa,rr)/(Ntemp+tiny)),1-0.9,pen)))+tiny;            // F estimate based on half of M
 		    objSRA+=pen;
-		   // if(pen>100){  
-		   //if(yy==90){
-		   // if(rr==nr){
-		    //if(aa==5){
-		    	//cout<<N(1)(1)(ss-1)<<endl;
-		    	//cout<<N(2)(1)(ss-1)<<endl;
-		    	//cout<<"yy="<<yy<<" ss="<<ss-1<<" rr="<<rr<<" aa="<<aa<<" N="<<Ntemp<<" C="<<HCobs(yy,ss-1,aa,rr)<<" F="<<hFAT(yy,ss-1,aa,rr)<<" pen="<<pen<<" objSRA="<<objSRA<<endl;
-		    	//cout<<Ntemp<<endl;
-		    	//cout<<HCobs(yy,ss-1,aa,rr)<<endl;
-		       //cout<<pen<<endl;
-		    	//cout<<hFAT(yy,ss-1,aa,rr)<<endl;
-		    	//exit(1);
-		    //}
-		    //}
-		    //}
-		   // }
 		  }
 		  for(int pp=1;pp<=np;pp++){   // Loop over stocks	  
 		    for(int rr=1;rr<=nr;rr++){
 		      hZ(pp,yy,ss-1,aa,rr)=hFAT(yy,ss-1,aa,rr)+Ma(pp,aa)*sdur(ss);
 		    }
 		    N(pp)(1)(ss)(aa)=elem_prod(mfexp(-hZ(pp)(yy)(ss-1)(aa)),N(pp)(1)(ss-1)(aa))*mov(pp)(ss)(aa); // Mortality then move
-		    //N(pp)(1)(ss)(aa)=elem_prod(mfexp(-Zeq(pp)(ss-1)(aa)),N(pp)(1)(ss-1)(aa))*mov(pp)(ss)(aa); // Mortality then move
 		    for(int rr=1;rr<=nr;rr++){  // Loop over areas
 		      hSSB(pp,yy,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
 		    }	                      // End of areas        
@@ -836,8 +808,6 @@ void model_parameters::initModel(void)
               CTA(pp)(1)(ss)=trans(elem_prod(
 	      	      	      elem_prod(N(pp)(1)(ss),1-mfexp(-Z(pp)(1)(ss))),
 	      	      	      elem_div(trans(FAT(pp)(1)(ss)),Z(pp)(1)(ss))));    
-	      	      	      //elem_prod(N(pp)(1)(ss),mfexp(Z(pp)(1)(ss))-1),
-	      	      	      //elem_div(trans(FAT(pp)(1)(ss)),Z(pp)(1)(ss))));    // total catch at age in first year
               CTL(pp)(1)(ss)(rr)=CTA(pp)(1)(ss)(rr)*ALK(pp)(1);                  // Catch at length is catch at age * inverse age length key
 	      for(int aa=1;aa<=na;aa++){                      // Loop over age class
 	        NLA(aa)=N(pp)(1)(ss)(aa)(rr)*ALK(pp)(1)(aa);  // Temporarily store numbers at length
@@ -902,9 +872,6 @@ void model_parameters::calcTransitions(void)
 		    N(pp)(yy)(ss)(aa)=N(pp)(yy)(ss)(aa-1); // Age fish
 	          }                                        // End of age classes
                   N(pp)(yy)(ss)(1)=spawnr(pp)*Rec(pp,yy);//*(0.8*R0(pp)*steep(pp)*sum(SSBdist(pp)))/(0.2*SSBpR(pp)*R0(pp)*(1-steep(pp))+(steep(pp)-0.2) * sum(SSBdist(pp))); // Recruitment (SSB lag 1 year)
-	          //cout<<spawnr<<endl;
-	          //cout<<Rec(pp)<<endl;
-	          //exit(1);
 	       	  for(int aa=1;aa<=na;aa++){  // Loop over age classes
 		     for(int rr=1;rr<=nr;rr++){ // Loop over areas
 		  	SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
@@ -922,8 +889,6 @@ void model_parameters::calcTransitions(void)
 	      CTA(pp)(yy)(ss)=trans(elem_prod(
 	        elem_prod(N(pp)(yy)(ss),1-mfexp(-Z(pp)(yy)(ss))),
 	      	elem_div(trans(FAT(pp)(yy)(ss)),Z(pp)(yy)(ss)))); // Calculate catch at age
-	      //elem_prod(N(pp)(yy)(ss),mfexp(Z(pp)(yy)(ss))-1),
-	      //elem_div(trans(FAT(pp)(yy)(ss)),Z(pp)(yy)(ss)))); // Calculate catch at age
 	      for(int rr=1;rr<=nr;rr++){                              // Loop over areas
 		CTL(pp)(yy)(ss)(rr)=CTA(pp)(yy)(ss)(rr)*ALK(pp)(yy);  // Calculate catch at length
 		for(int aa=1;aa<=na;aa++){                            // Loop over age classes
@@ -947,11 +912,6 @@ void model_parameters::calcTransitions(void)
 		CNpred(pp,yy,ss,rr)=sum(CTL(pp)(yy)(ss)(rr));        // Total predicted catch numbers (all fleets)
 	      }                                                      // End of areas
 	    }                                                        // End of subyear
-	    //if(yy==3){
-	    //cout<<SSB(1)(yy)<<endl;
-	    	//cout<<CTA(1)(1)<<endl;
-	    //exit(1);
-	    //}
 	  }                                                          // End of year
 	  SSBi(pp)=SSB(pp)/(sum(SSB(pp))/(ny*ns));                   // Calculate SSB index normalized to 1
 	  Btrend(pp)/=Btrend(pp,1);                                  // Normalize Btrend to depletion
@@ -1015,11 +975,8 @@ void model_parameters::calcObjective(void)
   	  //LHtemp=pow(log(CWtotpred(yy,ss,rr,ff)+tiny)-log(Cobs(i,5)+tiny),2);// SSQ test
   	  objC+=LHtemp*LHw(1);                                                           // Weighted likelihood contribution
   	  objG+=LHtemp*LHw(1);  
-  	  //objC+=LHtemp*1/nCobs;                                                           // Weighted likelihood contribution
-  	  //objG+=LHtemp*1/nCobs;   // Weighted likelihood contribution
   	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" Cobs="<<Cobs(i,5)<<" Cpred="<<CWtotpred(yy,ss,rr,ff)<<endl;
 	}
-	//exit(1);
 	if(debug)cout<<"---  * Finished Catch LHF ---"<<endl;
 	// -- CPUE observations --
 	dvariable CPUEtemp;
@@ -1080,8 +1037,6 @@ void model_parameters::calcObjective(void)
 	  LHtemp=dnorm(log(Ipred(yy,ss,rr,pp)+tiny),log(Iobs(i,7)+tiny),IobsCV(ii)); // Log-normal LHF
 	  objI+=LHtemp*LHw(3);                                          // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(3);                                          // Weighted likelihood contribution
-	  //objI+=LHtemp*1/nIobs;                                          // Weighted likelihood contribution
-	  //objG+=LHtemp*1/nIobs; 	          
 	}
 	if(debug)cout<<"---  * Finished FI index LHF ---"<<endl;
 	// -- Length composition data --  
@@ -1095,8 +1050,6 @@ void model_parameters::calcObjective(void)
 	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
 	  objCL+=LHtemp*LHw(4);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4);                                      // Weighted likelihood contribution
-	  //objCL+=LHtemp*1/nCLobs;                                     // Weighted likelihood contribution
-	  //objG+=LHtemp*1/nCLobs;  
 	}
 	if(debug)cout<<"---  * Finished length composition LHF ---"<<endl;
 	// -- Stock of origin data -- 
@@ -1117,8 +1070,6 @@ void model_parameters::calcObjective(void)
 	  LHtemp=(-SOOobs(i,6)*log(SOOpred+tiny));   // Multinomial LHF
 	  objSOO+=LHtemp*LHw(5);                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(5);                       // Weighted likelihood contribution
-	  //objSOO+=LHtemp*1/nSOOobs;                     // Weighted likelihood contribution
-	  //objG+=LHtemp*1/nSOOobs;  
 	}
 	if(debug)cout<<"---  * Finished SOO LHF ---"<<endl;
 	// -- PSAT tagging --
@@ -1132,8 +1083,6 @@ void model_parameters::calcObjective(void)
 	  LHtemp=(-PSAT(i,7)*log(RecapP(pp,ss,aa,tt,rr,r2)+tiny)); // Multinomial LHF
 	  objPSAT+=LHtemp*LHw(6);                               // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(6);                                  // weighted likelihood contribution
-	  //objPSAT+=LHtemp*1/nPSAT;                               // Weighted likelihood contribution
-	  //objG+=LHtemp*1/nPSAT;  
 	}
 	if(debug)cout<<"---  * Finished PSAT known SOO LHF ---"<<endl;
 	for(int i=1;i<=nPSAT2;i++){ // Individual tags with uncertain stock of origin
@@ -1145,9 +1094,6 @@ void model_parameters::calcObjective(void)
 	  for(int pp=1;pp<=np;pp++){
 	    LHtemp=(-log(RecapP(pp,ss,aa,tt,rr,r2)+tiny)*PSAT2(i,5+pp)); // Multinomial LHF
 	    objPSAT2+=LHtemp*LHw(7);                                  // Weighted likelihood contribution
-	    //objG+=LHtemp*LHw(7);                                    // Weighted likelihood contribution
-	    //objPSAT2+=LHtemp*1/nPSAT2;                                  // Weighted likelihood contribution
-	    //objG+=LHtemp*1/nPSAT2;                                    // Weighted likelihood contribution
 	  }
 	}
 	if(debug)cout<<"---  * Finished PSAT unknown SOO LHF ---"<<endl;
@@ -1155,15 +1101,19 @@ void model_parameters::calcObjective(void)
 	temp=(ny+na)/nRD;
 	for(int pp=1;pp<=np;pp++){  // Loop over stocks
 	  for(int yy=1;yy<=nRD;yy++){ // Loop over years (or blocks of recruitment deviations if complexRD=0)
-	    //if((yy*temp)<na){ // temporary fix for latest data - a stricter penalty on recruitment deviations prior to first historical year
-	      //LHtemp=dnorm(lnRD(pp,yy),0.,RDCV/50);   // Recruitment deviations (additional penalty for years before initial historical year)
-	    //}else{
-	      LHtemp=dnorm(log(RD(pp,yy)),0.,RDCV);   // Recruitment deviations
-	    //}
+	    LHtemp=dnorm(log(RD(pp,yy)),0.,RDCV);   // Recruitment deviations
 	    objRD+=LHtemp*LHw(8);                // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
 	  }
         }  
+	for(int pp=1;pp<=np;pp++){  // Loop over stocks
+	  LHtemp=dnorm(lnHR1(pp),0.,RDCV); 
+	  objRD+=LHtemp*LHw(8);
+	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
+	  LHtemp=dnorm(lnHR2(pp),0.,RDCV); 
+	  objRD+=LHtemp*LHw(8);
+	  objG+=LHtemp*LHw(8);  
+	}
 	// -- Movement parameters ---
 	for(int mm=1;mm<=nMP;mm++){
 	  LHtemp=dnorm(movest(mm),0.,2.5);        // Weak(ish) prior 
@@ -1177,13 +1127,10 @@ void model_parameters::calcObjective(void)
 	}
 	objG+=objSRA*LHw(11);                      // Add the posfun penalty for SRA harvest rates over 90%
 	for(int pp=1;pp<=np;pp++){
-	  //LHtemp=SSBnow(pp)*SSBCV;
 	  objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);
 	}
 	objG+=objSSB*LHw(12);
-	//objG/=1000.; // rescale global objective function
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
-	//objG+=dnorm(lnF(1),log(0.1),4);          // Temporary fix to allow F estimation to be simplied to a master index and partial F approach (complexF = 0)
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
 	if(verbose)cout<<"CPUE LHF "<<objCPUE<<endl;          // Report CPUE likelihood component
@@ -1209,7 +1156,9 @@ void model_parameters::simsam(void)
         cout<<"surv = "<<surv<<endl;
         cout<<"Fec ="<<Fec<<endl;
         //cout<<"muR sim = "<<log(muR_ini)<<endl;                // Simulated R0
-        cout<<"muR sam = "<<log(muR)<<endl;                    // Estimated R0
+        cout<<"muR sam = "<<log(muR)<<endl;                    // Estimated mu r
+        cout<<"lnHR1 sam = "<<lnHR1<<endl;                    // Estimated mu r deviant
+        cout<<"lnHR2 sam = "<<lnHR2<<endl;                    // Estimated mu r deviant
         //cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
         for(int ff=1;ff<=nf;ff++){
           //cout<<"sel sim f1= "<<sel_ini(1)<<endl;            // Simulated selectivity fleet 1
@@ -1382,12 +1331,10 @@ void model_parameters::report(const dvector& gradients)
 	report<<nmov1<<endl;
 	report<<"mov1(nmov1,4)"<<endl;       // Index of first non-estimated movement parameter (fixed to zero)
 	report<<mov1<<endl; 
-	report<<"movtype"<<endl;                    // 1: gravity, 2: markov
+	report<<"movtype"<<endl;             // 1: gravity, 2: markov
 	report<<movtype<<endl;
 	report<<"Ma (p,a)"<<endl;
 	report<<Ma<<endl;
-	//report<<"steep (p)"<<endl;
-	//report<<steep<<endl;
 	report<<"RDblock (y)"<<endl;
 	report<<RDblock<<endl;
 	report<<"Fec (p,a)"<<endl;
@@ -1418,16 +1365,16 @@ void model_parameters::report(const dvector& gradients)
 	for(int yy=1;yy<=ny;yy++){
 	  report <<Ipred(yy)<<endl;
   	}
-	//report<<"nZeq number of initial years to average over to get equilibrium Z"<<endl;
-	//report<<nZeq<<endl;
 	report<<"nydist number of year iterations to get initial spatial distribution"<<endl;
 	report<<nydist<<endl;
-	//report<<"nyeq number of initial year iterations used to calculation initial stock size and distribution"<<endl;
-	//report<<nyeq<<endl;
 	report<<"SSB0: unfished spawning stock biomass"<<endl;
 	report<<SSB0<<endl;
 	report<<"muR: mean historical recruitment"<<endl;
 	report<<muR<<endl;
+	report<<"lnHR1: mean historical recruitment deviations before initial year-10"<<endl;
+	report<<lnHR1<<endl;
+	report<<"lnHR1: mean historical recruitment deviations after initial year-10"<<endl;
+	report<<lnHR2<<endl;
 	report<<"nRD: number of estimated recruitment deviations by stock"<<endl;
 	report<<nRD<<endl;
 	report<<"lnRD: log recruitment deviations"<<endl; 

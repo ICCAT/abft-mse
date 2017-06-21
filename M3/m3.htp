@@ -130,6 +130,8 @@ private:
   ivector integer_control_flags;
   dvector double_control_flags;
   param_init_bounded_vector lnmuR;
+  param_init_bounded_vector lnHR1;
+  param_init_bounded_vector lnHR2;
   param_init_bounded_matrix selpar;
   param_init_bounded_dev_vector lnRD1;
   param_init_bounded_dev_vector lnRD2;

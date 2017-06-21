@@ -4,8 +4,8 @@
 
 CPUEdat<-read.csv(file=paste(getwd(),"/Data/Processed/CPUE indices/CPUE indices compiled.csv",sep=""))
 CPUEobs<-CPUEdat[,1:6]
+CPUEobs<-CPUEobs[CPUEobs$Year>=Base@years[1]&CPUEobs$Year<=Base@years[2],]
 CPUEobs[,1]<-CPUEobs[,1]-Base@years[1]+1
-CPUEobs<-CPUEobs[CPUEobs$Year<=Base@ny,] # set maximum year to Base@ny
 
 # Get the CPUE series names
 firstrow<-match(1:max(CPUEdat$qNo),CPUEdat$qNo)
