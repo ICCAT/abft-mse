@@ -10,7 +10,7 @@
 # Tom Carruthers UBC
 # Laurie Kell ICCAT
 
-# 8th August 2016
+# 18th June 2017
 
 
 # === Outstanding issues ==============

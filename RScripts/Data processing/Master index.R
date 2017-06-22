@@ -61,7 +61,7 @@ AS<-AS/mean(AS)
 MI<-new('list')
 MI[[1]]<-MI[[2]]<-MI[[3]]<-array(NA,c(Base@ny,Base@ns,Base@nr)) #
 
-ploto<-F
+ploto<-T
 # === First scenario set ===================
 
 
@@ -71,11 +71,11 @@ Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL", 
 type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg",  "nr",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 Fnam<-c("JP LL",     "USA LL", "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL","ES LL", "ES BB")   # Fleet names for graphing
 
-FleetID<-c("012",      "025",   "025",    "004",      "016",      "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",       "LL",    "RR",     "RR",       "TP",       "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',       "nr",    "nr",     'kg',       "kg",       "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+FleetID<-c("012",      "025",   "025",    "004",  "021",    "016",      "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",       "LL",    "RR",     "RR",   "TP",    "TP",       "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',       "nr",    "nr",     'kg',   "kg",    "kg",       "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR",   "MA TP",    "ES BB")   # Fleet names for graphing
+Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR", "CA LL",  "MA TP",    "ES BB")   # Fleet names for graphing
 
 cpue<-new('list')
 
@@ -184,7 +184,7 @@ SA[as.matrix(SAint[,1:2])]<-SAint[,3]
 
 # Create a pseudo area for interaction with time PArea
 #         c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
-Parea_conv<-c(1,    1,    2,     3,    4,      4,      5,      5,     5,      5)
+Parea_conv<-c(1,    1,    2,     1,    3,      3,      4,      4,     4,      4)
 #Parea_conv<-c(1,1,2,1,3,4,3,5,5,5)
 Parea<-Parea_conv[CPUE$Area]
 CPUE<-cbind(CPUE,Parea)
@@ -192,7 +192,7 @@ CPUE<-cbind(CPUE,Parea)
 for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
 wt<-as.numeric(as.character(CPUE$N))
 #out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
-out<-glm(log(CPUE)~Year*Area+Subyear*Area+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Parea+Subyear*Area+Fleet,data=CPUE,weights=wt)
 
 
 newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)
