@@ -2,18 +2,19 @@
 # August 2016
 # R Script for deriving Master indices for MSE testing
 
-T2cpue<-read.csv("Data/Raw/Task2/T2_errcheck.csv")
+T2cpue<-read.csv("Data/Raw/Task2/T2_2017.csv")#read.csv("Data/Raw/Task2/T2_errcheck.csv")
 T2cpue$FleetID<-substring(T2cpue$FleetID,1,3)
 
 # Calculate habitat area sizes by region and quarter
 
 T2cpue<-assign_quarter(T2cpue) # Add quarter
+T2cpue<-ICCATtoGEO(T2cpue)
 T2cpue<-assign_area(T2cpue,Base@area_defs)
 
 #T2cpue<-subset(T2cpue,!(T2cpue$FleetID=="012"&T2cpue$Area==10)) # Ignore Japanese data for the Med
 
 
-dat<-T2cpue[T2cpue$FleetID=="025",]
+#dat<-T2cpue[T2cpue$FleetID=="025",]
 checkrange<-function(dat){
   agg_y_r<-aggregate(rep(1,nrow(dat)),by=list(dat$Year-min(dat$Year)+1,dat$Area),sum)
 
@@ -173,6 +174,37 @@ for(i in 1:length(FleetID)){
 CPUE<-cpue[[1]]
 for(i in 2:length(cpue))CPUE<-rbind(CPUE,cpue[[i]])
 
+
+# Add the assessment cpue indices
+addMI<-TRUE
+
+if(addMI){
+
+  MIwt<-2
+  CPUEind<-read.csv("Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv")#read.csv("Data/Raw/Task2/T2_errcheck.csv")
+
+  CPUEind<-CPUEind[CPUEind$Year>=Base@years[1]&CPUEind$Year<=Base@years[2],]
+
+  fleets<-unique(CPUEind$qNo)
+
+  CPUEind$qNo<-match(CPUEind$qNo,fleets)
+  CPUEind$Year<-CPUEind$Year-Base@years[1]+1
+
+
+  for(i in 1:length(fleets)){
+
+    temp<-CPUEind[CPUEind$qNo==i,]
+    temp<-temp[,c(1,2,3,6,6,6,6,4)]
+    names(temp)<-c("Year","Subyear","Area","E","C","CPUE","N","Fleet")
+    temp$N<-MIwt
+    temp$Fleet<-temp$Fleet+length(FleetID)
+    CPUE<-rbind(CPUE,temp)
+  }
+
+}
+
+
+
 YAint<-aggregate(rep(1,nrow(CPUE)),by=list(as.numeric(CPUE$Year),as.numeric(CPUE$Area)),sum)
 YA<-array(NA,c(Base@ny,Base@nr))
 YA[as.matrix(YAint[,1:2])]<-YAint[,3]
@@ -192,7 +224,7 @@ CPUE<-cbind(CPUE,Parea)
 for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
 wt<-as.numeric(as.character(CPUE$N))
 #out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
-out<-glm(log(CPUE)~Year*Parea+Subyear*Area+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Area+Subyear*Area+Fleet,data=CPUE,weights=wt)
 
 
 newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)
