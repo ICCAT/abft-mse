@@ -44,7 +44,7 @@ Base@Date<-as.character(Sys.time())
 Base@Author<-"T. Carruthers (t.carruthers@oceans.ubc.ca)"
 Base@Notes<-"This object serves as a framework for populating the various Trial Specifications"
 Base@PrimarySource<-"ICCAT Bluefin data prep. meeting July 2016"
-Base@years<-years<-c(1983,2015)#c(1960,2014)
+Base@years<-years<-c(1983,2014)#c(1960,2014)
 Base@Hyears<-Hyears<-c(1864,1982)#c(1864,1959)
 
 
@@ -70,7 +70,7 @@ Base@Fleets<-Fleets
 
 # --- Length bin set up ------
 
-Base@lenbins<-(1:16)*25         #Base@lenbins<-(0:30)*12.5                   # 25 cm length bins
+Base@lenbins<-(1:16)*25                         # 25 cm length bins
 nlen<-length(Base@lenbins)-1
 Base@mulen<-(Base@lenbins[1:nlen]+Base@lenbins[2:(nlen+1)])/2
 
@@ -110,18 +110,10 @@ Base@nRD<-max(Base@RDblock)
 
 Base@lwa<-c(2.95*10^-5,1.96*10^-5)   # length-weight conversion w=al^b
 Base@lwb<-c(2.899,3.009)             # length-weight conversion w=al^b
-
-Base@A2<-c(NA,34)        # Richards growth curve
-Base@L1<-c(NA,33.0)      # Richards growth curve
-Base@L2<-c(NA,270.6)     # Richards growth curve
-Base@K<-c(0.093,0.22)    # Richards / von B growth curve
-Base@p<-c(NA,-0.12)       # Richards growth curve
-
-Base@t0<-c(-0.97,NA)
-Base@Linf<-c(318.85,NA)
-
-Base@Lvar_a<-c(0.06,0.06)
-Base@Lvar_b<-c(5.84,5.84)
+Base@L1<-c(33.0,33.0)      # Richards growth curve
+Base@L2<-c(270.6,270.6)    # Richards growth curve
+Base@K<-c(0.22,0.22)       # Richards growth curve
+Base@p<-c(0.97,0.97)       # Richards growth curve
 
 source("RScripts/Data processing/iALK.r") # returns len_age wt_age iALK
 
@@ -132,9 +124,8 @@ Base@len_age<-len_age
 # Fecundity / maturity / recruitment / mortality
 
 #Base@mat<-array(rep(c(0,0,0,0.25,0.5, 1,rep(1,Base@na-6)),each=Base@np),c(Base@np,Base@na,Base@ny))
-#   Age      1  2  3  4     5    6  7  8  9  10 11 12 13 14 15 16 17 18+
-mat<-array(c(0, 0, 0.25, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),c(Base@na,Base@np))
-Base@mat<-array(t(mat),c(Base@np,Base@na,Base@ny))
+Base@mat<-array(t(array(c(rep(0,5),rep(1,Base@na-5),
+                    rep(0,9),rep(1,Base@na-9)),c(Base@na,Base@np))),c(Base@np,Base@na,Base@ny))
 Base@Fec<-Base@mat[,,1]*Base@wt_age[,,1]
 #Base@steep<-c(0.7,0.7)
 Base@spawns<-c(2,2)
@@ -145,8 +136,8 @@ Base@canspawn<-matrix(c(0,0,0,0,0,0,0,0,0,1,  1,0,1,0,0,0,0,0,0,0),ncol=Base@np)
 #sum(Oldsurv)
 
 #Base@Ma<-c(0.8318,0.864)*wt_age[,,Base@ny]^-0.288
-#   Age             1      2     3     4    5      6    7     8     9     10    11    12    13    14   15   16   17  18+
-Base@Ma<-t(array(c(0.38, 0.30, 0.24, 0.20, 0.18, 0.16, 0.14, 0.13, 0.12, 0.12, 0.11, 0.11, 0.11, 0.1, 0.1, 0.1, 0.1, 0.1),c(Base@na,Base@np)))
+Base@Ma<-t(array(c(0.49,rep(0.24,4),0.2,0.175,0.15,0.125,rep(0.10,Base@na-9),
+        rep(0.14,Base@na)),c(Base@na,Base@np)))
 #surv<-exp(-t(rbind(c(0,0),apply(Base@Ma,1,cumsum)[1:(Base@na-1),])))
 #apply(surv,1,sum)
 #round(Base@Ma[2,],2)
