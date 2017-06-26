@@ -2,7 +2,7 @@
 # August 2016
 # R Script for correctly formatting the CATDIS data into the correct spatio-temporal strata
 
-dat<-read.csv(paste(getwd(),"/Data/Raw/Catch/cdis5014_BFT.csv",sep="")) # 
+dat<-read.csv(paste(getwd(),"/Data/Raw/Catch/cdis5015_BFT.csv",sep="")) #
 dat<-dat[,c(2,5,7,9,13,14,15)]
 names(dat)[c(1,4,5,6,7)]<-c("Year","Quarter","Lat","Lon","Catch")
 dat<-subset(dat,dat$Year>(Base@years[1]-1)&dat$Year<(Base@years[2]+1))
