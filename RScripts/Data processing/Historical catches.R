@@ -14,20 +14,8 @@ wt_len<-Base@lwa[1]*Base@mulen^Base@lwb[1] # calculate weights for length bins
 
 # Build an ALK (for assigning catch at length to catch at age)
 
-agearray<-array(rep(1:Base@na,each=Base@np),c(Base@np,Base@na,Base@ny))
-len_age<-wt_age<-array(NA,dim(agearray))
-ind<-TEG(dim(agearray))
-len_age[ind]<-(
-  Base@L1[ind[,1]]^Base@p[ind[,1]]+(Base@L2[ind[,1]]^Base@p[ind[,1]]-Base@L1[ind[,1]]^Base@p[ind[,1]])*
-    (
-      (1-exp(-Base@K[ind[,1]]*agearray[ind]))/
-        (1-exp(-Base@K[ind[,1]]*Base@na))
-    )
-)^(1/Base@p[ind[,1]])
-
-nlen<-length(Base@lenbins)-1
-
-ind<-TEG(dim(wt_age))
+wt_age<-array(NA,dim(agearray))
+ind<-TEG(dim(len_age))
 wt_age[ind]<-Base@lwa[ind[,1]]*len_age[ind]^Base@lwb[ind[,1]]
 
 LenCV<-0.07

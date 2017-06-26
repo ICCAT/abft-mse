@@ -4,9 +4,11 @@
 
 # --- Matt Lauretta --- GBYP - DFO - NOAA - WWF - Unimar - FCP - CB - IEO - AZTI - UCA 
 
-dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_09292016.csv",sep="")) # 
-
+#dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_09292016.csv",sep="")) # 
+dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_15APR2017.csv",sep=""))
 #dat<-AssignAge(dat,Base) # assign approximate ages bases on cohort slicing from eastern growth (needs only to get at rough age groups)
+
+dat<-dat[dat$Days_Area>0,]
 
   
 #AllPSATo<-read.csv(paste(getwd(),"/Data/Raw/PSAT/ALL_BFT_ElectronicTags_01122015.csv",sep=""))
