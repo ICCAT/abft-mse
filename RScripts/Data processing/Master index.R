@@ -30,8 +30,9 @@ cond<-test0$Group3=="nr"
 test0$x[cond]<-test0$x[cond]*70 # a daft guess at mean weight just to prioritize fleets by catch weight
 test0[order(test0$x,decreasing=T),]
 
-testSpat<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$Area,T2cpue$YearC),sum)
-testSpat<-testSpat[testSpat[,3]==1,]
+testSpat<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$Area),sum)
+testSpat<-testSpat[testSpat[,3]==10,]
+testSpat[order(testSpat$x,decreasing=T),]
 
 
 test<-aggregate(T2cpue$BFT,by=list(T2cpue$FleetID,T2cpue$GearGrpCode,T2cpue$CatchUnit,T2cpue$Area),sum)
@@ -42,8 +43,29 @@ test2[order(test2$x,decreasing=T),]
 by1<-T2cpue[T2cpue$SquareTypeCode=="1x1",]
 by1<-assign_area(by1,Base@area_defs)
 by1agg<-aggregate(by1$BFT,by=list(by1$Area,by1$Subyear,by1$Lat,by1$Lon),sum)
+
+by5<-T2cpue[T2cpue$SquareTypeCode=="5x5",]
+by5<-assign_area(by5,Base@area_defs)
+by5agg<-aggregate(by5$BFT,by=list(by5$Area,by5$Subyear,by5$Lat,by5$Lon),sum)
+
+names(by5agg)<-c("Area","Subyear","Lat","Lon","C")
+#              c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
+#by1agg<-by5agg[by5agg$C,]
+
+AS3tmp<-aggregate(rep(1,nrow(by5agg)),by=list(by5agg$Area,by5agg$Subyear),sum)
+AS3<-array(NA,c(length(Base@areas),Base@ns))
+AS3[as.matrix(AS3tmp[,1:2])]<-AS3tmp$x
+refmin<-array(apply(AS3,1,min,na.rm=T),dim(AS3))
+AS3[is.na(AS3)]<-refmin[is.na(AS3)]
+#AS2[10,1]<-AS2[10,2]# to account for observation process
+
+
+
+
 names(by1agg)<-c("Area","Subyear","Lat","Lon","C")
-by1agg<-by1agg[by1agg$C>5,]
+#              c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
+numbersbyarea<-c(  0,    1,    10,     0,     1,      1,     0,      0,      10,   1)
+by1agg<-by1agg[by1agg$C>numbersbyarea[by1agg$Area],]
 
 #AS<-aggregate(rep(1,nrow(by1agg)),by=list(by1agg$Area),sum)
 #AreaSize<-AS$x/mean(AS$x)
@@ -51,6 +73,14 @@ by1agg<-by1agg[by1agg$C>5,]
 AS<-aggregate(rep(1,nrow(by1agg)),by=list(by1agg$Area),sum)
 AS<-AS$x
 AS<-AS/mean(AS)
+
+AS2tmp<-aggregate(rep(1,nrow(by1agg)),by=list(by1agg$Area,by1agg$Subyear),sum)
+AS2<-array(NA,c(length(Base@areas),Base@ns))
+AS2[as.matrix(AS2tmp[,1:2])]<-AS2tmp$x
+refmin<-array(apply(AS2,1,min,na.rm=T),dim(AS2))
+AS2[is.na(AS2)]<-refmin[is.na(AS2)]
+AS2[10,1]<-AS2[10,2]# to account for observation process
+
 #AreaSize<-array(NA,c(Base@nr,Base@ns))
 #AreaSize[as.matrix(AS[,1:2])]<-AS[,3]
 #AreaSize<-AreaSize/mean(AreaSize,na.rm=T)
@@ -72,11 +102,11 @@ Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL", 
 type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg",  "nr",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 Fnam<-c("JP LL",     "USA LL", "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL","ES LL", "ES BB")   # Fleet names for graphing
 
-FleetID<-c("012",      "025",   "025",    "004",  "021",    "016",      "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",       "LL",    "RR",     "RR",   "TP",    "TP",       "BB")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',       "nr",    "nr",     'kg',   "kg",    "kg",       "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+FleetID<-c("012",      "025",   "025",    "004",  "021",    "016",      "021",  "023", "024",  "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",       "LL",    "RR",     "RR",   "TP",     "TP",       "BB",   "PS",  "PS",    "PS")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',       "nr",    "nr",     'kg',   "kg",     "kg",       "kg",   "kg",  "kg",    "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR", "CA LL",  "MA TP",    "ES BB")   # Fleet names for graphing
+Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR", "ES TP",  "MA TP",  "ES BB","OTH PS","ES PS")   # Fleet names for graphing
 
 cpue<-new('list')
 
@@ -180,7 +210,7 @@ addMI<-TRUE
 
 if(addMI){
 
-  MIwt<-2
+  MIwt<-5
   CPUEind<-read.csv("Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv")#read.csv("Data/Raw/Task2/T2_errcheck.csv")
 
   CPUEind<-CPUEind[CPUEind$Year>=Base@years[1]&CPUEind$Year<=Base@years[2],]
@@ -216,7 +246,7 @@ SA[as.matrix(SAint[,1:2])]<-SAint[,3]
 
 # Create a pseudo area for interaction with time PArea
 #         c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
-Parea_conv<-c(1,    1,    2,     1,    3,      3,      4,      4,     4,      4)
+Parea_conv<-c(1,    2,    2,     1,    3,      3,      4,      4,     4,      5)
 #Parea_conv<-c(1,1,2,1,3,4,3,5,5,5)
 Parea<-Parea_conv[CPUE$Area]
 CPUE<-cbind(CPUE,Parea)
@@ -237,15 +267,12 @@ pred<-predict(out,newdat)
 #newdat2$Fleet<-as.factor("1")
 #pred<-predict(out,newdat2)
 
-
 ind<-as.matrix(expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr))
-MI[[1]][ind]<-exp(pred)*AS[ind[,3]]#AreaSize[ind[,3:2]]
-
-#for(i in 1:Base@ns)MI[[1]][,i,]<-MI[[1]][,i,]/mean(MI[[1]][,i,])
+#MI[[1]][ind]<-exp(pred)*AS[ind[,3]]#AreaSize[ind[,3:2]]
+MI[[1]][ind]<-exp(pred)*AS2[ind[,3:2]]  # AS = 1x1 just by area  AS2 = 1x1 by area and seson   AS3 = 5x5 by area and season
 
 
 if(ploto)plotindex2(Base,pCPUE=MI[[1]]) # Figure 4
-
 
 
 for(a in 1:Base@nr){for(q in 1:Base@ns){
@@ -254,9 +281,7 @@ for(a in 1:Base@nr){for(q in 1:Base@ns){
 }}
 
 
-
 #for(i in 1:Base@ns)MI[[1]][,i,]<-MI[[1]][,i,]/mean(MI[[1]][,i,])
-
 
 if(ploto)plotindex2(Base,MI[[1]]) # Figure 5
 
