@@ -277,7 +277,7 @@ Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating mode
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/200,   1/50 ,  1,         1/3000,   50,    1,      1,       5,        2,     1,      20,     0      ) # SSB index for each population
+Base@LHw<-c(1/200,   1/50 ,  1,         1/3000,   50,    1,      1,       25,        2,     1,      20,     0      ) # SSB index for each population
 
 
 # --- Initial Values ------
@@ -311,13 +311,14 @@ Base@OMfactors<-list("Mimicking","the", "2014 assessments")
 # Save the base OMI  ------
 
 OMI<-Base
-OMI<-MatM_Ref(OMI,1)
+#OMI<-MatM_Ref(OMI,1)
 M3write(OMI,OMdir=paste0(getwd(),"/M3"))  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 #M3write(OMI,datfile="C:/M3/M3.dat")  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 
 save(OMI,file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
 save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
 
+# make_fit_reports(dirs="C:/Users/Tom/Documents/GitHub/abft-mse/M3",addlab=TRUE)
 
 # ==== END =======================================================================================
 

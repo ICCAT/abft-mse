@@ -154,22 +154,22 @@ SampCatch2<-function(C,nCAAobs){
   nsubyears<-dims[5]
   nareas<-dims[6]
   nfleets<-dims[7]
-  
+
   out<- array(NA,c(nsim,nyears,nsubyears,nareas,nfleets,nages))
-  
+
   for(ss in 1:nsim){
     for(yy in 1:nyears){
       for(suby in 1:nsubyears){
         for(rr in 1:nareas){
           for(ff in 1:nfleets){
-            
+
             Csampo<-apply(C[ss,,,yy,suby,rr,ff],2,sum,na.rm=T)
             Csampo[Csampo<0]<-0.00000001
             #assign("Csampot",Csampo,envir=globalenv()) # debugging
             #assign("nsampt",nSamp[ss],envir=globalenv()) # debugging
             if(sum(Csampo)==0)Csampo<-rep(1/nages,nages)
             out[ss,yy,suby,rr,ff,]<-ceiling(rmultinom(1,size=nCAAobs[ss],Csampo))
-            
+
           }
         }
       }
@@ -257,6 +257,7 @@ MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c
   wFM[FMind]<-FM[FMind]*Nr[FMind[,c(1,2,5,3)]]
   wFM2<-apply(wFM,c(1,2,4,5),mean)
   wFM2<-apply(wFM2,c(1,4),sum) #what is the F at age profile?
+  wFM2<-wFM2/apply(wFM2,1,max)
   # matplot(t(wFM2),type='l',xlab="Age",ylab="F"); legend('topright',legend=c("East","West"),bty='n',text.col=c("black","red"))
 
 
@@ -316,7 +317,7 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
     #Rs[i]<-Rtemp/R0
   }
 
-  MSY<-sum(Wa*N*exp(Z/2)*(1-exp(-Z))*(q*Fa)/Z)
+  MSY<-sum(Wa*N*(1-exp(-Z))*(q*Fa)/Z)
   #MSY<-sum(Wa*N*(1-exp(-Z))*(q*Fa)/Z)
 
   #print(c(max(Fa),MSY/BMSY,MSY,BMSY/B0))
@@ -325,138 +326,6 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
     return(-MSY)
   }else{
     return(c(MSY,max(q*Fa),MSY/BMSY,BMSY,SSBMSY,BMSY/B0,SSBMSY/SSB0,Rtemp/R0))
-  }
-
-}
-
-
-getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F){
-
-  h<-0.2+1/(1+exp(-pars[1]))*0.8
-  R0<-exp(pars[2])
-
-  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
-
-  if(plot){
-    ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
-    SSB2<-seq(0,R0*SSBpR,length.out=500)
-    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
-    lines(SSB2,recpred2,col='blue')
-    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
-    abline(h=c(R0,R0*h),lty=2,col='red')
-    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
-  }
-
-  if(mode==1){
-    #return(sum(((recpred-rec)/10000)^2))
-    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,6,log=T)) # add a vague prior on h = 0.6
-    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
-  }else{
-    return(rec-recpred)
-  }
-
-}
-
-getBH_R0<-function(pars,SSB,rec,SSBpR,h,mode=1,plot=F){
-
-  R0<-exp(pars[1])
-
-  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
-
-  if(plot){
-    ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
-    SSB2<-seq(0,R0*SSBpR,length.out=500)
-    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
-    lines(SSB2,recpred2,col='blue')
-    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
-    abline(h=c(R0,R0*h),lty=2,col='red')
-    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
-  }
-
-  if(mode==1){
-    #return(sum(((recpred-rec)/10000)^2))
-    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T)))
-    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
-  }else{
-    return(rec-recpred)
-  }
-
-}
-
-getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F){
-
-  inflect<-exp(pars[1])/(1+exp(pars[1]))
-  R0<-exp(pars[2])
-  SSB0<-R0*SSBpR
-
-  recpred<-rep(R0,length(SSB))
-  cond<-SSB<inflect*SSB0
-  recpred[cond]<-R0*SSB[cond]/(SSB0*inflect)
-
-
-  if(plot){
-    ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
-    SSB2<-seq(0,R0*SSBpR,length.out=500)
-    recpred2<-rep(R0,length(SSB2))
-    cond<-SSB2<inflect*SSB0
-    recpred2[cond]<-R0*SSB2[cond]/(SSB0*inflect)
-
-    lines(SSB2,recpred2,col='blue')
-    abline(v=c(0.2*SSB0,inflect*SSB0,SSB0),lty=2,col='red')
-    h<-0.2/inflect
-    R0h<-R0*h
-    abline(h=c(R0,R0h),lty=2,col='red')
-
-    legend('topright',legend=c(paste0("Inflec. = ",round(inflect,3)),paste0("lnR0 = ",round(log(R0),3)),paste0("eqiv h = ",round(h,3))),bty='n')
-  }
-
-  if(mode==1){
-    #return(sum(((recpred-rec)/10000)^2))
-    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,4,log=T))
-    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
-  }else{
-    return(rec-recpred)
-  }
-
-}
-
-getHS_R0<-function(pars,SSB,rec,SSBpR,h=0.98,mode=1,plot=F){
-
-  inflect<-0.2/h#exp(pars[1])/(1+exp(pars[1]))
-  R0<-exp(pars[1])
-  SSB0<-R0*SSBpR
-
-  recpred<-rep(R0,length(SSB))
-  cond<-SSB<inflect*SSB0
-  recpred[cond]<-R0*SSB[cond]/(SSB0*inflect)
-
-
-  if(plot){
-    ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
-    SSB2<-seq(0,R0*SSBpR,length.out=500)
-    recpred2<-rep(R0,length(SSB2))
-    cond<-SSB2<inflect*SSB0
-    recpred2[cond]<-R0*SSB2[cond]/(SSB0*inflect)
-
-    lines(SSB2,recpred2,col='blue')
-    abline(v=c(0.2*SSB0,inflect*SSB0,SSB0),lty=2,col='red')
-    h<-0.2/inflect
-    R0h<-R0*h
-    abline(h=c(R0,R0h),lty=2,col='red')
-
-    legend('topright',legend=c(paste0("Inflec. = ",round(inflect,3)),paste0("lnR0 = ",round(log(R0),3)),paste0("eqiv h = ",round(h,3))),bty='n')
-  }
-
-  if(mode==1){
-    return(sum(((recpred-rec)/10000)^2))
-    #return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T)))
-    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
-  }else{
-    return(rec-recpred)
   }
 
 }
@@ -669,7 +538,75 @@ timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East"
 }
 
 
-SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
+
+getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
+
+  h<-0.2+1/(1+exp(-pars[1]))*0.8
+
+  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
+    abline(h=c(R0,R0*h),lty=2,col='red')
+    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,6,log=T)) # add a vague prior on h = 0.6
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+
+getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
+
+  inflect<-exp(pars[1])/(1+exp(pars[1]))
+  SSB0<-R0*SSBpR
+
+  recpred<-rep(R0,length(SSB))
+  cond<-SSB<inflect*SSB0
+  recpred[cond]<-R0*SSB[cond]/(SSB0*inflect)
+
+
+  if(plot){
+    ord<-order(SSB)
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    recpred2<-rep(R0,length(SSB2))
+    cond<-SSB2<inflect*SSB0
+    recpred2[cond]<-R0*SSB2[cond]/(SSB0*inflect)
+
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*SSB0,inflect*SSB0,SSB0),lty=2,col='red')
+    h<-0.2/inflect
+    R0h<-R0*h
+    abline(h=c(R0,R0h),lty=2,col='red')
+
+    legend('topright',legend=c(paste0("Inflec. = ",round(inflect,3)),paste0("lnR0 = ",round(log(R0),3)),paste0("eqiv h = ",round(h,3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,4,log=T))
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+
+
+SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",SSB0=NA){
 
   blocksize<-sum(out$RDblock==1)
 
@@ -685,56 +622,40 @@ SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
 
   if(plot)par(mfrow=c(1,out$np),mai=c(0.4,0.5,0.1,0.05),omi=c(0.5,0.5,0.01,0.01))
 
+  lnR0<-rep(NA,out$np)
+
   for(pp in out$np:1){
 
-    R0temp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
+    Rectemp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
+    R0temp<-mean(Rectemp/(out$SSB[pp,yrs,out$spawns[pp]]/out$SSB0[pp]))
 
     SSBpR=sum(exp(-cumsum(c(0,out$M_age[1:(out$na-1)])))*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
     SSB=out$SSB[pp,yrs,out$spawns[pp]]
     rec=out$muR[pp]*exp(out$lnRD[pp,paryrs])
+    R0<-out$SSB0[pp]/SSBpR
+    lnR0[pp]<-log(R0)
 
     #fscale<-getSteepness(pars,SSB=SSB,rec=rec, SSBpR=SSBpR,mode=1,plot=F)
     #opt<-nlm(getSR,p=pars,typsize=c(0.5,log(R0temp)),fscale=fscale,hessian=T,print.level=2,
 
     if(type=="BH"){
 
-      if(just_R0){
-        pars<-log(R0temp) # guess / starting values
-        opt[[pp]]<-optim(pars,getBH_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50),hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1,plot=F)
-        devs<-getBH_R0(opt[[pp]]$par,SSB,rec,SSBpR,h=h,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
+      pars<-0.5 # guess / starting values
+      opt[[pp]]<-optim(pars,getBH,method="L-BFGS-B",lower=-6,upper=6., hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F,R0=R0)
 
-      }else{
-        pars<-c(0.5,log(R0temp)) # guess / starting values
-        opt[[pp]]<-optim(pars,getBH,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
+      devs<-getBH(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot,R0=R0)
+      resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
 
-        devs<-getBH(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-      }
 
     }else if(type=="HS"){
 
-      if(just_R0){
+      pars<--0.5 # guess / starting values
+      opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F,R0=R0)
 
-        pars<-log(R0temp) # guess / starting values
-        opt[[pp]]<-optim(pars,getHS_R0,method="L-BFGS-B",lower=log(R0temp/50),upper=log(R0temp*50), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,h=h,mode=1, plot=F)
-
-        devs<-getHS_R0(opt[[pp]]$par,SSB,rec,SSBpR,h=h,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-
-      }else{
-
-        pars<-c(-0.5,log(R0temp)) # guess / starting values
-        opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
-                         SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F)
-
-        devs<-getHS(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot)
-        resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
-
-      }
+      devs<-getHS(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot,R0=R0)
+      resid[[pp]]<-data.frame(yrs=yrs,SSB=SSB,rec=rec,devs=devs)
 
     }
 
@@ -746,46 +667,22 @@ SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",just_R0=F,h=0.98){
 
   if(type=="BH"){
 
-    if(just_R0){
 
-      logith<-rep(-log(1/((h-0.2)/0.8)-1),out$np)
-      lnR0<-sapply(opt,FUN=function(x)x$par[1])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
+    logith<-sapply(opt,FUN=function(x)x$par[1])#0.2+1/(1+exp(-sapply(opt,FUN=function(x)x$par[1])))*0.8
+    VC<-lapply(opt,FUN=function(x)solve(x$hessian))
 
-      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
+    if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
 
-    }else{
-
-      logith<-sapply(opt,FUN=function(x)x$par[1])#0.2+1/(1+exp(-sapply(opt,FUN=function(x)x$par[1])))*0.8
-      lnR0<-sapply(opt,FUN=function(x)x$par[2])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logith,lnR0=lnR0,VC=VC,resid=resid))
-
-    }
   }else if(type=="HS"){
 
-    if(just_R0){
+    logitinflect<-sapply(opt,FUN=function(x)x$par[1])
+    VC<-lapply(opt,FUN=function(x)solve(x$hessian))
 
-      inflect<-0.2/rep(h,out$np)
-      logitinflect<--log(1/inflect-1)
-      lnR0<-sapply(opt,FUN=function(x)x$par[1])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
-
-    }else{
-
-      logitinflect<-sapply(opt,FUN=function(x)x$par[1])
-      lnR0<-sapply(opt,FUN=function(x)x$par[2])
-      VC<-lapply(opt,FUN=function(x)solve(x$hessian))
-
-      if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
-
-    }
+    if(!quiet)return(list(type=rep(type,out$np),par1=logitinflect,lnR0=lnR0,VC=VC,resid=resid))
 
   }
 
 }
+
 
 
