@@ -5,10 +5,10 @@
 
 # --- Set working directory ------
 
-setwd("C:/ABT-MSE/")#setwd("C:/Users/tcar_/OneDrive/Documents/GitHub/abft-mse")
+setwd("C:/ABT-MSE/")#setwd("C:/Users/tcar_/Documents/GitHub/abft-mse")
 source("Source/MSE_source.r")
 source("Source/Objects.r")
-MPind<-read.csv("Data/Processed/MP Indices/MP indices compiled.csv")
+MPind<-read.csv("Data/Processed/MP Indices/MP indices compiled assessment 2017.csv")
 
 
 # --- Create a bad observation error model

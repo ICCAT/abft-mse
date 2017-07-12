@@ -2,65 +2,65 @@
 # August 2016
 # R Script for formatting PSAT data
 
-# --- Matt Lauretta --- GBYP - DFO - NOAA - WWF - Unimar - FCP - CB - IEO - AZTI - UCA 
+# --- Matt Lauretta --- GBYP - DFO - NOAA - WWF - Unimar - FCP - CB - IEO - AZTI - UCA
 
-#dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_09292016.csv",sep="")) # 
-dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_15APR2017.csv",sep=""))
+dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_09292016.csv",sep="")) #
+#dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_15APR2017.csv",sep=""))
 #dat<-AssignAge(dat,Base) # assign approximate ages bases on cohort slicing from eastern growth (needs only to get at rough age groups)
 
 dat<-dat[dat$Days_Area>0,]
 
-  
+
 #AllPSATo<-read.csv(paste(getwd(),"/Data/Raw/PSAT/ALL_BFT_ElectronicTags_01122015.csv",sep=""))
 
 expandtrack<-function(dat){
-  
+
   datstr<-dat
-  org<-c("CAR", "E_ATL","E_MED",  "GOM","GSL","NC_ATL", "NE_ATL", "SC_ATL", "SE_ATL", "W_ATL",  "W_MED") 
-  nu<-c(   2,     8,      10,       1,    4,     6,        7,        5,         9,      3,        10)# 
-  #got to here 
+  org<-c("CAR", "E_ATL","E_MED",  "GOM","GSL","NC_ATL", "NE_ATL", "SC_ATL", "SE_ATL", "W_ATL",  "W_MED")
+  nu<-c(   2,     8,      10,       1,    4,     6,        7,        5,         9,      3,        10)#
+  #got to here
   dat$Stock_Area<-nu[match(dat$Stock_Area,org)]
-  dat$Start_Date<-as.POSIXct(dat$Start_Date, format = "%m/%d/%Y", tz = "UTC") 
-  dat$End_Date<-as.POSIXct(dat$End_Date, format = "%m/%d/%Y", tz = "UTC") 
-  
+  dat$Start_Date<-as.POSIXct(dat$Start_Date, format = "%m/%d/%Y", tz = "UTC")
+  dat$End_Date<-as.POSIXct(dat$End_Date, format = "%m/%d/%Y", tz = "UTC")
+
   cond<-is.na(dat$Start_Date)
-  dat$Start_Date[cond]<-as.POSIXct(datstr$Start_Date[cond], format = "%m/%d/%Y", tz = "UTC") 
-  dat$End_Date[cond]<-as.POSIXct(datstr$End_Date[cond], format = "%m/%d/%Y", tz = "UTC") 
- 
+  dat$Start_Date[cond]<-as.POSIXct(datstr$Start_Date[cond], format = "%m/%d/%Y", tz = "UTC")
+  dat$End_Date[cond]<-as.POSIXct(datstr$End_Date[cond], format = "%m/%d/%Y", tz = "UTC")
+
   getlb<-function(x,vec){
     vec<-c(0,vec)
     max((1:length(vec))[x>vec])
   }
   #       TagID Area Date
-  
+
   age<-sapply(dat$Length_cm,getlb,vec=Base@len_age[1,,1])
   agew<-sapply(dat$Weight_kg,getlb,vec=Base@wt_age[1,,1])
   age[is.na(age)]<-agew[is.na(age)]
-  
+
   ageclass<-Base@ma[age]
   dat<-cbind(dat,ageclass)
-  
+
   dat<-subset(dat,!is.na(dat$ageclass))
-  
+
   for(r in 1:nrow(dat)){
-    
+
     nd<-as.integer((dat$End_Date[r]-dat$Start_Date[r])+1)
     Date<-dat$Start_Date[r]+days(0:(nd-1))
     Year<-as.numeric(format(Date,"%Y"))
-    Quarter<-ceiling(as.numeric(format(Date,"%m"))/3) 
+    Quarter<-ceiling(as.numeric(format(Date,"%m"))/3)
     TagID<-rep(as.character(dat$Tag_ID[r]),nd)
     Area<-rep(dat$Stock_Area[r],nd)
     AgeC<-rep(dat$ageclass[r],nd)
-    
+
     temp2<-data.frame(TagID,Area,Date,Year,Quarter,AgeC)
-    
+
     if(r==1)temp<-temp2
-    if(r>1)temp<-rbind(temp,temp2)  
-    
+    if(r>1)temp<-rbind(temp,temp2)
+
   }
-  
-  temp 
-  
+
+  temp
+
 }
 
 All<-expandtrack(dat)
@@ -71,20 +71,21 @@ mostfreq<-function(x){
   if(nrow(freq)>0){
     return(freq[which.max(freq$x),1])
   }else{
-    return(NA) 
-  }  
-} 
+    return(NA)
+  }
+}
 # As per M3 format population, subyear, time duration (quarters) til capture, from area, to area, N
 stk<-array(rep(1:Base@np,each=Base@nr),c(Base@nr,Base@np))
 ar<-array(rep(1:Base@nr,Base@np),c(Base@nr,Base@np))
 ExSpawn<-cbind(stk[Base@canspawn==1],ar[Base@canspawn==1])
+ExSpawn<-cbind(c(1,2,2),c(10,1,4))
 
 TagIDs<-unique(All$TagID)
 nTags<-length(TagIDs)
 tracks<-rep(0,6)
 
 for(i in 1:nTags){
-  
+
   dat<-subset(All,All$TagID==TagIDs[i])
   Trk<-aggregate(dat$Area,by=list(dat$Year,dat$Quarter,dat$AgeC),mostfreq)
   names(Trk)<-c("Year","Quarter","AgeClass","Area")
@@ -99,7 +100,7 @@ for(i in 1:nTags){
         temptrack<-c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j])
       }else{
         temptrack<-rbind(temptrack,c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j]))
-      }  
+      }
     }
     tracks<-rbind(tracks,temptrack)
   }
@@ -128,7 +129,7 @@ if(fortrialspec){
   restab<-as.data.frame(restab)
   names(restab)<-c("",Base@areanams,"",Base@areanams)
   write.csv(restab,file="G:/BFT MSE/Data/PSATtable.csv")
-  
+
 }
 
 

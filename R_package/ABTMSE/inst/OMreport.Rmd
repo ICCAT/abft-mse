@@ -15,6 +15,8 @@ fontsize: 10.5
 `r OMI@OMfactors[[2]]`   
 `r OMI@OMfactors[[3]]`    
 
+\newpage
+
 ###  Fits to CPUE indices of relative abundance
 ```{r CPUE fits, fig.width=7, fig.height=6.5,echo=FALSE}
 
@@ -25,7 +27,7 @@ Fleetnos<-as.vector(OMI@CPUEobs[firstrow,5])
 Seasons<-as.vector(OMI@CPUEobs[firstrow,2])
 Areas<-OMI@areanams[as.vector(OMI@CPUEobs[firstrow,3])]
 
-nrow<-ceiling(OMI@nCPUEq/2)
+nrow<-ceiling(OMI@nCPUEq/3)
 ncol<-ceiling(OMI@nCPUEq/nrow)
 
 par(mfcol=c(nrow,ncol),mai=c(0.3,0.3,0.1,0.01),omi=c(0.3,0.3,0.1,0.05))

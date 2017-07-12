@@ -17,10 +17,15 @@
 #' \item{areanams}{Full names of the various geographical areas}
 #' \item{area_defs}{A list of the polygons representing each of the areas (for plotting)}
 #' \item{Fleets}{A list object containing the definitions of the fleets}
+#' \item{A2}{Richards growth curve parameter}
 #' \item{L1}{Richards growth curve parameter}
 #' \item{L2}{Richards growth curve parameter}
 #' \item{K}{Richards growth curve parameter}
 #' \item{p}{Richards growth curve parameter}
+#' \item{t0}{VB growth curve parameter}
+#' \item{Linf}{VB growth curve parameter}
+#' \item{Lvar_a}{Length variability at length parameter}
+#' \item{Lvar_b}{Length variability at length parameter}
 #' \item{ageM}{Age at 50 percent maturity (not currently specified)}
 #' \item{ageMsd}{slope in the maturity ogive (not currently specified)}
 #' \item{mat}{maturity at age ogive [stock, age class, year]}
@@ -120,7 +125,8 @@ setClass("OMI",representation(
   # other slots --------------------------------------------------------------------------------------------------
   years="numeric", Hyears="numeric", areas='character',
   areanams='character', area_defs='list', Fleets='list',
-  L1='numeric',L2='numeric',K='numeric',p='numeric',
+  A2='numeric',L1='numeric',L2='numeric',K='numeric',p='numeric',
+  t0='numeric',Linf='numeric',Lvar_a='numeric',Lvar_b='numeric',
   ageM='numeric',ageMsd='numeric',mat='array',lenbins='numeric',
   # Inputs to M3 (in order) --------------------------------------------------------------------------------------
   nHy='integer', ny='integer', ns='integer',np='integer',na='integer',nr='integer',nf='integer',

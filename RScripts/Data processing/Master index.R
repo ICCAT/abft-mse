@@ -80,6 +80,10 @@ AS2[as.matrix(AS2tmp[,1:2])]<-AS2tmp$x
 refmin<-array(apply(AS2,1,min,na.rm=T),dim(AS2))
 AS2[is.na(AS2)]<-refmin[is.na(AS2)]
 AS2[10,1]<-AS2[10,2]# to account for observation process
+AS2[1,]<-AS2[1,]*2 # Med adjustment
+AS2[1,2]<-AS2[1,2]*2
+AS2[4,]<-AS2[4,]*5
+AS2[7,]<-AS2[7,]*3
 
 #AreaSize<-array(NA,c(Base@nr,Base@ns))
 #AreaSize[as.matrix(AS[,1:2])]<-AS[,3]
@@ -102,11 +106,11 @@ Gear<-c(   "LL",     "LL",       "RR",     "LL",      "TP",     "TP",     "HL", 
 type<-c(   'nr',     'nr',       'kg',     "kg",      "kg",     "kg",     "kg",  "nr",     "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 Fnam<-c("JP LL",     "USA LL", "CA RR",  "CA LL",  "MA TP",  "ES TP",  "ES HL","ES LL", "ES BB")   # Fleet names for graphing
 
-FleetID<-c("012",      "025",   "025",    "004",  "021",    "016",      "021",  "023", "024",  "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
-Gear<-c(   "LL",       "LL",    "RR",     "RR",   "TP",     "TP",       "BB",   "PS",  "PS",    "PS")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
-type<-c(   'nr',       "nr",    "nr",     'kg',   "kg",     "kg",       "kg",   "kg",  "kg",    "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
+FleetID<-c("012",      "025",   "025",    "004",  "004", "021",    "016",      "021",  "023", "024",  "021") # Fleet code#FleetID<-c("012JP00","004CA00","005TW00","025US00","025US01","004CA00","021ES00","016MA00","021ES00","021ES00") # Fleet code
+Gear<-c(   "LL",       "LL",    "RR",     "RR",   "LL",  "TP",     "TP",       "BB",   "PS",  "PS",    "PS")          # Gear group code#Gear<-c(   "LL",    "TL",      "LL",     "LL",     "LL",     "RR",     "LL",     "TP",     "TP",     "HL")          # Gear group code
+type<-c(   'nr',       "nr",    "nr",     'kg',   "kg",  "kg",     "kg",       "kg",   "kg",  "kg",    "kg")                                       # Unit#type<-c(   'nr',    "kg",      "kg",     'nr',     "nr",     'kg',     "kg",     "kg",     "kg",     "kg")                                       # Unit
 
-Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR", "ES TP",  "MA TP",  "ES BB","OTH PS","ES PS")   # Fleet names for graphing
+Fnam<-c("JP LL",      "US LL",  "US RR",  "CA RR", "CA LL", "ES TP",  "MA TP",  "ES BB","OTH PS","ES PS")   # Fleet names for graphing
 
 cpue<-new('list')
 
@@ -210,7 +214,7 @@ addMI<-TRUE
 
 if(addMI){
 
-  MIwt<-5
+  MIwt<-50
   CPUEind<-read.csv("Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv")#read.csv("Data/Raw/Task2/T2_errcheck.csv")
 
   CPUEind<-CPUEind[CPUEind$Year>=Base@years[1]&CPUEind$Year<=Base@years[2],]
@@ -246,7 +250,7 @@ SA[as.matrix(SAint[,1:2])]<-SAint[,3]
 
 # Create a pseudo area for interaction with time PArea
 #         c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
-Parea_conv<-c(1,    2,    2,     1,    3,      3,      4,      4,     4,      5)
+Parea_conv<-c(1,    2,    3,     1,    3,      3,      4,      4,     4,      5)
 #Parea_conv<-c(1,1,2,1,3,4,3,5,5,5)
 Parea<-Parea_conv[CPUE$Area]
 CPUE<-cbind(CPUE,Parea)
@@ -254,7 +258,7 @@ CPUE<-cbind(CPUE,Parea)
 for(i in c(1,2,3,8,9))CPUE[,i]<-as.factor(as.character(CPUE[,i]))
 wt<-as.numeric(as.character(CPUE$N))
 #out<-glm(log(CPUE)~Year*Area*Subyear+Fleet,data=CPUE,weights=wt)
-out<-glm(log(CPUE)~Year*Area+Subyear*Area+Fleet,data=CPUE,weights=wt)
+out<-glm(log(CPUE)~Year*Parea+Subyear*Parea+Fleet,data=CPUE,weights=wt)
 
 
 newdat<-expand.grid(1:(Base@years[2]-Base@years[1]+1),1:Base@ns,1:Base@nr,1)

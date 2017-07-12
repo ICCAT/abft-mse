@@ -28,7 +28,7 @@
 
 setwd("C:/ABT-MSE/")
 # setwd("C:/Users/Tom/Documents/GitHub/abft-mse")
-# setwd("C:/Users/tcar_/OneDrive/Documents/GitHub/abft-mse")
+# setwd("C:/Users/tcar_/Documents/abft-mse")
 
 
 # --- Source MSE functions and objects ------
@@ -101,7 +101,7 @@ Base@sdur<-rep(1/Base@ns,Base@ns) # the duration of each subyear - we make these
 #Base@nZeq<-as.integer(40)
 Base@nydist<-as.integer(10)
 #Base@nyeq<-as.integer(15)
-yblock<-3 # the duration of recruitment deviation blocks
+yblock<-2 # the duration of recruitment deviation blocks
 Base@RDblock<-rep(1:100,each=yblock)[1:Base@ny]
 Base@nRD<-max(Base@RDblock)
 
@@ -269,7 +269,7 @@ Base@mov1<-mov1
 
 # --- Relating to likelihood functions ------
 
-Base@CobsCV<-rep(0.2,Base@nf)         # CV on seasonal catch observations by area
+Base@CobsCV<-rep(0.1,Base@nf)         # CV on seasonal catch observations by area
 Base@CPUEobsCV<-rep(0.1,Base@nCPUEq) # CV on seasonal CPUE observations by area
 Base@IobsCV<-rep(0.25,Base@nI)        # CV on fishery independent indices
 Base@RDCV<-2/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
@@ -277,8 +277,8 @@ Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating mode
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/200,   1/50 ,  1,         1/3000,   50,    1,      1,       25,        2,     1,      20,     0      ) # SSB index for each population
-
+Base@LHw<-c(1/100,   1/5 ,   1,         1/200,   50,    50,      1,        5,        1/10,     1,      10,     0      ) # SSB index for each population
+# good last fit was 0.05 CobsCV and 1/500 LHw for catch component
 
 # --- Initial Values ------
 
@@ -318,8 +318,8 @@ M3write(OMI,OMdir=paste0(getwd(),"/M3"))  # Store this base operating model in t
 save(OMI,file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
 save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
 
-# make_fit_reports(dirs="C:/Users/Tom/Documents/GitHub/abft-mse/M3",addlab=TRUE)
-
+# make_fit_reports(dirs="C:/Users/tcar_/Documents/abft-mse/M3",addlab=TRUE)
+# pin_from_par("C:/Users/tcar_/Documents/abft-mse/M3")
 # ==== END =======================================================================================
 
 

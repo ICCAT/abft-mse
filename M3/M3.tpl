@@ -260,15 +260,16 @@ PARAMETER_SECTION
 	// -- Estimated parameters --
 	//init_bounded_vector lnR0(1,np,11.,17.,1);                 // Unfished recruitment
 	init_bounded_vector lnmuR(1,np,9.5,18.,1);                  // Historical mean recruitment 
-	init_bounded_vector lnHR1(1,np,-3,3,1);                      // Historical mean recruitment 
-	init_bounded_vector lnHR2(1,np,-3,3,1);                      // Historical mean recruitment 
+	init_bounded_vector lnHR1(1,np,-2,2,1);                      // Historical mean recruitment 
+	init_bounded_vector lnHR2(1,np,-2,2,1);                      // Historical mean recruitment 
 	init_bounded_matrix selpar(1,nsel,1,seltype,-2.,2.,1);      // Selectivity parameters
-	init_bounded_dev_vector lnRD1(1,nRD,-8.,8.,1);
-	init_bounded_dev_vector lnRD2(1,nRD,-8.,8.,1);
+	init_bounded_dev_vector lnRD1(1,nRD,-2.,2.,1);
+	init_bounded_dev_vector lnRD2(1,nRD,-2.,2.,1);
 	init_bounded_vector movest(1,nMP,-6.,6.,1);                 // Movement parameters
 	init_bounded_vector lnqE(1,nE,-6.,1.,1);                    // q estimates for E fleets
         init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. indices
         init_bounded_vector lnqCPUE(1,nCPUEq,-6.,4.,1);             // q estimates for Fish. Dep. indices
+	init_bounded_dev_vector Fmod(1,ns*nr,-2,2,2);               // F modifier by season and area
 	
 	LOCAL_CALCS
 	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
@@ -291,6 +292,8 @@ PARAMETER_SECTION
         number objPSAT2;                            // PSAT tags with uncertain stock of origin
         number objSRA;                              // The penalty for F exceeding Fmax 
         number objSSB;                              // The prior on current SSB
+        number objFmod;                             // The Fmod prior
+        number objRat;                              // The SSB ratio prior
 
         // -- Transitions --
         5darray N(1,np,1,ny,1,ns,1,na,1,nr);        // Stock numbers
@@ -756,8 +759,9 @@ FUNCTION calcF
           int ss=Eobs(i,2);    // Subyear
           int rr=Eobs(i,3);    // Region
 	  int ff=Eobs(i,4);    // Fleet
+	  int ll=(ss-1)*nr+rr; // position in Fmod
 	     
-	  FL(yy)(ss)(rr)(ff)= sel(ff)*Eobs(i,6)*qE(ff);  // Calculate fishing mortality rate at length 
+	  FL(yy)(ss)(rr)(ff)= sel(ff)*Eobs(i,6)*qE(ff)*mfexp(Fmod(ll));  // Calculate fishing mortality rate at length 
 	    
 	}
 	
@@ -1352,6 +1356,8 @@ FUNCTION calcObjective
 	objPSAT.initialize();                   // PSAT tags certain stock of origin
 	objPSAT2.initialize();                  // PSAT tags w uncertain stock of origin
 	objSSB.initialize();                    // SSB prior
+	objFmod.initialize();                   // Fmod prior
+	objRat.initialize();                    // Ratio on unfished spawning stock size
 	
 	Ipred.initialize();                     // Predicted fishery-independent index
 	
@@ -1494,8 +1500,9 @@ FUNCTION calcObjective
 	  int ff=CLobs(i,4);   // Fleet type
 	  int ll=CLobs(i,5);   // Length class
 	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" l="<<ll<<" CLobs="<<CLobs(i,6)<<" CLpred="<<CLtotpred(yy,ss,rr,ff,ll)<<endl;
-	  
-	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
+	  //LHtemp=dnorm(log(CLtotpred(yy)(ss)(rr)(ff)(ll)),log(CLobs(i,6)),1);
+	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
+	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
 	  objCL+=LHtemp*LHw(4);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4);                                      // Weighted likelihood contribution
 	}
@@ -1593,7 +1600,7 @@ FUNCTION calcObjective
 	
 	for(int pp=1;pp<=np;pp++){  // Loop over stocks
 	 
-	  LHtemp=dnorm(lnHR1(pp),0.,RDCV); 
+	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
 	  LHtemp=dnorm(lnHR2(pp),0.,RDCV); 
@@ -1630,6 +1637,18 @@ FUNCTION calcObjective
 	
 	objG+=objSSB*LHw(12);
 	
+	for(int ll=1;ll<=ns*nr;ll++){
+	  
+	  objFmod+=dnorm(Fmod(ll),0,1);
+	  
+	}
+	
+	objG+=objFmod;
+	
+	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
+	
+	objG+=objRat*100;
+	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
@@ -1646,6 +1665,8 @@ FUNCTION calcObjective
 	if(verbose)cout<<"selectivity prior "<<objsel<<endl;  // Report Rec dev likelihood component
 	if(verbose)cout<<"SRA penalty "<<objSRA*LHw(11)<<endl;// Report penalty for excessive F in SRA
 	if(verbose)cout<<"SSB penalty "<<objSSB<<endl;        // Report penalty for current SSB prior
+	if(verbose)cout<<"Fmod prior "<<objFmod<<endl;        // Report penalty for Fmod prior
+	if(verbose)cout<<"SSB0 ratio prior"<<objRat<<endl;    // Report penalty for unfished SSB ratio (East / West)
 	if(verbose)cout<<"Global objective "<<objG<<endl;     // Report Global objective function
 	
   }
@@ -1963,7 +1984,7 @@ REPORT_SECTION
 
 RUNTIME_SECTION
     maximum_function_evaluations 5000
-    convergence_criteria 1.e-5
+    convergence_criteria 1.e-4
 
 
 TOP_OF_MAIN_SECTION

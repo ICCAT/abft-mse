@@ -1,3 +1,9 @@
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+    #include <cfenv>
+    #include <cstdlib>
+  #endif
+#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -106,15 +112,16 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
 {
   initializationfunction();
   lnmuR.allocate(1,np,9.5,18.,1,"lnmuR");
-  lnHR1.allocate(1,np,-3,3,1,"lnHR1");
-  lnHR2.allocate(1,np,-3,3,1,"lnHR2");
+  lnHR1.allocate(1,np,-2,2,1,"lnHR1");
+  lnHR2.allocate(1,np,-2,2,1,"lnHR2");
   selpar.allocate(1,nsel,1,seltype,-2.,2.,1,"selpar");
-  lnRD1.allocate(1,nRD,-8.,8.,1,"lnRD1");
-  lnRD2.allocate(1,nRD,-8.,8.,1,"lnRD2");
+  lnRD1.allocate(1,nRD,-2.,2.,1,"lnRD1");
+  lnRD2.allocate(1,nRD,-2.,2.,1,"lnRD2");
   movest.allocate(1,nMP,-6.,6.,1,"movest");
   lnqE.allocate(1,nE,-6.,1.,1,"lnqE");
   lnqI.allocate(1,nI,-2.3,2.3,1,"lnqI");
   lnqCPUE.allocate(1,nCPUEq,-6.,4.,1,"lnqCPUE");
+  Fmod.allocate(1,ns*nr,-2,2,2,"Fmod");
 	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
 	  //cout<<nodemax<<endl;
   nodes.allocate(1,nodemax,"nodes");
@@ -171,6 +178,14 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   objSSB.allocate("objSSB");
   #ifndef NO_AD_INITIALIZE
   objSSB.initialize();
+  #endif
+  objFmod.allocate("objFmod");
+  #ifndef NO_AD_INITIALIZE
+  objFmod.initialize();
+  #endif
+  objRat.allocate("objRat");
+  #ifndef NO_AD_INITIALIZE
+  objRat.initialize();
   #endif
   N.allocate(1,np,1,ny,1,ns,1,na,1,nr,"N");
   #ifndef NO_AD_INITIALIZE
@@ -621,7 +636,8 @@ void model_parameters::calcF(void)
           int ss=Eobs(i,2);    // Subyear
           int rr=Eobs(i,3);    // Region
 	  int ff=Eobs(i,4);    // Fleet
-	  FL(yy)(ss)(rr)(ff)= sel(ff)*Eobs(i,6)*qE(ff);  // Calculate fishing mortality rate at length 
+	  int ll=(ss-1)*nr+rr; // position in Fmod
+	  FL(yy)(ss)(rr)(ff)= sel(ff)*Eobs(i,6)*qE(ff)*mfexp(Fmod(ll));  // Calculate fishing mortality rate at length 
 	}
         for(int yy=1; yy<=ny;yy++){                    // Loop over years
 	  for(int ss=1;ss<=ns;ss++){                   // Loop over seasons
@@ -961,6 +977,8 @@ void model_parameters::calcObjective(void)
 	objPSAT.initialize();                   // PSAT tags certain stock of origin
 	objPSAT2.initialize();                  // PSAT tags w uncertain stock of origin
 	objSSB.initialize();                    // SSB prior
+	objFmod.initialize();                   // Fmod prior
+	objRat.initialize();                    // Ratio on unfished spawning stock size
 	Ipred.initialize();                     // Predicted fishery-independent index
 	dvariable LHtemp;                       // Temporary store of the calculated likelihood values
         double tiny=1E-10;                      // Create a small constant to avoid log(0) error
@@ -1047,7 +1065,9 @@ void model_parameters::calcObjective(void)
 	  int ff=CLobs(i,4);   // Fleet type
 	  int ll=CLobs(i,5);   // Length class
 	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" l="<<ll<<" CLobs="<<CLobs(i,6)<<" CLpred="<<CLtotpred(yy,ss,rr,ff,ll)<<endl;
-	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
+	  //LHtemp=dnorm(log(CLtotpred(yy)(ss)(rr)(ff)(ll)),log(CLobs(i,6)),1);
+	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
+	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
 	  objCL+=LHtemp*LHw(4);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4);                                      // Weighted likelihood contribution
 	}
@@ -1107,7 +1127,7 @@ void model_parameters::calcObjective(void)
 	  }
         }  
 	for(int pp=1;pp<=np;pp++){  // Loop over stocks
-	  LHtemp=dnorm(lnHR1(pp),0.,RDCV); 
+	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
 	  LHtemp=dnorm(lnHR2(pp),0.,RDCV); 
@@ -1130,6 +1150,12 @@ void model_parameters::calcObjective(void)
 	  objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);
 	}
 	objG+=objSSB*LHw(12);
+	for(int ll=1;ll<=ns*nr;ll++){
+	  objFmod+=dnorm(Fmod(ll),0,1);
+	}
+	objG+=objFmod;
+	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
+	objG+=objRat*100;
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
@@ -1144,6 +1170,8 @@ void model_parameters::calcObjective(void)
 	if(verbose)cout<<"selectivity prior "<<objsel<<endl;  // Report Rec dev likelihood component
 	if(verbose)cout<<"SRA penalty "<<objSRA*LHw(11)<<endl;// Report penalty for excessive F in SRA
 	if(verbose)cout<<"SSB penalty "<<objSSB<<endl;        // Report penalty for current SSB prior
+	if(verbose)cout<<"Fmod prior "<<objFmod<<endl;        // Report penalty for Fmod prior
+	if(verbose)cout<<"SSB0 ratio prior"<<objRat<<endl;    // Report penalty for unfished SSB ratio (East / West)
 	if(verbose)cout<<"Global objective "<<objG<<endl;     // Report Global objective function
   }
 }
@@ -1397,7 +1425,7 @@ void model_parameters::set_runtime(void)
   dvector temp1("{5000}");
   maximum_function_evaluations.allocate(temp1.indexmin(),temp1.indexmax());
   maximum_function_evaluations=temp1;
-  dvector temp("{1.e-5}");
+  dvector temp("{1.e-4}");
   convergence_criteria.allocate(temp.indexmin(),temp.indexmax());
   convergence_criteria=temp;
 }
@@ -1440,12 +1468,31 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+std::feclearexcept(FE_ALL_EXCEPT);
+  #endif
+#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+bool failedtest = false;
+if (std::fetestexcept(FE_DIVBYZERO))
+  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
+if (std::fetestexcept(FE_INVALID))
+  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
+if (std::fetestexcept(FE_OVERFLOW))
+  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
+if (std::fetestexcept(FE_UNDERFLOW))
+  { cerr << "Error: Detected underflow." << endl; }
+if (failedtest) { std::abort(); } 
+  #endif
+#endif
     return 0;
 }
 

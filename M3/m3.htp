@@ -139,6 +139,7 @@ private:
   param_init_bounded_vector lnqE;
   param_init_bounded_vector lnqI;
   param_init_bounded_vector lnqCPUE;
+  param_init_bounded_dev_vector Fmod;
   param_vector nodes;
   param_number prior_function_value;
   param_number likelihood_function_value;
@@ -155,6 +156,8 @@ private:
   param_number objPSAT2;
   param_number objSRA;
   param_number objSSB;
+  param_number objFmod;
+  param_number objRat;
   param_5array N;
   param_matrix NLA;
   param_matrix surv;

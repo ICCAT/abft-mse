@@ -277,7 +277,7 @@ MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c
 getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
 
   if(grepl("BH",SRtype)){
-    h=0.2+1/(1+exp(-fixpar))*0.8
+    h=0.6+1/(1+exp(-fixpar))*0.4
   }else if(grepl("HS",SRtype)){
     inflect=1/(1+exp(-fixpar))
   }
@@ -541,7 +541,7 @@ timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East"
 
 getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
-  h<-0.2+1/(1+exp(-pars[1]))*0.8
+  h<-0.6+1/(1+exp(-pars[1]))*0.4
 
   recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
 

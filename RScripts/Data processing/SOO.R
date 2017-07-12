@@ -27,11 +27,13 @@ SOO2<-aggregate(1-SOO$Prob.East,by=list(SOO$age,SOO$Year,SOO$Quarter,SOO$BFT_Are
 SOO1<-cbind(rep(1,nrow(SOO1)),SOO1)
 SOO2<-cbind(rep(2,nrow(SOO2)),SOO2)
 
-SOOtemp<-expand.grid(2,2,1,1:4,5,10) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+SOOtempGOM<-expand.grid(2,1:3,1,1:4,1,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+SOOtempMed<-expand.grid(1,1:3,1,1:4,10,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+SOOtempSEATL<-expand.grid(1,1:3,1,1:4,9,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
 
-names(SOO1)<-names(SOO2)<-names(SOOtemp)<-c("p","aa","y","s","r","N")
+names(SOO1)<-names(SOO2)<-names(SOOtempGOM)<-names(SOOtempMed)<-names(SOOtempSEATL)<-c("p","aa","y","s","r","N")
 
-SOOobs<-rbind(SOO1,SOO2,SOOtemp)
+SOOobs<-rbind(SOO1,SOO2,SOOtempGOM,SOOtempMed,SOOtempSEATL)
 SOOobs<-SOOobs[SOOobs$N>0,]
 SOOobs<-as.matrix(SOOobs)
 
