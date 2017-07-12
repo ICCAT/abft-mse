@@ -10,7 +10,11 @@ dat<-assign_area(dat,Base@area_defs)
 dat<-AssignFleet(dat,Base@Fleets)
 dat$Year<-dat$Year-Base@years[1]+1
 
-Cobs<-dat[,c(1,4,8,9,7)]
+Cpa<-dat[,c(1,4,8,9,7)]
+
+Cobs<-aggregate(Cpa$Catch,by=list(Cpa$Year,Cpa$Quarter,Cpa$Area,Cpa$Fleet),sum)
+names(Cobs)<-names(Cpa)
+
 Cobs[,5]<-Cobs[,5]*1000 # convert tonnes to kg
 save(Cobs,file=paste(getwd(),"/Data/Processed/Conditioning/Cobs",sep=""))
 

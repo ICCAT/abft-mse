@@ -15,6 +15,18 @@ fontsize: 10.5
 `r OMI@OMfactors[[2]]`   
 `r OMI@OMfactors[[3]]`    
 
+### Area definitions for operating model:
+
+```{r plotareas,echo=F,message=F,warning=F,error=F,fig.width=3, fig.height=2.5}
+
+par(mar=rep(0.01,4))
+areaplot(OMI)
+
+```
+
+Figure 1. Area definitions for operating model 
+
+
 \newpage
 
 ###  Fits to CPUE indices of relative abundance
@@ -32,11 +44,13 @@ ncol<-ceiling(OMI@nCPUEq/nrow)
 
 par(mfcol=c(nrow,ncol),mai=c(0.3,0.3,0.1,0.01),omi=c(0.3,0.3,0.1,0.05))
 
+VBi<-out$VB/rep(apply(out$VB,4,mean),each=out$ny*out$ns*out$nr)
+
 for(i in 1:OMI@nCPUEq){
   
   tempdat<-subset(OMI@CPUEobs,OMI@CPUEobs[,4]==i)  
   obs<-as.numeric(tempdat[,6])
-  pred<-exp(out$lnqCPUE[i])*out$VB[tempdat[,c(1,2,3,5)]]
+  pred<-exp(out$lnqCPUE[i])*VBi[tempdat[,c(1,2,3,5)]]
   yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
   plot(yrs,obs,pch=19,col="#99999995",ylim=c(0,max(obs,pred)),ylab="",xlab="")
   lines(yrs,pred,lwd=1.5,col="#0000ff95")
@@ -52,7 +66,7 @@ mtext("Year",1,line=1,outer=T)
 
 ```
 
-Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
+Figure 2. Assessment CPUE index fits (blue line = predicted, grey dots = index)
 
 
 ### Tracking of 'master' abundance indices (for generatingstandardized effort, partial Fs) ###
@@ -71,7 +85,7 @@ Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
   pch<-19
   cex<-0.8
   lwd=1.5
-  pcols<-c("#ff000080","#0000ff80","#00ff0080","#ffff0080")
+  pcols<-c("Red","Blue","#00ff0080","#ffff0080")
   
 
   popnams=c("East","West")
@@ -92,8 +106,8 @@ Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
   RAIpP<-apply(B,c(5,3,2,1),sum) # r s y p
   RAIpP<-RAIpP/muRAIp
 
-  par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.4,0.05))
-  ylim=c(0,max(RAIo,RAIp,na.rm=T))
+  par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.1,0.05))
+  ylim=c(0,max(RAIp,na.rm=T))
   ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
   xs<-pretty(seq(yrs[1],yrs[ny],length.out=6))
  
@@ -103,8 +117,8 @@ Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
   
     for(r in 1:nr){
     
-      plot(yrs,RAIo[r,s,],col="#99999980",pch=pch,ylim=ylim,axes=F)
-      lines(yrs,RAIp[r,s,],col="#ff00ff80",lwd=2)
+      #plot(yrs,RAIo[r,s,],col="#99999980",pch=pch,ylim=ylim,axes=F)
+      plot(yrs,RAIp[r,s,],col="purple",pch=pch,ylim=ylim,axes=F,lwd=2,type="l")
       for(p in 1:np){
         lines(yrs,RAIpP[r,s,,p],col=pcols[p],lwd=1.5)
       }
@@ -115,19 +129,19 @@ Figure 1. Assessment CPUE index fits (blue line = predicted, grey dots = index)
       if(s<(ns+1))axis(2,ys,NA)
       if(s==1)mtext(areanams[r],2,line=2.75)
       if(r==1)mtext(subyrnams[s],3,line=-0.5)
-      if(r==1&s==ns)legend('topright',legend=popnams,text.font=2,text.col=pcols[1:np],bty='n')
+      if(r==1&s==ns)legend('topright',legend=c("Total",popnams),text.font=2,text.col=c("purple",pcols[1:np]),bty='n')
       
-      mtext(plab[i],3,adj=0.02,line=0.09,cex=0.7)
+      mtext(plab[l],3,adj=0.02,line=-1.5,cex=0.7)
       l=l+1
     }
   
   }
 
   mtext("Year",1,outer=T,line=2)
-  mtext("Predicted (line) versus observed (point) relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
+  #mtext("Predicted relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
 ```
 
-Figure 2. 'Master index' tracking (implied fit): grey line is index, the purple line is both stocks combined. 
+Figure 3. Predicted seasonal and spatial biomass of Atlantic bluefin tuna. 
 
 ### SSB, recruitment and F comparison with 2014 assessment (by East/West area, not East/West stock) 
 
@@ -137,27 +151,31 @@ Figure 2. 'Master index' tracking (implied fit): grey line is index, the purple 
 Nind<-TEG(dim(out$N))
 SSB<-array(NA,dim(out$N))
 SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
-SSBsum<-apply(SSB[,,,,],c(2,3,5),sum) # SSB by year and area in spawning season
+SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
 SSBmu<-apply(SSBsum,c(1,3),mean)
 #sum(SSBmu[55,])==sum(SSBsum[55,,])/4 # Debug test
 muSSB<-array(NA,c(np,ny))
 muSSB[1,]<-apply(SSBmu*rep(c(0,0,0,0,1,1,1,1,1,1),each=out$ny),1,sum)
 muSSB[2,]<-apply(SSBmu*rep(c(1,1,1,1,0,0,0,0,0,0),each=out$ny),1,sum)
 
+muSSBc<-apply(muSSB,2,sum)
+
 #SSBmu<-apply(apply(SSB,c(1,2,4,5),mean),c(1,2,4),sum)
 EWareas<-array(NA,c(out$np,out$ny,out$nr))
 EWareas[1,,]<-rep(c(0,0,0,0,1,1,1,1,1,1),each=out$ny)
 EWareas[2,,]<-rep(c(1,1,1,1,0,0,0,0,0,0),each=out$ny)
 #muSSB<-apply(SSBmu*EWareas,1:2,sum)
-muSSBc<-apply(muSSB,2,sum)
-
 
 # Harvest rate calculation
+
+#C_all_fts<-array(apply(out$Cpred,1:3,sum),dim(out$Cpred))
+#Ubf<-out$Cpred/(out$Cpred+out$VB)
+#muU<-apply(Ubf,sum)/apply(out$Cpred,c(1,3),sum)
+
 CatEW<-array(rep(apply(out$Cpred,c(1,3),sum),out$np),dim(EWareas))*EWareas
 BEW<-array(rep(apply(out$B,c(1,3),mean),out$np),dim(EWareas))*EWareas
-U<-apply(CatEW,1:2,sum)/(apply(BEW,1:2,sum)+apply(CatEW,1:2,sum))
-
-
+#U<-apply(CatEW,1:2,sum)/(apply(BEW,1:2,sum)+apply(CatEW,1:2,sum))
+U<-apply(CatEW,1:2,sum)/apply(BEW,1:2,sum)
 
 #sind<-c("E","W")
 snams<-c("East","West")
@@ -233,7 +251,7 @@ lines(tdat$Year,as.numeric(as.character(tdat$Val)),col="#00ff0090",lwd=2)
   
 ```
 
-Figure 3.Regional comparisons (45deg W) with 2014 stock assessment.
+Figure 3.Regional comparisons (45deg W) with 2014 stock assessment. Note that annual estimates from the operating model are calculated from average of the seasonal predictions. Harvest rates from the operating model are based on total stock biomass not vulnerable biomass which is fleet specific (and hence may not be comparable with assessments).  
 
 ### Stock-recruitment relationships (by East/West stock)
 

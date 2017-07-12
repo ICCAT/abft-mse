@@ -167,6 +167,7 @@ private:
   param_matrix SSBdist;
   param_matrix spawnr;
   param_4array VB;
+  param_4array VBi;
   param_3array B;
   param_vector SSB0;
   param_vector D;

@@ -82,7 +82,6 @@ AS2[is.na(AS2)]<-refmin[is.na(AS2)]
 AS2[10,1]<-AS2[10,2]# to account for observation process
 AS2[1,]<-AS2[1,]*2 # Med adjustment
 AS2[1,2]<-AS2[1,2]*2
-AS2[4,]<-AS2[4,]*5
 AS2[7,]<-AS2[7,]*3
 
 #AreaSize<-array(NA,c(Base@nr,Base@ns))

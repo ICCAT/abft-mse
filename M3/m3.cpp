@@ -1,9 +1,3 @@
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-    #include <cfenv>
-    #include <cstdlib>
-  #endif
-#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -222,6 +216,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   VB.allocate(1,ny,1,ns,1,nr,1,nf,"VB");
   #ifndef NO_AD_INITIALIZE
     VB.initialize();
+  #endif
+  VBi.allocate(1,ny,1,ns,1,nr,1,nf,"VBi");
+  #ifndef NO_AD_INITIALIZE
+    VBi.initialize();
   #endif
   B.allocate(1,ny,1,ns,1,nr,"B");
   #ifndef NO_AD_INITIALIZE
@@ -689,6 +687,7 @@ void model_parameters::initModel(void)
 	CLtotfrac.initialize();        // Total catch fractions (length class) = 0
 	CTA.initialize();              // Temporary catch at age = 0
 	VB.initialize();               // Vulnerable biomass = 0
+	VBi.initialize();              // Vulnerable biomass index = 0
 	D.initialize();                // Spawning Stock depletion = 0
 	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
@@ -1012,7 +1011,7 @@ void model_parameters::calcObjective(void)
 	    for(int yy=1;yy<=ny;yy++){
 	      for(int ss=1;ss<=ns;ss++){	    	        
 	        for(int rr=1;rr<=nr;rr++){
-	           VB(yy,ss,rr,ff)/=CPUEtemp; // normalise VB into an index with mean 1
+	           VBi(yy,ss,rr,ff) = VB(yy,ss,rr,ff)/CPUEtemp; // normalise VB into an index with mean 1
 	        }
 	      }
 	    }
@@ -1024,7 +1023,7 @@ void model_parameters::calcObjective(void)
 	    int ii=CPUEobs(i,4);    // index No ID
 	    int ff=CPUEobs(i,5);    // fleet index ID
 	    //cout<<yy<<"-"<<ss<<"-"<<rr<<"-"<<ii<<"-"<<ff<<"-"<<CPUEobs(i,5)<<endl;
-	    CPUEtemp=VB(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	    CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
 	    LHtemp=dnorm(log(CPUEtemp+tiny),log(CPUEobs(i,6)+tiny),CPUEobsCV(ii));    // Log-normal LHF
 	    objCPUE+=LHtemp*LHw(2);                                                   // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(2);                                                      // Weighted likelihood contribution
@@ -1154,8 +1153,8 @@ void model_parameters::calcObjective(void)
 	  objFmod+=dnorm(Fmod(ll),0,1);
 	}
 	objG+=objFmod;
-	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
-	objG+=objRat*100;
+	//objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
+	//objG+=objRat*100;
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
@@ -1468,31 +1467,12 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-std::feclearexcept(FE_ALL_EXCEPT);
-  #endif
-#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-bool failedtest = false;
-if (std::fetestexcept(FE_DIVBYZERO))
-  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
-if (std::fetestexcept(FE_INVALID))
-  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
-if (std::fetestexcept(FE_OVERFLOW))
-  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
-if (std::fetestexcept(FE_UNDERFLOW))
-  { cerr << "Error: Detected underflow." << endl; }
-if (failedtest) { std::abort(); } 
-  #endif
-#endif
     return 0;
 }
 

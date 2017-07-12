@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	        v1.3                                   
+//                                	           	        v1.5                                   
 //
-//                                   		          5th December 2016                           
+//                                   		          5th July 2017                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -305,6 +305,7 @@ PARAMETER_SECTION
         matrix SSBdist(1,np,1,nr);                  // A temporary vector storing the spatial distribution of spawning biomass
         matrix spawnr(1,np,1,nr);                   // The fraction of spawning in each area
         4darray VB(1,ny,1,ns,1,nr,1,nf);            // Vulnerable biomass
+        4darray VBi(1,ny,1,ns,1,nr,1,nf);           // Vulnerable biomass index
         3darray B(1,ny,1,ns,1,nr);                  // Biomass
         vector SSB0(1,np);                          // Unfished spawning stock biomass
         vector D(1,np);                             // Stock depletion SSB now / SSB0
@@ -842,6 +843,7 @@ FUNCTION initModel
 	CLtotfrac.initialize();        // Total catch fractions (length class) = 0
 	CTA.initialize();              // Temporary catch at age = 0
 	VB.initialize();               // Vulnerable biomass = 0
+	VBi.initialize();              // Vulnerable biomass index = 0
 	D.initialize();                // Spawning Stock depletion = 0
 	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
@@ -1415,7 +1417,7 @@ FUNCTION calcObjective
 	        
 	        for(int rr=1;rr<=nr;rr++){
 	        
-	           VB(yy,ss,rr,ff)/=CPUEtemp; // normalise VB into an index with mean 1
+	           VBi(yy,ss,rr,ff) = VB(yy,ss,rr,ff)/CPUEtemp; // normalise VB into an index with mean 1
 	        
 	        }
 	        
@@ -1435,7 +1437,7 @@ FUNCTION calcObjective
 	    	    
 	    //cout<<yy<<"-"<<ss<<"-"<<rr<<"-"<<ii<<"-"<<ff<<"-"<<CPUEobs(i,5)<<endl;
 	    
-	    CPUEtemp=VB(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	    CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
 	    LHtemp=dnorm(log(CPUEtemp+tiny),log(CPUEobs(i,6)+tiny),CPUEobsCV(ii));    // Log-normal LHF
 	    objCPUE+=LHtemp*LHw(2);                                                   // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(2);                                                      // Weighted likelihood contribution
@@ -1645,9 +1647,9 @@ FUNCTION calcObjective
 	
 	objG+=objFmod;
 	
-	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
+	//objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
 	
-	objG+=objRat*100;
+	//objG+=objRat*100;
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	
