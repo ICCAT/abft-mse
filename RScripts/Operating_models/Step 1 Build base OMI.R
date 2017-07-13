@@ -101,7 +101,7 @@ Base@sdur<-rep(1/Base@ns,Base@ns) # the duration of each subyear - we make these
 #Base@nZeq<-as.integer(40)
 Base@nydist<-as.integer(10)
 #Base@nyeq<-as.integer(15)
-yblock<-2 # the duration of recruitment deviation blocks
+yblock<-1 # the duration of recruitment deviation blocks
 Base@RDblock<-rep(1:100,each=yblock)[1:Base@ny]
 Base@nRD<-max(Base@RDblock)
 
@@ -244,10 +244,10 @@ Base@SOOobs<-SOOobs
 
 Base@nsel<-Base@nf
 
-Base@seltype<-c(rep(3,Base@nf-1),2) # all fleets have thompson (potentially) dome-shaped selectivity except the combined other fleet
-Base@seltype[Fleets$gearTC=="LL"]<-2 # set longline to asymptotic
-Base@seltype[Fleets$gearTC=="RR"]<-2 # set rod and reel to asymptotic
-Base@seltype[c(8,10)]<-2 # PSwestold TPwestold are currently estimated to be asymptotic..
+Base@seltype<-rep(3,Base@nf) # all fleets have thompson (potentially) dome-shaped selectivity except the combined other fleet
+Base@seltype[(1:length(Base@seltype))[Fleets$name%in%c("LLJPN","RRCan","PSWestOld","PSMedRec")]]<-2 # set longline to asymptotic
+#Base@seltype[Fleets$gearTC=="RR"]<-2 # set rod and reel to asymptotic
+#Base@seltype[c(8,10)]<-2 # PSwestold TPwestold are currently estimated to be asymptotic..
 
 Base@selind<-1:Base@nf # No selectivity mirroring - selectivities correspond to fleets
 Base@ratiolim<-c(0.1,0.4) # limits on the logistic slope paramter relative to position of inflection point
@@ -277,8 +277,8 @@ Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating mode
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/50,    1/5 ,   1,         1/1000,  5,     10,     1,       20,       5,      2,      10,     0      ) # SSB index for each population
-# good last fit was 0.05 CobsCV and 1/500 LHw for catch component
+Base@LHw<-c(1/50,    1/5 ,   1,         1/500,   3,     10,     1,       20,       5,      4,      10,     0      ) # SSB index for each population
+# good last fit was 1/1000 LHw for catch component
 
 # --- Initial Values ------
 

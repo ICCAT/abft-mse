@@ -28,9 +28,9 @@
 # ml the mean length of the length categories
 37.5 62.5 87.5 112.5 137.5 162.5 187.5 212.5 237.5 262.5 287.5 312.5 337.5 362.5 387.5
 # RDblock the RD parameter for each year
-1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9 10 10 11 11 12 12 13 13 14 14 15 15 16 16 17
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33
 # nRD the number of estimated recruitment strengths
-17
+33
 # iALK the age-length key by population and year p y a l
 0.2623073 0.7367012 0.0009914628 6.393895e-10 1.975871e-19 2.925875e-32 2.076141e-48 7.059308e-68 1.150195e-90 8.980173e-117 3.359712e-146 6.023146e-179 5.174267e-215 2.129994e-254 4.201572e-297
 0.0008192689 0.3886392 0.6074137 0.003127809 5.306568e-08 2.966231e-15 5.462783e-25 3.314673e-37 6.626515e-52 4.36463e-69 9.471691e-89 6.772131e-111 1.595295e-135 1.238153e-162 3.166106e-192
@@ -15404,7 +15404,7 @@
 # nsel, number of estimated selectivities
 14
 # seltype, 2:logistic, 3:Thompson
-2 2 3 3 3 3 3 2 3 2 3 2 2 2
+3 2 3 3 2 3 3 2 3 3 3 2 3 3
 # selind, which selectivity is assigned to each fleet
 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 # ratiolim, limits on logistic slope parameter relative to inflection point
@@ -15685,7 +15685,7 @@
 0.25 0.25
 0.25 0.25
 # RDCV, lognormal penalty on recruitment deviations
-0.7177406
+1
 # SSBprior, prior on current SSB
 1
 1
@@ -15694,7 +15694,7 @@
 # nLHw, number of likelihood components
 12
 # LHw,  likelihood components
-0.02 0.2 1 0.001 5 10 1 20 10 0.5 10 0
+0.02 0.2 1 0.002 3 10 1 20 5 3 10 0
 # muR_ini, initial values for mean historical recruitment
 1.4e+07 1750000
 # sel_ini, initial values for selectivity
