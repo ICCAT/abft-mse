@@ -277,7 +277,7 @@ Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating mode
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/50,    1/5 ,   1,         1/500,   3,     10,     1,       20,       5,      4,      10,     0      ) # SSB index for each population
+Base@LHw<-c(1/50,    1/5 ,   1,         1/500,   3,     10,     1,       20,       5,      3,      10,     0      ) # SSB index for each population
 # good last fit was 1/1000 LHw for catch component
 
 # --- Initial Values ------
