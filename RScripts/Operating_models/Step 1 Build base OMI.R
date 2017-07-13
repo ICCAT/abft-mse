@@ -269,15 +269,15 @@ Base@mov1<-mov1
 
 # --- Relating to likelihood functions ------
 
-Base@CobsCV<-rep(0.05,Base@nf)         # CV on seasonal catch observations by area
+Base@CobsCV<-rep(0.1,Base@nf)         # CV on seasonal catch observations by area
 Base@CPUEobsCV<-rep(0.1,Base@nCPUEq) # CV on seasonal CPUE observations by area
 Base@IobsCV<-rep(0.25,Base@nI)        # CV on fishery independent indices
-Base@RDCV<-2/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
+Base@RDCV<-1/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
 Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating models use fractions of other model estimated current SSB)
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
-#          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,     10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/100,   1/5 ,   1,         1/200,   50,    50,      1,        5,        1/10,     1/10,      10,     0      ) # SSB index for each population
+#          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
+Base@LHw<-c(1/50,    1/5 ,   1,         1/1000,  5,     10,     1,       20,       5,      2,      10,     0      ) # SSB index for each population
 # good last fit was 0.05 CobsCV and 1/500 LHw for catch component
 
 # --- Initial Values ------

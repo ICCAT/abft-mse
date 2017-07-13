@@ -1,3 +1,9 @@
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+    #include <cfenv>
+    #include <cstdlib>
+  #endif
+#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -109,9 +115,9 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   lnHR1.allocate(1,np,-2,2,1,"lnHR1");
   lnHR2.allocate(1,np,-2,2,1,"lnHR2");
   selpar.allocate(1,nsel,1,seltype,-2.,2.,1,"selpar");
-  lnRD1.allocate(1,nRD,-2.,2.,1,"lnRD1");
-  lnRD2.allocate(1,nRD,-2.,2.,1,"lnRD2");
-  movest.allocate(1,nMP,-6.,6.,1,"movest");
+  lnRD1.allocate(1,nRD,-6.,6.,1,"lnRD1");
+  lnRD2.allocate(1,nRD,-6.,6.,1,"lnRD2");
+  movest.allocate(1,nMP,-8.,8.,1,"movest");
   lnqE.allocate(1,nE,-6.,1.,1,"lnqE");
   lnqI.allocate(1,nI,-2.3,2.3,1,"lnqI");
   lnqCPUE.allocate(1,nCPUEq,-6.,4.,1,"lnqCPUE");
@@ -1129,13 +1135,13 @@ void model_parameters::calcObjective(void)
 	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
-	  LHtemp=dnorm(lnHR2(pp),0.,RDCV); 
+	  LHtemp=dnorm(lnHR2(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);  
 	}
 	// -- Movement parameters ---
 	for(int mm=1;mm<=nMP;mm++){
-	  LHtemp=dnorm(movest(mm),0.,2.5);        // Weak(ish) prior 
+	  LHtemp=dnorm(movest(mm),0.,2);        // Weak(ish) prior 
           objmov+=LHtemp*LHw(9);                  // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(9);                    // Weighted likelihood contribution
 	}
@@ -1153,8 +1159,8 @@ void model_parameters::calcObjective(void)
 	  objFmod+=dnorm(Fmod(ll),0,1);
 	}
 	objG+=objFmod;
-	//objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
-	//objG+=objRat*100;
+	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.15);
+	objG+=objRat*10;
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
@@ -1424,7 +1430,7 @@ void model_parameters::set_runtime(void)
   dvector temp1("{5000}");
   maximum_function_evaluations.allocate(temp1.indexmin(),temp1.indexmax());
   maximum_function_evaluations=temp1;
-  dvector temp("{1.e-4}");
+  dvector temp("{1.e-6}");
   convergence_criteria.allocate(temp.indexmin(),temp.indexmax());
   convergence_criteria=temp;
 }
@@ -1467,12 +1473,31 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+std::feclearexcept(FE_ALL_EXCEPT);
+  #endif
+#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+bool failedtest = false;
+if (std::fetestexcept(FE_DIVBYZERO))
+  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
+if (std::fetestexcept(FE_INVALID))
+  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
+if (std::fetestexcept(FE_OVERFLOW))
+  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
+if (std::fetestexcept(FE_UNDERFLOW))
+  { cerr << "Error: Detected underflow." << endl; }
+if (failedtest) { std::abort(); } 
+  #endif
+#endif
     return 0;
 }
 

@@ -15677,7 +15677,7 @@
 # movtype, the type of movement parameterization 1: gravity 2:markov matrix
 1
 # CobsCV, lognormal CV of the observed catches
-0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05 0.05
+0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1
 # CPUEobsCV, lognormal CV of the CPUE indices
 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1 0.1
 0.1 0.1 0.1 0.1
@@ -15685,7 +15685,7 @@
 0.25 0.25
 0.25 0.25
 # RDCV, lognormal penalty on recruitment deviations
-1.435481
+0.7177406
 # SSBprior, prior on current SSB
 1
 1
@@ -15694,7 +15694,7 @@
 # nLHw, number of likelihood components
 12
 # LHw,  likelihood components
-0.01 0.2 1 0.005 50 50 1 5 0.1 0.1 10 0
+0.02 0.2 1 0.001 5 10 1 20 10 0.5 10 0
 # muR_ini, initial values for mean historical recruitment
 1.4e+07 1750000
 # sel_ini, initial values for selectivity

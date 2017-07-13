@@ -263,9 +263,9 @@ PARAMETER_SECTION
 	init_bounded_vector lnHR1(1,np,-2,2,1);                      // Historical mean recruitment 
 	init_bounded_vector lnHR2(1,np,-2,2,1);                      // Historical mean recruitment 
 	init_bounded_matrix selpar(1,nsel,1,seltype,-2.,2.,1);      // Selectivity parameters
-	init_bounded_dev_vector lnRD1(1,nRD,-2.,2.,1);
-	init_bounded_dev_vector lnRD2(1,nRD,-2.,2.,1);
-	init_bounded_vector movest(1,nMP,-6.,6.,1);                 // Movement parameters
+	init_bounded_dev_vector lnRD1(1,nRD,-6.,6.,1);
+	init_bounded_dev_vector lnRD2(1,nRD,-6.,6.,1);
+	init_bounded_vector movest(1,nMP,-8.,8.,1);                 // Movement parameters
 	init_bounded_vector lnqE(1,nE,-6.,1.,1);                    // q estimates for E fleets
         init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. indices
         init_bounded_vector lnqCPUE(1,nCPUEq,-6.,4.,1);             // q estimates for Fish. Dep. indices
@@ -1605,7 +1605,7 @@ FUNCTION calcObjective
 	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
-	  LHtemp=dnorm(lnHR2(pp),0.,RDCV); 
+	  LHtemp=dnorm(lnHR2(pp),0.,RDCV/5); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);  
 	
@@ -1614,7 +1614,7 @@ FUNCTION calcObjective
 	
 	for(int mm=1;mm<=nMP;mm++){
 	     
-	  LHtemp=dnorm(movest(mm),0.,2.5);        // Weak(ish) prior 
+	  LHtemp=dnorm(movest(mm),0.,2);        // Weak(ish) prior 
           objmov+=LHtemp*LHw(9);                  // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(9);                    // Weighted likelihood contribution
 	  
@@ -1647,9 +1647,9 @@ FUNCTION calcObjective
 	
 	objG+=objFmod;
 	
-	//objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.2);
+	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.15);
 	
-	//objG+=objRat*100;
+	objG+=objRat*10;
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	
@@ -1986,7 +1986,7 @@ REPORT_SECTION
 
 RUNTIME_SECTION
     maximum_function_evaluations 5000
-    convergence_criteria 1.e-4
+    convergence_criteria 1.e-6
 
 
 TOP_OF_MAIN_SECTION
