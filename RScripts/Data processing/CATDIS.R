@@ -12,6 +12,10 @@ dat$Year<-dat$Year-Base@years[1]+1
 
 Cpa<-dat[,c(1,4,8,9,7)]
 
+CbyY<-aggregate(Cpa$Catch,by=list(Cpa$Year),sum)
+
+
+
 Cobs<-aggregate(Cpa$Catch,by=list(Cpa$Year,Cpa$Quarter,Cpa$Area,Cpa$Fleet),sum)
 names(Cobs)<-names(Cpa)
 

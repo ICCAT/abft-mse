@@ -246,18 +246,11 @@ ADMBrep<-function(repfile,st,ADMBdim,quiet=T)  tomt(array(scan(repfile,skip=st,n
 MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c("East","West"),SRtypes=c('BH','BH')){
   # FML                                    # s, r, f, l
   # iALK                                   # p, a, l
+
   np<-dim(wt_age)[1]
-  Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
-  Find<-TEG(dim(Ftot))
-  Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
-  FM<-apply(Ftot,c(1,2,3,4,6), sum) # p, s, r, f, a    (sum over lengths)
-  Nr<-N/apply(N,1,mean)             # p, s, a, r      (normalized to mean 1)
-  wFM<-array(NA,dim(FM))            # p, s, r, f, a (weighted fishing mortality rate at age)
-  FMind<-TEG(dim(FM))
-  wFM[FMind]<-FM[FMind]*Nr[FMind[,c(1,2,5,3)]]
-  wFM2<-apply(wFM,c(1,2,4,5),mean)
-  wFM2<-apply(wFM2,c(1,4),sum) #what is the F at age profile?
-  wFM2<-wFM2/apply(wFM2,1,max)
+
+  Fprof<-Fageprof(FML, iALK, N,wt_age)
+  wFM2<-Fprof/apply(Fprof,1,max)
   # matplot(t(wFM2),type='l',xlab="Age",ylab="F"); legend('topright',legend=c("East","West"),bty='n',text.col=c("black","red"))
 
 
@@ -285,13 +278,17 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
   q<-exp(lnq)
   na<-length(Ma)
 
-  N0<-exp(-(cumsum(Ma)-Ma/2))*R0
+  surv<-exp(-cumsum(Ma))
+  N0<-surv*R0
   B0<-sum(N0*Wa)
+  B0<-B0+surv[na]*exp(-Ma[na])/(1-exp(Ma[na]))*Wa[na]
   SSB0<-sum(N0*Wa*mat)
+  SSB0<-SSB0+surv[na]*exp(-Ma[na])/(1-exp(Ma[na]))*Wa[na]*Ma[na]
+
   SSBpR<-SSB0/R0
 
   Z<-q*Fa+Ma
-  surv<-exp(-(cumsum(Z)-Z/2))
+  surv<-exp(-cumsum(Z))
   Rtemp<-R0/3
 
   # Rs<-Bs<-rep(NA,nits)
@@ -317,7 +314,7 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
     #Rs[i]<-Rtemp/R0
   }
 
-  MSY<-sum(Wa*N*(1-exp(-Z))*(q*Fa)/Z)
+  MSY<-sum(Wa*N*exp(Z)*(1-exp(-Z))*(q*Fa)/Z) # need to add back in losses due to Z
   #MSY<-sum(Wa*N*(1-exp(-Z))*(q*Fa)/Z)
 
   #print(c(max(Fa),MSY/BMSY,MSY,BMSY/B0))
@@ -511,7 +508,40 @@ meanFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East"
 }
 
 
-timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East","West")){
+Fageprof<-function(FML,iALK,N,wt_age){
+
+  np<-dim(wt_age)[1]
+  ns<-dim(FML)[1]
+  nr<-dim(FML)[2]
+  nf<-dim(FML)[3]
+  nl<-dim(FML)[4]
+  na<-dim(iALK)[2]
+
+  Fprof<-array(NA,c(np,na))
+
+  for(pp in 1:np){ # loops due to memory issues in sim test
+
+
+      Ftot<-array(NA,c(ns,nr,nf,nl,na))
+
+      Find<-TEG(dim(Ftot))
+      alkind<-cbind(rep(pp,nrow(Find)),Find[,5:4])
+      Ftot[Find]<-FML[Find[,1:4]]*iALK[alkind]
+
+      FM<-apply(Ftot,c(2,5), sum) # s, r, a    (sum over lengths)
+
+      Nw<-apply(N[pp,,,],3:2,sum)
+      Fw<-apply(FM*Nw,2,sum)/apply(Nw,2,sum)
+      Fprof[pp,]<-Fw
+
+  }
+
+  Fprof
+
+}
+
+
+timeFs<-function(FML,iALK,N,wt_age){
   # FML                                    # y, s, r, f, l
   # iALK                                   # p, y, a, l
   # N                                      # p, y, s, a, r
@@ -522,18 +552,43 @@ timeFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East"
   nf<-dim(FML)[4]
   nl<-dim(FML)[5]
   na<-dim(iALK)[3]
-  Ftot<-array(NA,c(ny,np,ns,nr,nf,nl,na)) # y, p, s, r, f, l, a
-  Find<-TEG(dim(Ftot))
-  Ftot[Find]<-FML[Find[,c(1,3:6)]]*iALK[Find[,c(2,1,7,6)]] # y p s r f a x p a l
-  FM<-apply(Ftot,c(1:5,7), sum) # y, p, s, r, f, a    (sum over lengths)
-  Cat<-array(NA,dim(FM))            # y, p, s, r, f, a (weighted fishing mortality rate at age)
-  FMind<-TEG(dim(FM))
-  Cat[FMind]<-(1-exp(-FM[FMind]))*N[FMind[,c(2,1,3,6,4)]] # y, p, s, r, f, a
-  sumCat<-apply(Cat,c(2,1,3,6),sum) # p, y, s, a
-  sumN<-apply(N,1:4,sum)            # p, y, s, a
-  UbyS<-sumCat/sumN
-  muU<-apply(UbyS,c(1,2,4),mean)   # p, y, a # not ideal mean U across seasons but very close to best
-  -log(1-apply(muU,1:2,max))  # p, y
+
+  Fap<-array(NA,c(np,ny))
+
+  for(pp in 1:np){ # loops due to memory issues in sim test
+    for(yy in 1:ny){
+
+      Ftot<-array(NA,c(ns,nr,nf,nl,na))
+
+      Find<-TEG(dim(Ftot))
+      FMLind<-cbind(rep(yy,nrow(Find)),Find[,c(1:4)])
+      alkind<-cbind(rep(pp,nrow(Find)),rep(yy,nrow(Find)),Find[,5:4])
+
+      Ftot[Find]<-FML[FMLind]*iALK[alkind] # y p s r f a x p a l
+      FM<-apply(Ftot,c(2,5), sum) # s, r, a    (sum over lengths)
+
+      Nw<-apply(N[pp,yy,,,],3:2,sum)
+      Fw<-apply(FM*Nw,2,sum)/apply(Nw,2,sum)
+      Fap[pp,yy]<-max(Fw)
+
+
+    }
+  }
+
+  Fap
+
+  #Ftot<-array(NA,c(ny,np,ns,nr,nf,nl,na)) # y, p, s, r, f, l, a
+  #Find<-TEG(dim(Ftot))
+  #Ftot[Find]<-FML[Find[,c(1,3:6)]]*iALK[Find[,c(2,1,7,6)]] # y p s r f a x p a l
+  #FM<-apply(Ftot,c(1:5,7), sum) # y, p, s, r, f, a    (sum over lengths)
+  #Cat<-array(NA,dim(FM))            # y, p, s, r, f, a (weighted fishing mortality rate at age)
+  #FMind<-TEG(dim(FM))
+  #Cat[FMind]<-(1-exp(-FM[FMind]))*N[FMind[,c(2,1,3,6,4)]] # y, p, s, r, f, a
+  #sumCat<-apply(Cat,c(2,1,3,6),sum) # p, y, s, a
+  #sumN<-apply(N,1:4,sum)            # p, y, s, a
+  #UbyS<-sumCat/sumN
+  #muU<-apply(UbyS,c(1,2,4),mean)   # p, y, a # not ideal mean U across seasons but very close to best
+  #-log(1-apply(muU,1:2,max))  # p, y
 
 }
 
@@ -548,7 +603,7 @@ getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
   if(plot){
     ord<-order(SSB)
     plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
-    SSB2<-seq(0,R0*SSBpR,length.out=500)
+    SSB2<-seq(0,max(R0*SSBpR,max(SSB)),length.out=500)
     recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
     lines(SSB2,recpred2,col='blue')
     abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
@@ -558,7 +613,7 @@ getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
   if(mode==1){
     #return(sum(((recpred-rec)/10000)^2))
-    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,6,log=T)) # add a vague prior on h = 0.6
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,2,log=T)) # add a vague prior on h = 0.8
     #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
   }else{
     return(rec-recpred)
@@ -606,7 +661,7 @@ getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
 
 
-SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",SSB0=NA){
+SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",R0p=NA){
 
   blocksize<-sum(out$RDblock==1)
 
@@ -622,18 +677,25 @@ SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",SSB0=NA){
 
   if(plot)par(mfrow=c(1,out$np),mai=c(0.4,0.5,0.1,0.05),omi=c(0.5,0.5,0.01,0.01))
 
-  lnR0<-rep(NA,out$np)
+  if(is.na(R0p[1]))R0p<-out$muR#*exp(out$lnHR1)
+
+  lnR0<-log(R0p)
 
   for(pp in out$np:1){
 
-    Rectemp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
-    R0temp<-mean(Rectemp/(out$SSB[pp,yrs,out$spawns[pp]]/out$SSB0[pp]))
-
-    SSBpR=sum(exp(-cumsum(c(0,out$M_age[1:(out$na-1)])))*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
+    #Rectemp<-mean(exp(out$lnRD[pp,1:2])*out$muR[pp]) # have a guess at R0 for initializing nlm
+    #R0temp<-mean(Rectemp/(out$SSB[pp,yrs,out$spawns[pp]]/SSB0[pp]))
+    surv<-exp(-cumsum(c(0,out$M_age[pp,1:(out$na-1)])))
+    SSBpR=sum(surv*out$mat_age[pp,]*out$wt_age[out$ny,,pp]) #SSBpR based on M, mat and growth
+    SSBpR=SSBpR+surv[out$na]*exp(-out$M_age[pp,out$na])/(1-exp(-out$M_age[pp,out$na]))*out$mat_age[pp,out$na]*out$wt_age[out$ny,out$na,pp]
+      #muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na)))*Fec(pp,aa)
     SSB=out$SSB[pp,yrs,out$spawns[pp]]
+    #SSB=apply(out$SSB[pp,yrs,],1,mean)
+
     rec=out$muR[pp]*exp(out$lnRD[pp,paryrs])
-    R0<-out$SSB0[pp]/SSBpR
-    lnR0[pp]<-log(R0)
+
+    R0<-R0p[pp]#SSB0[pp]/SSBpR
+
 
     #fscale<-getSteepness(pars,SSB=SSB,rec=rec, SSBpR=SSBpR,mode=1,plot=F)
     #opt<-nlm(getSR,p=pars,typsize=c(0.5,log(R0temp)),fscale=fscale,hessian=T,print.level=2,

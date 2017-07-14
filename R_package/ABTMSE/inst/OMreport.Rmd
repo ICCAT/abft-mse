@@ -69,7 +69,7 @@ mtext("Year",1,line=1,outer=T)
 Figure 2. Assessment CPUE index fits (blue line = predicted, grey dots = index)
 
 
-### Tracking of 'master' abundance indices (for generatingstandardized effort, partial Fs) ###
+### Predicted seasonal and spatial biomass of Atlantic bluefin tuna ###
 
 ```{r indexfit, fig.width=7, fig.height=9.5,echo=FALSE}
 
@@ -253,18 +253,18 @@ lines(tdat$Year,as.numeric(as.character(tdat$Val)),col="#00ff0090",lwd=2)
 
 Figure 3.Regional comparisons (45deg W) with 2014 stock assessment. Note that annual estimates from the operating model are calculated from average of the seasonal predictions. Harvest rates from the operating model are based on total stock biomass not vulnerable biomass which is fleet specific (and hence may not be comparable with assessments).  
 
-### Stock-recruitment relationships (by East/West stock)
+### Stock-recruitment relationships (R0 is unfished mean recruitment)
 
 ```{r Stock-recruitment, fig.width=5.5, fig.height=2.5,echo=FALSE}
 
- opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",SSB0=out$SSB0)
-
+ #opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR)
+ opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR*exp(out$lnHR1))
 
 ```
 
-Figure 4. Model predicted pairs of SSB and recruitment (with a fitted Bev Holt for illustration)
+Figure 4. Model predicted pairs of SSB and recruitment(with a fitted Bev Holt for illustration)
 
-### MSY reference points (by East/West stock)
+### MSY reference points (2013 for comparison with previous assessment)
 
 Table 1. Reference points by stock.
 
@@ -272,16 +272,15 @@ Table 1. Reference points by stock.
 
 res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
          wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-         R0s=exp(opt$lnR0), fixpars=opt$par1,SRtypes=rep("BH",2))
+         R0s=out$muR*exp(out$lnHR1), fixpars=opt$par1,SRtypes=rep("BH",2))
 
 refyr<-2013-OMI@years[1]+1
 
 Fap<-timeFs(FML=out$FL, iALK=out$iALK, N=out$N,
-         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-         R0s=exp(opt$lnR0), hs=out$h)
+         wt_age=t(out$wt_age[out$ny,,]))
 
 F_FMSY<-Fap[,refyr]/res[,2]
-SSB_SSBMSY<-(apply(out$SSB,1:2,mean)/res$SSBMSY)[,refyr]
+SSB_SSBMSY<-apply(out$SSB[,refyr,],1,mean)/res$SSBMSY
 res<-cbind(res,F_FMSY,SSB_SSBMSY)
 res[,c(2,3,6,7,8,9,10)]<-round(res[,c(2,3,6,7,8,9,10)],3)
 res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)

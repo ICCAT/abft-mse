@@ -476,15 +476,15 @@ FUNCTION calcSurvival
 	// -- Calculate survival --
 	for(int pp=1;pp<=np;pp++){                   // Loop over stocks      
 	 
-	  surv(pp,1)=1.;                             // Survival to age 1 is 100%
+	  //surv(pp,1)=1.;                             // Survival to age 1 is 100%
 	  
-	  for(int aa=1;aa<=(na-1);aa++){             // Loop over age classes
+	  for(int aa=1;aa<=na;aa++){             // Loop over age classes
 	    
-	    surv(pp,aa+1)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
+	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
 	  
 	  }                                          // End of age classes
 	
-	  surv(pp,na)*=exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // final plus group survival is multiplied by the indefinite intergral  
+	  //surv(pp,na)*=exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // final plus group survival is multiplied by the indefinite intergral  
 	
 	}                                            // End of stocks
 	
@@ -855,6 +855,15 @@ FUNCTION initModel
 	
 	}
 	
+	//cout<<Fec(1)<<endl;
+	//cout<<muR<<endl;
+	//cout<<lnHR1<<endl;
+	//cout<<surv(1)<<endl;
+	//cout<<sum(elem_prod(surv(1),Fec(1)))<<endl;
+	//cout<<SSB0<<endl;
+	//exit(1);
+	
+	
 	for(int pp=1;pp<=np;pp++){                              // Loop over stocks
 	
 	  // -- Initial guess at stock distribution -------------------------------------------
@@ -881,18 +890,20 @@ FUNCTION initModel
 	  }                                                     // End of years
 	 
  	  // -- Initial guess 
-	  for(int rr=1;rr<=nr;rr++){                                // Loop over areas
+	  
+	  for(int rr=1;rr<=nr;rr++){                            // Loop over areas
 	    
 	    for(int ss=1;ss<=ns;ss++){ 
 	    
 	      for(int aa=1;aa<=na;aa++){
 	        
 	        N(pp,1,ss,aa,rr)=mfexp(lnHR1(pp))*muR(pp)*surv(pp,aa)*stemp(pp,ss,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
-	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);              // Historical spawning stock biomass
+	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);           // Historical spawning stock biomass
 	        
 	      }                                                       // end of ages
 	      
 	      N(pp,1,ss,na,rr)+=mfexp(lnHR1(pp))*muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // Indefinite intergral for plus group
+	      hSSB(pp,1,ss)+=mfexp(lnHR1(pp))*muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na)))*Fec(pp,na);
 	      
 	    }                                                       // End of seasons
 	  

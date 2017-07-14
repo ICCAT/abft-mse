@@ -1,9 +1,3 @@
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-    #include <cfenv>
-    #include <cstdlib>
-  #endif
-#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -473,11 +467,11 @@ void model_parameters::calcSurvival(void)
   {
 	// -- Calculate survival --
 	for(int pp=1;pp<=np;pp++){                   // Loop over stocks      
-	  surv(pp,1)=1.;                             // Survival to age 1 is 100%
-	  for(int aa=1;aa<=(na-1);aa++){             // Loop over age classes
-	    surv(pp,aa+1)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
+	  //surv(pp,1)=1.;                             // Survival to age 1 is 100%
+	  for(int aa=1;aa<=na;aa++){             // Loop over age classes
+	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
 	  }                                          // End of age classes
-	  surv(pp,na)*=exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // final plus group survival is multiplied by the indefinite intergral  
+	  //surv(pp,na)*=exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // final plus group survival is multiplied by the indefinite intergral  
 	}                                            // End of stocks
 	if(debug)cout<<"--- Finished calcSurvival ---"<<endl;
   }
@@ -701,6 +695,13 @@ void model_parameters::initModel(void)
 	  SSB0(pp)=muR(pp)*mfexp(lnHR1(pp))*sum(elem_prod(surv(pp),Fec(pp)));     // Unfished Spawning Stock Biomass
 	  SSB0(pp)+=muR(pp)*mfexp(lnHR1(pp))*Fec(pp,na)*surv(pp,na)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // indefinite integral of surv added to get plus group SSB0
 	}
+	//cout<<Fec(1)<<endl;
+	//cout<<muR<<endl;
+	//cout<<lnHR1<<endl;
+	//cout<<surv(1)<<endl;
+	//cout<<sum(elem_prod(surv(1),Fec(1)))<<endl;
+	//cout<<SSB0<<endl;
+	//exit(1);
 	for(int pp=1;pp<=np;pp++){                              // Loop over stocks
 	  // -- Initial guess at stock distribution -------------------------------------------
 	  stemp(pp)(ns)=1./nr;                                  // Distribute a fish evenly over areas                     
@@ -716,13 +717,14 @@ void model_parameters::initModel(void)
 	    }                                                   // End of subyears
 	  }                                                     // End of years
  	  // -- Initial guess 
-	  for(int rr=1;rr<=nr;rr++){                                // Loop over areas
+	  for(int rr=1;rr<=nr;rr++){                            // Loop over areas
 	    for(int ss=1;ss<=ns;ss++){ 
 	      for(int aa=1;aa<=na;aa++){
 	        N(pp,1,ss,aa,rr)=mfexp(lnHR1(pp))*muR(pp)*surv(pp,aa)*stemp(pp,ss,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
-	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);              // Historical spawning stock biomass
+	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);           // Historical spawning stock biomass
 	      }                                                       // end of ages
 	      N(pp,1,ss,na,rr)+=mfexp(lnHR1(pp))*muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // Indefinite intergral for plus group
+	      hSSB(pp,1,ss)+=mfexp(lnHR1(pp))*muR(pp)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na)))*Fec(pp,na);
 	    }                                                       // End of seasons
 	  }                                                         // End of areas 
 	}                                                           // End of stocks
@@ -1473,31 +1475,12 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-std::feclearexcept(FE_ALL_EXCEPT);
-  #endif
-#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-bool failedtest = false;
-if (std::fetestexcept(FE_DIVBYZERO))
-  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
-if (std::fetestexcept(FE_INVALID))
-  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
-if (std::fetestexcept(FE_OVERFLOW))
-  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
-if (std::fetestexcept(FE_UNDERFLOW))
-  { cerr << "Error: Detected underflow." << endl; }
-if (failedtest) { std::abort(); } 
-  #endif
-#endif
     return 0;
 }
 
