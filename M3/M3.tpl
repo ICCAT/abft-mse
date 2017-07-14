@@ -1986,7 +1986,7 @@ REPORT_SECTION
 
 RUNTIME_SECTION
     maximum_function_evaluations 5000
-    convergence_criteria 1.e-6
+    convergence_criteria 1.e-9
 
 
 TOP_OF_MAIN_SECTION

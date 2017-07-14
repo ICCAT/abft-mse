@@ -339,10 +339,16 @@ M3write<-function(OMI,OMdir="C:/M3"){
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
 #' @examples
 #' #runM3p(1,"C:/ABT-MSE/M3")
-runM3p<-function(x,OMdir='C:/M3temp'){
+runM3p<-function(x,OMdir='C:/M3temp',hess=F){
   setwd(paste0(OMdir,"/",x))
-  system("M3.exe -est",wait=T,show.output.on.console = F)
-  return(paste("M3 ran at",OMdir[x]))
+  if(hess){
+    system("M3.exe",wait=T,show.output.on.console = F)
+    return(paste("M3 ran with hessian calculation at",OMdir[x]))
+  }else{
+    system("M3.exe -est",wait=T,show.output.on.console = F)
+    return(paste("M3 ran at",OMdir[x]))
+  }
+
 }
 
 #' Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)
@@ -351,10 +357,17 @@ runM3p<-function(x,OMdir='C:/M3temp'){
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
 #' @examples
 #' #runM3("C:/ABT-MSE/M3")
-runM3<-function(OMdir='C:/ABT-MSE/M3'){
+runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F){
   setwd(OMdir)
-  system("M3.exe -est",wait=T,show.output.on.console = F)
-  return(paste("M3 ran at",OMdir))
+
+  if(hess){
+    system("M3.exe",wait=T,show.output.on.console = F)
+    return(paste("M3 ran with hessian calculation at",OMdir[x]))
+  }else{
+    system("M3.exe -est",wait=T,show.output.on.console = F)
+    return(paste("M3 ran at",OMdir[x]))
+  }
+
 }
 
 

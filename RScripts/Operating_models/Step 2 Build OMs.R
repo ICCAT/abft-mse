@@ -25,6 +25,7 @@
 
 #rm(list=ls(all=TRUE))                  # Remove all existing objects from environment
 setwd("C:/ABT-MSE/")                   # The working location
+#setwd("C:/Users/tcar_/Documents/abft-mse")
 
 # Some toggles
 runinitialOM<-F
@@ -43,7 +44,7 @@ OMDir<-paste(getwd(),"/M3",sep="")
 
 # --- Set up the MSE design matrix
 
-all_levs<-list(c("1","2","3"),c("A","B"),c("I","II","III"))
+all_levs<-list(c("1","2","3"),c("A","B"),c("I","II","III","IV"))
 all_lnams<-list( c("1: West - Hockey stick, East - '83+ B-H h=0.98",
                    "2: West - B-H h estimated, East - '83+ B-H h=0.7",
                    "3: West - Hockey stock changes to B-H after 10 yrs, East - 83+ B-H with h=0.98 changes to '50-82 B-H with h=0.98 after 10 years"),
@@ -51,9 +52,10 @@ all_lnams<-list( c("1: West - Hockey stick, East - '83+ B-H h=0.98",
                  c("A: West - Current SSB is best estimate,  East - Current SSB is best estimate",
                    "B: West - Current SSB is 75% of best estimate, East - Current SSB is 50% of best estimate"),
 
-                  c("I: West - M by age, older maturity, East - M by age, younger maturity",
-                    "II: West - M by age, older maturity, East - M constant, older maturity",
-                    "III: West - M by age, younger maturity, East - M by age, younger maturity")
+                  c("I: West - younger spawning, East - younger spawning",
+                    "II: West - younger spawning, East - older spawning",
+                    "III: West - older spawning, East - younger spawning",
+                    "IV: West - older spawning, East - older spawning")
                )
 
 Design_Ref<-expand.grid(all_levs)                                               # The full design grid (all combinations) of the various factors and their levels
@@ -85,7 +87,7 @@ if(runinitialOM){
 # --- Build operating model objects and write them to folders ------------
 if(OMbuild){
 
-  for(i in 1:3){
+  for(i in 1:length(all_levs[[3]])){
 
     load(file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))       # reference base operating model
     OMcode<-paste0("1-A-",all_levs[[3]][i])
@@ -93,7 +95,7 @@ if(OMbuild){
     OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")          # the home directory for a new modified operating model
     if(!dir.exists(OMfolder))dir.create(OMfolder)                 # create the directory if necessary
 
-    OMI<-MatM_Ref(OMI,i)
+    OMI<-Mat_Ref(OMI,i)
 
     OMI@Name<-paste0(OMno,"/",nOMs," : ",OMcode)
     OMI@OMfactors<-as.list(LNames_Ref[OMno,])
@@ -110,6 +112,7 @@ if(OMbuild){
 }
 
 setwd("C:/ABT-MSE/")
+#setwd("C:/Users/tcar_/Documents/abft-mse")
 
 # --- Fit the 1-A-I, 1-A-II and 1-A-III operating models (~ 1 hour)  ----
 
@@ -139,7 +142,7 @@ foldernos<-match(OMnewcodes,OMcodes)           # The numbering of the folders
 # --- Copy - modify - paste -----------------
 if(OMbuild){
 
-  for(i in 1:3){
+  for(i in 1:length(all_levs[[3]])){
 
     load(file=paste0(getwd(),"/Objects/OMs/",reffoldernos[i],"/OMI"))       # load the reference operating model input object
     out<-M3read(paste0(getwd(),"/Objects/OMs/",reffoldernos[i],"/"))        # read the outputs of the fitted reference operating model

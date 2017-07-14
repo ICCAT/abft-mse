@@ -1430,7 +1430,7 @@ void model_parameters::set_runtime(void)
   dvector temp1("{5000}");
   maximum_function_evaluations.allocate(temp1.indexmin(),temp1.indexmax());
   maximum_function_evaluations=temp1;
-  dvector temp("{1.e-6}");
+  dvector temp("{1.e-9}");
   convergence_criteria.allocate(temp.indexmin(),temp.indexmax());
   convergence_criteria=temp;
 }

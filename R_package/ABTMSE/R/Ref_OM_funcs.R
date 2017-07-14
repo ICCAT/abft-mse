@@ -4,6 +4,49 @@
 
 # These functions represent modifications to a Base OMI (operating model input) object.
 
+Mat_Ref<-function(OMI,lev=NA){
+
+  if(is.na(lev)){
+
+    return(3)
+
+  }else if(lev=='Names'){
+
+    return(c("W-LSpn_E-LSpn","W-LSpn_E-HSpn","W-HSpn_E-LSpn","W-HSpn_E-HSpn"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Level 1: West - younger spawning, East - younger spawning",
+             "Level 2: West - younger spawning, East - older spawning",
+             "Level 3: West - older spawning, East - younger spawning",
+             "Level 4: West - older spawning, East - older spawning"))
+
+  }else{
+
+    matlow<- c(0, 0, 0, 0.25, 0.5, 1,rep(1,OMI@na-6)) # both stocks
+    mathighW<-c(0, 0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-13)) #both stocks
+    mathighE<-c(0, 0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-9)) #both stocks
+
+    if(lev==1){      # East,  West
+      tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+    }else if(lev==2){# East,  West
+      tmat<-array(c(mathighE,matlow),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+    }else if(lev==3){ # East,  West
+      tmat<-array(c(matlow,mathighW),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+    }else{
+      tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+    }
+
+    return(OMI)
+
+  }
+}
+
+
 # Natural mortality rate / M --------------------------
 
 MatM_Ref<-function(OMI,lev=NA){

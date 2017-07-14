@@ -15404,7 +15404,7 @@
 # nsel, number of estimated selectivities
 14
 # seltype, 2:logistic, 3:Thompson
-3 2 3 3 2 3 3 2 3 3 3 2 3 3
+3 2 3 2 2 3 3 2 3 3 3 2 3 3
 # selind, which selectivity is assigned to each fleet
 1 2 3 4 5 6 7 8 9 10 11 12 13 14
 # ratiolim, limits on logistic slope parameter relative to inflection point
@@ -15694,7 +15694,7 @@
 # nLHw, number of likelihood components
 12
 # LHw,  likelihood components
-0.02 0.2 1 0.002 3 10 1 20 5 3 10 0
+0.02 1 1 0.002 3 30 1 20 5 1 10 0
 # muR_ini, initial values for mean historical recruitment
 1.4e+07 1750000
 # sel_ini, initial values for selectivity
