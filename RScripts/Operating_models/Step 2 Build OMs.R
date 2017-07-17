@@ -111,8 +111,8 @@ if(OMbuild){
 
 }
 
-setwd("C:/ABT-MSE/")
-#setwd("C:/Users/tcar_/Documents/abft-mse")
+#setwd("C:/ABT-MSE/")
+setwd("C:/Users/tcar_/Documents/abft-mse")
 
 # --- Fit the 1-A-I, 1-A-II and 1-A-III operating models (~ 1 hour)  ----
 
@@ -181,7 +181,7 @@ if(runM3OM){
   #sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs/",foldernos))             # Run the M3 executables in parallel
   sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"))             # Run the M3 executables in parallel
 
-  for(i in foldernos)pin_from_par(paste0(getwd(),"/Objects/OMs/",i,'/M3'))   # Record the MLE parameter estimates as initial values
+  for(i in foldernos)pin_from_par(paste0(getwd(),"/Objects/OMs/",i))   # Record the MLE parameter estimates as initial values
 
 }
 
@@ -218,12 +218,13 @@ if(OMbuild){
 
 # === Make all fit reports ===== ===============================
 if(reportbuild){
-  OMdirs<-paste0(getwd(),"/Objects/OMs/",c(1,7,13,4,10,16)) # the actual fitted models
+  OMdirs<-paste0(getwd(),"/Objects/OMs/",c(1,7,13,19,4,10,16,22)) # the actual fitted models
   #OMdirs<-list.dirs(OMdir)
   #OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
 
   make_fit_reports(dirs=OMdirs,addlab=TRUE)           # make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
-  #make_summary_report(paste0(getwd(),"/Objects/OMs"))
+  #make_summary_report(dir=paste0(getwd(),"/Objects/OMs"),OMdirs=OMdirs)
+  make_summary_report(dir=paste0(getwd(),"/Objects/OMs"))
 }
 
 # === Step 5: Create the future recruitment scenarios (1, 2, 3) and build operating model objects================================================
@@ -235,7 +236,6 @@ if(OMbuild){
   nsim<-48
   proyears<-30
   seed<-1
-
 
   # --- Define the three recruitment scenarios ---------------------------
 
@@ -282,7 +282,7 @@ if(OMbuild){
 
   )
 
-  save(Recs,file=paste(getwd(),"/Objects/Recruitment scenarios/Trial specifications",sep=""))
+  save(Recs,file=paste(getwd(),"/Objects/Recruitment_scenarios/Trial specifications",sep=""))
 
 
   # --- Make the OM objects (~ 2 minutes) ---------------------------
@@ -295,7 +295,7 @@ if(OMbuild){
 
       OMno<-foldernos[i]
       OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")
-      OM<-new('OM',OMd=OMfolder,nsim=nsim,proyears=proyears,seed=1,targpop=NA,Recruitment=Recs[[j]])
+      OM<-new('OM',OMd=OMfolder,nsim=nsim,proyears=proyears,seed=1,Recruitment=Recs[[j]])
       save(OM,file=paste0(OMfolder,"/OM"))
       cat(".")
 

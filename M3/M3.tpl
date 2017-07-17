@@ -259,7 +259,7 @@ PARAMETER_SECTION
 		
 	// -- Estimated parameters --
 	//init_bounded_vector lnR0(1,np,11.,17.,1);                 // Unfished recruitment
-	init_bounded_vector lnmuR(1,np,9.5,18.,1);                  // Historical mean recruitment 
+	init_bounded_vector lnmuR(1,np,9.5,19.,1);                  // Historical mean recruitment 
 	init_bounded_vector lnHR1(1,np,-2,2,1);                      // Historical mean recruitment 
 	init_bounded_vector lnHR2(1,np,-2,2,1);                      // Historical mean recruitment 
 	init_bounded_matrix selpar(1,nsel,1,seltype,-2.,2.,1);      // Selectivity parameters
@@ -269,7 +269,7 @@ PARAMETER_SECTION
 	init_bounded_vector lnqE(1,nE,-6.,1.,1);                    // q estimates for E fleets
         init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. indices
         init_bounded_vector lnqCPUE(1,nCPUEq,-6.,4.,1);             // q estimates for Fish. Dep. indices
-	init_bounded_dev_vector Fmod(1,ns*nr,-2,2,2);               // F modifier by season and area
+	init_bounded_dev_vector Fmod(1,ns*nr,-2,2,1);               // F modifier by season and area
 	
 	LOCAL_CALCS
 	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
@@ -1613,10 +1613,10 @@ FUNCTION calcObjective
 	
 	for(int pp=1;pp<=np;pp++){  // Loop over stocks
 	 
-	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/5); 
+	  LHtemp=dnorm(lnHR1(pp),0.,RDCV/10); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);                 // Weighted likelihood contribution
-	  LHtemp=dnorm(lnHR2(pp),0.,RDCV/5); 
+	  LHtemp=dnorm(lnHR2(pp),0.,RDCV/10); 
 	  objRD+=LHtemp*LHw(8);
 	  objG+=LHtemp*LHw(8);  
 	
@@ -1652,15 +1652,15 @@ FUNCTION calcObjective
 	
 	for(int ll=1;ll<=ns*nr;ll++){
 	  
-	  objFmod+=dnorm(Fmod(ll),0,1);
+	  objFmod+=dnorm(Fmod(ll),0,0.5);
 	  
 	}
 	
 	objG+=objFmod;
 	
-	objRat=dnorm(log(SSBnow(1)/SSBnow(2)),2.079,0.15);
+	objRat=dnorm(log(SSB0(1)/SSB0(2)),2.079,0.15);
 	
-	objG+=objRat*10;
+	objG+=objRat*50;
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	
@@ -1679,7 +1679,7 @@ FUNCTION calcObjective
 	if(verbose)cout<<"SRA penalty "<<objSRA*LHw(11)<<endl;// Report penalty for excessive F in SRA
 	if(verbose)cout<<"SSB penalty "<<objSSB<<endl;        // Report penalty for current SSB prior
 	if(verbose)cout<<"Fmod prior "<<objFmod<<endl;        // Report penalty for Fmod prior
-	if(verbose)cout<<"SSB0 ratio prior"<<objRat<<endl;    // Report penalty for unfished SSB ratio (East / West)
+	if(verbose)cout<<"SSB0 ratio prior"<<objRat*50<<endl; // Report penalty for unfished SSB ratio (East / West)
 	if(verbose)cout<<"Global objective "<<objG<<endl;     // Report Global objective function
 	
   }
@@ -1997,7 +1997,7 @@ REPORT_SECTION
 
 RUNTIME_SECTION
     maximum_function_evaluations 5000
-    convergence_criteria 1.e-9
+    convergence_criteria 1.e-4
 
 
 TOP_OF_MAIN_SECTION

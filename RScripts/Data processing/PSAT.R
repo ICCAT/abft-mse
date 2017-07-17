@@ -82,7 +82,7 @@ ExSpawn<-cbind(c(1,2,2),c(10,1,4))
 
 TagIDs<-unique(All$TagID)
 nTags<-length(TagIDs)
-tracks<-rep(0,6)
+Tracks<-rep(0,7)
 
 for(i in 1:nTags){
 
@@ -97,19 +97,26 @@ for(i in 1:nTags){
     pop<-mostfreq(ExSpawn[match(Trk$Area,ExSpawn[,2]),1])
     for(j in 2:nT){  # loop over tracks by quarter
       if(j==2){
-        temptrack<-c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j])
+        temptrack<-c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j],i)
       }else{
-        temptrack<-rbind(temptrack,c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j]))
+        temptrack<-rbind(temptrack,c(pop,Trk$AgeClass[j-1],Trk$Quarter[j-1],2,Trk$Area[j-1],Trk$Area[j],i))
       }
     }
-    tracks<-rbind(tracks,temptrack)
+    Tracks<-rbind(Tracks,temptrack)
   }
 }
 
-Tracks<-data.frame(tracks[2:nrow(tracks),])
-names(Tracks)<-c("p","a","s","t","fr","tr")
+Tracks<-data.frame(Tracks[2:nrow(Tracks),])
+names(Tracks)<-c("p","a","s","t","fr","tr","tagno")
+
+if(Impute){
+  source("Rscripts/Data processing/impSOO.r")
+}
+
 anyna<-function(x)sum(is.na(x))==0
 Tracks<-Tracks[apply(Tracks,1,anyna),] # remove any line with unknown stock, subyear, or area
+Tracks<-Tracks[,1:6] # remove tagno
+
 
 
 PSAT<-aggregate(rep(1,nrow(Tracks)),by=list(Tracks$p,Tracks$a,Tracks$s,Tracks$t,Tracks$fr,Tracks$tr),sum)

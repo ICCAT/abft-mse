@@ -249,7 +249,7 @@ MSY_FAST<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,fixpars,toly=1e-3,rnams=c
 
   np<-dim(wt_age)[1]
 
-  Fprof<-Fageprof(FML, iALK, N,wt_age)
+  Fprof<-meanFs(FML, iALK, N,wt_age)
   wFM2<-Fprof/apply(Fprof,1,max)
   # matplot(t(wFM2),type='l',xlab="Age",ylab="F"); legend('topright',legend=c("East","West"),bty='n',text.col=c("black","red"))
 
@@ -281,9 +281,9 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
   surv<-exp(-cumsum(Ma))
   N0<-surv*R0
   B0<-sum(N0*Wa)
-  B0<-B0+surv[na]*exp(-Ma[na])/(1-exp(Ma[na]))*Wa[na]
+  B0<-B0+surv[na]*exp(-Ma[na])/(1-exp(-Ma[na]))*Wa[na]
   SSB0<-sum(N0*Wa*mat)
-  SSB0<-SSB0+surv[na]*exp(-Ma[na])/(1-exp(Ma[na]))*Wa[na]*Ma[na]
+  SSB0<-SSB0+N0[na]*exp(-Ma[na])/(1-exp(-Ma[na]))*Wa[na]*Ma[na]
 
   SSBpR<-SSB0/R0
 
@@ -298,6 +298,8 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
     N<-surv*Rtemp
     SSBMSY<-sum(N*Wa*mat)
     BMSY<-sum(N*Wa)
+    N[na]<-N[na]+N[na]*exp(-Z[na])/(1-exp(-Z[na]))
+
 
     if(grepl("BH",SRtype)){
       Rtemp<-((0.8*R0*h*SSBMSY)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSBMSY))
@@ -341,13 +343,14 @@ DesignEffect<-function(Sres1,Sres2,Design){
   nams<-c("UMSY","MSY","D","OFL")
   toplabline<-3.5
   cexp<-1
+  OMind<-as.integer(Sres1[,1])
 
   for(i in 1:nfac){
 
-    col<-cols[Design$Design_Ref[,i]]
+    col<-cols[Design$Design_Ref[OMind,i]]
 
     plot(Sres1[,4],Sres2[,4],col=col,pch=19,cex=1,xlab="",ylab="")
-    legend('topleft',legend=Design$all_nams[[i]],text.col=lcols[1:max(Design$all_levs[[i]])],bty='n',cex=0.8)
+    legend('topleft',legend=Design$all_lnams[[i]],text.col=lcols[1:max(Design$all_levs[[i]])],bty='n',cex=0.8)
 
     if(i==1)mtext("UMSY",3,outer=F,line=toplabline)
 
@@ -488,22 +491,65 @@ musmooth<-function(vec){
 }
 
 
-meanFs<-function(FML,iALK,N,wt_age,M_age,mat_age,R0s,hs,toly=1e-3,rnams=c("East","West")){
+meanFage<-function(FML,iALK,N,wt_age,rnams=c("East","West")){
   # FML                                    # s, r, f, l
   # iALK                                   # p, a, l
   np<-dim(wt_age)[1]
   Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
   Find<-TEG(dim(Ftot))
   Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
-  FM<-apply(Ftot,c(1,2,3,4,6), sum) # p, s, r, f, a    (sum over lengths)
-  Nr<-N/apply(N,1,mean)             # p, s, a, r      (normalized to mean 1)
-  wFM<-array(NA,dim(FM))            # p, s, r, f, a (weighted fishing mortality rate at age)
+  FM<-apply(Ftot,c(1,3,6), sum) # p, s, r, f, a    (sum over lengths)
+  wFM2<-apply(FM,c(1,3),mean)
+  #matplot(t(wFM2),type='l',xlab="Age",ylab="F")
+  #legend('topright',legend=rnams,bty='n',text.col=c("black","red"))
+
+}
+
+
+meanFslen<-function(FML,iALK,N,wt_age,rnams=c("East","West")){
+  # FML                                    # s, r, f, l
+  # iALK                                   # p, a, l
+  np<-dim(wt_age)[1]
+  FM<-array(NA,c(dim(iALK)[1],dim(FML))) # p, s, r, f, l
+  Find<-TEG(dim(FM))
+  FM[Find]<-FML[Find[,2:5]]
+  sumN<-apply(N,1:2,sum)          # p, s       (mean over areas)
+  Nind<-TEG(dim(N))
+  #Nr<-array(0,dim(N))
+  #Nr[Nind]<-N[Nind]/muN[Nind[,1:2]]             # p, s, a, r      (normalized to mean 1)
+  wFM<-array(NA,dim(FM))            # p, s, r, f, l (weighted fishing mortality rate at length)
   FMind<-TEG(dim(FM))
-  wFM[FMind]<-FM[FMind]*Nr[FMind[,c(1,2,5,3)]]
+  wFM[FMind]<-FM[FMind]*N[FMind[,c(1,2,5,3)]]/sumN[FMind[,1:2]]
   wFM2<-apply(wFM,c(1,2,4,5),mean)
-  wFM2<-apply(wFM2,c(1,4),sum) #what is the F at age profile?
-  matplot(t(wFM2),type='l',xlab="Age",ylab="F")
-  legend('topright',legend=rnams,bty='n',text.col=c("black","red"))
+  wFM3<-apply(wFM2,c(1,4),sum) #what is the F at length profile?
+  #matplot(OMI@mulen,t(wFM3),type='l',xlab="Length",ylab="F")
+  #legend('topright',legend=rnams,bty='n',text.col=c("black","red"))
+
+}
+
+meanFs<-function(FML,iALK,N,wt_age,rnams=c("East","West")){
+  # FML                                    # s, r, f, l
+  # iALK                                   # p, a, l
+  np<-dim(wt_age)[1]
+  nr<-dim(N)[4]
+  Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
+  Find<-TEG(dim(Ftot))
+  Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
+  #FM<-apply(Ftot,c(1,2,3,6), sum) # p, s, r, a    (sum over lengths and fleets)
+  wFM2<-apply(Ftot,c(1,6),sum)/nr
+  wFM2
+  #muN<-apply(N,1:3,mean)          # p, s, a       (mean over areas)
+  #sumN<-apply(N,1:3,sum)          # p, s, a       (mean over areas)
+  #Nind<-TEG(dim(N))
+  #Nr<-array(0,dim(N))
+  #Nr[Nind]<-N[Nind]/muN[Nind[,1:3]]             # p, s, a, r      (normalized to mean 1)
+  #wFM<-array(NA,dim(FM))            # p, s, r, f, a (weighted fishing mortality rate at age)
+  #FMind<-TEG(dim(FM))
+  #wFM[FMind]<-FM[FMind]*(N[FMind[,c(1,2,4,3)]]/sumN[FMind[,c(1,2,4)]])
+  #wFM2<-apply(wFM,c(1,4),sum) #what is the F at age profile?
+
+  #matplot(t(wFM2),type='l',xlab="Age",ylab="F")
+  #legend('topright',legend=rnams,bty='n',text.col=c("black","red"))
 
 }
 
@@ -530,7 +576,7 @@ Fageprof<-function(FML,iALK,N,wt_age){
 
       FM<-apply(Ftot,c(2,5), sum) # s, r, a    (sum over lengths)
 
-      Nw<-apply(N[pp,,,],3:2,sum)
+      Nw<-apply(N[pp,,,]*rep(wt_age[pp,],each=ns),3:2,sum)
       Fw<-apply(FM*Nw,2,sum)/apply(Nw,2,sum)
       Fprof[pp,]<-Fw
 
@@ -713,7 +759,7 @@ SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",R0p=NA){
     }else if(type=="HS"){
 
       pars<--0.5 # guess / starting values
-      opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=c(-6.,log(R0temp/50)),upper=c(6.,log(R0temp*50)), hessian=T,
+      opt[[pp]]<-optim(pars,getHS,method="L-BFGS-B",lower=-6.,upper=6., hessian=T,
                          SSB=SSB,rec=rec,SSBpR=SSBpR,mode=1, plot=F,R0=R0)
 
       devs<-getHS(opt[[pp]]$par,SSB,rec,SSBpR,mode=2,plot=plot,R0=R0)
@@ -725,7 +771,8 @@ SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",R0p=NA){
 
   }
 
-  if(plot)  mtext("Spawning Biomass (kg)",1,line=0.8,outer=T);mtext("Recruits (n)",2,line=0.8,outer=T)
+  if(plot)  mtext("Spawning Biomass (kg)",1,line=0.8,outer=T);
+  if(plot)  mtext("Recruits (n)",2,line=0.8,outer=T)
 
   if(type=="BH"){
 

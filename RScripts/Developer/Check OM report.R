@@ -1,8 +1,11 @@
 
 library(ABTMSE)
 loadABT()
-dirs="C:/Users/Tom/Documents/GitHub/abft-mse/M3"
+dirs="C:/Users/tcar_/Documents/abft-mse/M3"
 addlab=TRUE
+
+
+make_fit_reports(dirs="C:/Users/tcar_/Documents/abft-mse/M3",addlab=TRUE)
 
 nOMs<-length(dirs)
 Obs<-Bad_Obs #load(paste0(getwd(),"/Objects/Observation_models/Bad_Obs"))

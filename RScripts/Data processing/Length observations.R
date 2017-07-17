@@ -30,7 +30,7 @@ dat$Year<-dat$Year-Base@years[1]+1
 
 Lencat<-rep(NA,nrow(dat))
 for(i in 1:Base@nl){
-  
+
   Lencat[dat$ClassFrq>(Base@lenbins[i]-0.01)&dat$ClassFrq<Base@lenbins[i+1]]<-i
 
 }
@@ -38,7 +38,16 @@ cond<-!is.na(Lencat)
 Lencat<-Lencat[cond]
 dat<-dat[cond,]
 
+
 CLobs<-aggregate(dat$Nr,by=list(dat$Year,dat$Quarter,dat$Area,dat$Fleet,Lencat),sum)
+CLtot<-aggregate(dat$Nr,by=list(dat$Year,dat$Fleet),sum)
+
+CLtota<-array(NA,c(Base@ny,Base@nf))
+CLtota[as.matrix(CLtot[,1:2])]<-CLtot[,3]
+
+
 names(CLobs)<-c("Year","Subyear","Area","Fleet","Length_category","N")
+CLobs$N<-(CLobs$N/CLtota[as.matrix(CLobs[,c(1,4)])])*log(CLtota[as.matrix(CLobs[,c(1,4)])])
+CLobs<-subset(CLobs,CLobs$N>0)
 
 save(CLobs,file=paste(getwd(),"/Data/Processed/Conditioning/CLobs",sep=""))

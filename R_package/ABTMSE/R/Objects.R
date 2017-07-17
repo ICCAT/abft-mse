@@ -413,21 +413,29 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
   for(pp in 1:np){
     for(tt in 1:ntypes){
+
       type=strsplit(Recruitment$type[tt,pp],split="_")[[1]][1]
       just_R0<-grepl("R0",Recruitment$type[tt,pp])
       opt<-SRopt(out,plot=ploty,quiet=F,years=Recruitment$years[,pp,tt],
-                 type=type,just_R0=just_R0,h=Recruitment$fixpar[tt,pp])
-
+                 type=type,R0p=out$muR*exp(out$lnHR1))
+      .Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,log(out$muR*exp(out$lnHR1)),0.1)) # always lnR0
       if(just_R0){ # only second parameter is subject to error
         .Object@Recpars[,pp,tt,1]<-Recruitment$fixpar[tt,pp] # either logit h or logit inflection
-        .Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,opt$lnR0[pp],opt$VC[[pp]]^0.5)) # always lnR0
+        #.Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,opt$lnR0[pp],opt$VC[[pp]]^0.5))
       }else{
-        posdef<-(sum(eigen(opt$VC[[pp]])$values>0)==2)
-        if(posdef).Object@Recpars[,pp,tt,]<-rmvnorm(nsim,mean=c(opt$par1[pp],opt$lnR0[pp]),sigma=opt$VC[[pp]])
-        if(!posdef).Object@Recpars[,pp,tt,]<-rnorm(nsim*2,mean=c(rep(opt$par1[pp],nsim),rep(opt$lnR0[pp],nsim)),0.1) # default 10% CV in the odd case of a non-positive definite hessian
-        if(type=="BH").Object@Recpars[,pp,tt,1]<-0.2+1/(1+exp(-.Object@Recpars[,pp,tt,1]))*0.8
-        if(type=="HS").Object@Recpars[,pp,tt,1]<-1/(1+exp(-.Object@Recpars[,pp,tt,1]))
-        .Object@Recpars[,pp,tt,2]<-exp(.Object@Recpars[,pp,tt,2])
+        opt<-SRopt(out,plot=ploty,quiet=F,years=Recruitment$years[,pp,tt],
+                   type=type,R0p=out$muR*exp(out$lnHR1))
+        #posdef<-(sum(eigen(opt$VC[[pp]])$values>0)==2)
+        #if(posdef)
+        #  .Object@Recpars[,pp,tt,]<-rmvnorm(nsim,mean=c(opt$par1[pp],opt$lnR0[pp]),sigma=opt$VC[[pp]])
+        #if(!posdef).Object@Recpars[,pp,tt,]<-rnorm(nsim*2,mean=c(rep(opt$par1[pp],nsim),rep(opt$lnR0[pp],nsim)),0.1) # default 10% CV in the odd case of a non-positive definite hessian
+        steeppar<-rnorm(nsim,opt$par1[pp],opt$VC[[pp]])
+        #if(type=="BH").Object@Recpars[,pp,tt,1]<-0.6+1/(1+exp(-.Object@Recpars[,pp,tt,1]))*0.4
+        if(type=="BH").Object@Recpars[,pp,tt,1]<-0.6+1/(1+exp(-steeppar))*0.4
+        #if(type=="HS").Object@Recpars[,pp,tt,1]<-1/(1+exp(-.Object@Recpars[,pp,tt,1]))
+        if(type=="HS").Object@Recpars[,pp,tt,1]<-1/(1+exp(-steeppar))
+
+        #.Object@Recpars[,pp,tt,2]<-exp(.Object@Recpars[,pp,tt,2])
       }
 
       if(tt==1){ # some properties of recruitment deviations

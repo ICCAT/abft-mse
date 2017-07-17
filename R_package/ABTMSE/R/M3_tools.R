@@ -726,7 +726,7 @@ make_fit_reports<-function(dirs="C:/M3",addlab=FALSE) {
 
 
 
-make_summary_report<-function(dir){
+make_summary_report<-function(dir,OMdirs=NA){
 
   if(!file.exists(dir)){
     print(paste('Directory:',dir,'does not exist'))
@@ -741,16 +741,20 @@ make_summary_report<-function(dir){
 
   load(designdir)
 
-  OMdirs<-list.dirs(dir)
-  OMdirs<-OMdirs[2:length(OMdirs)]
+  if(is.na(OMdirs)){
+    OMdirs<-list.dirs(dir)
+    OMdirs<-OMdirs[2:length(OMdirs)]
+    nOMs<-length(OMdirs)
+    fileind<-rep(NA,nOMs)
+    foldnams<-strsplit(OMdirs,"/")
+    lastfolder<-length(foldnams[[1]])
+    lfnams<-unlist(lapply(foldnams,FUN=function(X)X[lastfolder]))
+    OMdirs<-OMdirs[order(as.numeric(lfnams))]
+
+  }
   nOMs<-length(OMdirs)
-  fileind<-rep(NA,nOMs)
-  foldnams<-strsplit(OMdirs,"/")
-  lastfolder<-length(foldnams[[1]])
-  lfnams<-unlist(lapply(foldnams,FUN=function(X)X[lastfolder]))
-  OMdirs<-OMdirs[order(as.numeric(lfnams))]
-  nOMs<-length(OMdirs)
-  render(input="Source/OMsummary.Rmd", output_file=paste(dir,"/Summary report.pdf",sep=""))
+  #render(input="Source/OMsummary.Rmd", output_file=paste(dir,"/Summary report.pdf",sep=""))
+  render(input=system.file("OMsummary.Rmd", package="ABTMSE"), output_file=paste(dir,"/Summary_Report.pdf",sep=""))
 
 
 }

@@ -26,9 +26,10 @@
 
 # --- Set working directory ------
 
-setwd("C:/ABT-MSE/")
-# setwd("C:/Users/Tom/Documents/GitHub/abft-mse")
-# setwd("C:/Users/tcar_/Documents/abft-mse")
+#setwd("C:/ABT-MSE/")
+
+#setwd("C:/Users/Tom/Documents/GitHub/abft-mse")
+setwd("C:/Users/tcar_/Documents/abft-mse")
 
 
 # --- Source MSE functions and objects ------
@@ -101,7 +102,7 @@ Base@sdur<-rep(1/Base@ns,Base@ns) # the duration of each subyear - we make these
 #Base@nZeq<-as.integer(40)
 Base@nydist<-as.integer(10)
 #Base@nyeq<-as.integer(15)
-yblock<-1 # the duration of recruitment deviation blocks
+yblock<-2 # the duration of recruitment deviation blocks
 Base@RDblock<-rep(1:100,each=yblock)[1:Base@ny]
 Base@nRD<-max(Base@RDblock)
 
@@ -215,6 +216,7 @@ Base@Iobs<-Iobs   # y s r i type(biomass/ssb) index
 Base@nma<-as.integer(3)
 Base@ma<-c(rep(1,4),rep(2,4),rep(3,Base@na-8))
 
+Impute=FALSE # Do you want to use movement fingerprinting to identify more PSATs?
 source("Rscripts/Data processing/PSAT.r") # returns a table of electronic tag tracks of known (PSAT) and unknown (PSAT2) stock of origin
 
 Base@nPSAT<-nrow(PSAT)
@@ -277,8 +279,8 @@ Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating mode
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
 Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
 #          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/50,    1 ,   1,         1/500,   3,     30,     1,       20,       5,      1,      10,     0      ) # SSB index for each population
-# good last fit was 1/5 LHw for cpue component
+Base@LHw<-c(1/5,     5 ,     1,         4,       1,     5,      1,       6,        1/3,    1/2,      10,     0      ) # SSB index for each population
+# good last fit was recdev 4, SSBrat (M3) 10, Lcomp 2
 
 # --- Initial Values ------
 
@@ -317,6 +319,8 @@ M3write(OMI,OMdir=paste0(getwd(),"/M3"))  # Store this base operating model in t
 
 save(OMI,file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
 save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
+
+
 
 # make_fit_reports(dirs="C:/Users/tcar_/Documents/abft-mse/M3",addlab=TRUE)
 # make_fit_reports(dirs="C:/Users/Tom/Documents/GitHub/abft-mse/M3",addlab=TRUE)

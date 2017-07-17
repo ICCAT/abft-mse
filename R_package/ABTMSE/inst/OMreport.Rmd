@@ -141,7 +141,35 @@ Figure 2. Assessment CPUE index fits (blue line = predicted, grey dots = index)
   #mtext("Predicted relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
 ```
 
-Figure 3. Predicted seasonal and spatial biomass of Atlantic bluefin tuna. 
+Figure 3. Predicted seasonal and spatial biomass of Atlantic bluefin tuna (Recent period). 
+
+
+### Historical Spawning biomass ###
+
+
+```{r allSSB, fig.width=7, fig.height=4,echo=FALSE}
+opt<-SRopt(out,plot=F,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR*exp(out$lnHR1))
+
+res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
+         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
+         R0s=out$muR, fixpars=opt$par1,SRtypes=rep("BH",2))
+
+
+allSSB<-cbind(apply(out$hSSB,1:2,mean),apply(out$SSB,1:2,mean))
+matplot(OMI@Hyears[1]:OMI@years[2],t(allSSB)/1E6,ylim=c(0,max(allSSB)/1E6),type='l',col="white",xlab="Year",ylab="SSB (1000 t)")
+abline(v=(180:230)*10,col="#99999920")
+abline(h=(0:20)*500,col="#99999920")
+matplot(OMI@Hyears[1]:OMI@years[2],t(allSSB)/1E6,ylim=c(0,max(allSSB)/1E6),type='l',col=c("red","blue"),lty=c(1,1),add=T)
+
+abline(h=(res$SSBMSY_SSB0*out$SSB0)/1E6,col=c("#ff000080","#0000ff80"),lty=c(2,2))
+abline(h=out$SSB0/1E6,col=c("#ff000080","#0000ff80"),lty=c(1,1))
+abline(v=mean(OMI@Hyears[2],OMI@years[1]),col="#99999950",lwd=2)
+legend('topleft',legend=c("West","East"),text.col=c("blue","red"),bty='n')
+legend('top',legend=c("Unfished","MSY"),lty=c(1,2),bty='n')
+  
+```
+
+Figure 4. Predicted seasonal and spatial biomass of Atlantic bluefin tuna (Recent period). 
 
 ### SSB, recruitment and F comparison with 2014 assessment (by East/West area, not East/West stock) 
 
@@ -172,8 +200,11 @@ EWareas[2,,]<-rep(c(1,1,1,1,0,0,0,0,0,0),each=out$ny)
 #Ubf<-out$Cpred/(out$Cpred+out$VB)
 #muU<-apply(Ubf,sum)/apply(out$Cpred,c(1,3),sum)
 
-CatEW<-array(rep(apply(out$Cpred,c(1,3),sum),out$np),dim(EWareas))*EWareas
-BEW<-array(rep(apply(out$B,c(1,3),mean),out$np),dim(EWareas))*EWareas
+CatEWo<-array(NA,dim(out$Cpred))
+CatEWo[as.matrix(out$Cobs[,1:4])]<-out$Cobs[,5]
+
+CatEW<-array(rep(apply(out$Cpred,c(1,3),sum),each=out$np, out$np),dim(EWareas))*EWareas
+BEW<-array(rep(apply(out$B,c(1,3),mean),each=out$np),dim(EWareas))*EWareas
 #U<-apply(CatEW,1:2,sum)/(apply(BEW,1:2,sum)+apply(CatEW,1:2,sum))
 U<-apply(CatEW,1:2,sum)/apply(BEW,1:2,sum)
 
@@ -270,18 +301,17 @@ Table 1. Reference points by stock.
 
 ```{r refpoints, results='asis',echo=FALSE,fig.width=5}
 
-res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
-         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-         R0s=out$muR*exp(out$lnHR1), fixpars=opt$par1,SRtypes=rep("BH",2))
-
 refyr<-2013-OMI@years[1]+1
 
-Fap<-timeFs(FML=out$FL, iALK=out$iALK, N=out$N,
-         wt_age=t(out$wt_age[out$ny,,]))
+Fap<-meanFs(FML=out$FL[refyr,,,,], iALK=out$iALK[,refyr,,], N=out$N[,refyr,,,],
+         wt_age=t(out$wt_age[refyr,,]))
 
-F_FMSY<-Fap[,refyr]/res[,2]
-SSB_SSBMSY<-apply(out$SSB[,refyr,],1,mean)/res$SSBMSY
-res<-cbind(res,F_FMSY,SSB_SSBMSY)
+#Fap<-timeFs(FML=out$FL, iALK=out$iALK, N=out$N,
+#         wt_age=t(out$wt_age[out$ny,,]))
+
+F_FMSY<-apply(Fap,1,max)/res[,2]
+SSB_SSB0<-apply(out$SSB[,refyr,],1,mean)/out$SSB0#res$SSBMSY
+res<-cbind(res,F_FMSY,SSB_SSB0)
 res[,c(2,3,6,7,8,9,10)]<-round(res[,c(2,3,6,7,8,9,10)],3)
 res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)
 kable(res)
@@ -308,9 +338,13 @@ kable(res)
 
 ```{r meanFs, fig.width=3.5, fig.height=2,echo=FALSE}
 par(mai=c(0.05,0.15,0.01,0.01),omi=c(0.66,0.5,0.1,0.05))
-meanFs(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
-         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-         R0s=out$muR, hs=out$h)
+Fprof<-meanFs(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
+         wt_age=t(out$wt_age[out$ny,,]))
+matplot(t(Fprof),type='l',xlab="Age",ylab="F",lty=c(1,1),col='white')
+abline(h=(0:100)/100,col="#99999940",lty=1)
+matplot(t(Fprof),type='l',lty=c(1,1),add=T,col=c("#ff000090","#0000ff90"),lwd=2)
+
+legend('right',legend=c("West","East"),bty='n',text.col=c("blue","red"))
 mtext("Age",1,outer=T,line=2)
 mtext("Total annual F",2,outer=T,line=1.5)
 ```
@@ -356,7 +390,7 @@ Figure 7. The implied asymptotic distribution of fish under unfished conditions 
 
 ### Fit to aggregate catches ###
 
-```{r catchaggfit, fig.width=7, fig.height=9,echo=FALSE}
+```{r catchaggfit, fig.width=8.5, fig.height=9,echo=FALSE}
 
   firstyr=OMI@years[1]
   fleetnams=c(OMI@Fleets$name,'ALL OTH')
@@ -420,9 +454,8 @@ Figure 8. Fit to a observed total catches aggregated over various axes (lines = 
 
 ### Fit to aggregate length composition ###
 
-```{r fit to agg length observations, fig.width=7, fig.height=9,echo=FALSE}
-  
- 
+```{r fit to agg length observations, fig.width=7.5, fig.height=9,echo=FALSE}
+
   cexmult<-0.75
   maxcex<-1.5
 
@@ -446,9 +479,27 @@ Figure 8. Fit to a observed total catches aggregated over various axes (lines = 
   coly<-array('blue',dim=dim(cexy))
   coly[PR<0]<-'red'
   
-  par(mfcol=c(7,2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+  CLoa<-apply(CLo,2:3,sum,na.rm=T)/apply(CLo,2,sum,na.rm=T)
+  CLpa<-apply(CLp,2:3,sum,na.rm=T)/apply(CLp,2,sum,na.rm=T)
 
-  for(ff in 1:nf){
+  # calculate unfished composition ==============
+  Nrel<-t(exp(-apply(out$M_age,1,cumsum)))
+  UFfreq<-array(NA,c(np,nf,nl))
+  for(pp in 1:np){
+    Lf<-apply(Nrel[pp,]*out$iALK[pp,1,,],2,sum)
+    for(f in 1:nf){
+      temp<-out$sel[f,]*Lf
+      UFfreq[pp,f,]<-temp/sum(temp)
+    }
+    
+  }
+  
+  
+  #par(mfcol=c(7,2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+   par(mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+  dmat<-array(c((1:7)*2-1,(1:7)*2-1,1:7*2),c(7,3))
+  layout(dmat)
+  for(ff in 1:7){
     #if(ff==9)par(mfcol=c(ceiling((nf-8)/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
     yrng<-range(out$CLobs[out$CLobs[,4]==ff,1],na.rm=T)
     yind<-yrng[1]:yrng[2]
@@ -459,15 +510,63 @@ Figure 8. Fit to a observed total catches aggregated over various axes (lines = 
     cex0[cex0>maxcex]<-maxcex
     xs<-rep(yrs,OMI@nl)
     ys<-rep(1:OMI@nl,each=length(yrs))
-    plot(xs,ys,cex=cex0,pch=pch0,col=col0)
+    plot(xs,ys,cex=cex0,pch=pch0,col=col0,axes=F,xlab="Year",ylab="Length (cm)")
+    axis(1)
+    axis(2,1:OMI@nl,OMI@mulen)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
+    
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    barplot(CLoa[ff,],ylim=ylim,names.arg=out$ml,border=NA,col='orange')
+      
+    lines(CLpa[ff,],col="#0000ff90",lwd=2)
+    lines(UFfreq[1,ff,],col="#99999990",lwd=2)
+    lines(UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+    #legend('topright',legend=paste("n=",round(sum(CLobsA[,,,ff,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
+    abline(v=xs,col="#99999980")
+    #legend('topright',legend=paste("n=",round(sum(exp(apply(CLobsA[,,,ff,],1,sum)),na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
   
   }
  
-    
 ``` 
 
-Figure 9.Length composition residuals. Red points are negative Pearson residuals (predicted is higher than observed), blue circles are positive (predicted is lower than observed)
+Figure 9a.Length composition residuals. Red points are negative Pearson residuals (predicted is higher than observed), blue circles are positive (predicted is lower than observed). Orange bars are observed, blue lines are model predicttions. 
+
+```{r fit to agg length observations2, fig.width=7.5, fig.height=9,echo=FALSE}
+
+ 
+  par(mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+  dmat<-array(c((1:7)*2-1,(1:7)*2-1,1:7*2),c(7,3))
+  layout(dmat)
+  for(ff in 8:nf){
+    #if(ff==9)par(mfcol=c(ceiling((nf-8)/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+    yrng<-range(out$CLobs[out$CLobs[,4]==ff,1],na.rm=T)
+    yind<-yrng[1]:yrng[2]
+    yrs<-yind+OMI@years[1]-1
+    cex0<-cexy[yind,ff,]
+    pch0<-pchy[yind,ff,]
+    col0<-coly[yind,ff,]
+    cex0[cex0>maxcex]<-maxcex
+    xs<-rep(yrs,OMI@nl)
+    ys<-rep(1:OMI@nl,each=length(yrs))
+    plot(xs,ys,cex=cex0,pch=pch0,col=col0,axes=F,xlab="Year",ylab="Length (cm)")
+    axis(1)
+    axis(2,1:OMI@nl,OMI@mulen)
+    legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
+    
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    barplot(CLoa[ff,],ylim=ylim,names.arg=out$ml,border=NA,col='orange')
+      
+    lines(CLpa[ff,],col="#0000ff90",lwd=2)
+    lines(UFfreq[1,ff,],col="#99999990",lwd=2)
+    lines(UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+    #legend('topright',legend=paste("n=",round(sum(CLobsA[,,,ff,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
+    abline(v=xs,col="#99999980")
+  
+  }
+ 
+``` 
+
+Figure 9b.Length composition residuals. Red points are negative Pearson residuals (predicted is higher than observed), blue circles are positive (predicted is lower than observed).Orange bars are observed, blue lines are model predicttions.
 
 
 ## Other model estimates and fits ##
@@ -497,151 +596,6 @@ Figure 9.Length composition residuals. Red points are negative Pearson residuals
 ```
 
 Figure 10. 
-
-
-### Fit to observed catches ###
-
-```{r catchfit, results='asis',echo=FALSE}
-
-  firstyr=OMI@years[1]
-  fleetnams=c(OMI@Fleets$name,'ALL OTH')
-  areanams=OMI@areanams
-  subyrnams=c("Jan-Mar","Apr-Jun","Jul-Sept","Oct-Dec")
-  
-  pch<-19
-  cex<-0.8
-  lwd=2
-  
-  np<-out$np   
-  ny<-out$ny
-  ns<-out$ns
-  nr<-out$nr
-  nf<-out$nf
-  na<-out$na
-  nl<-out$nl
-  
-  yrs<-firstyr:(firstyr+ny-1)
-  
-  # Fit to catches --------------------------
-  
-  CobsA<-array(NA,c(ny,ns,nr,nf))
-  CobsA[out$Cobs[,1:4]]<-out$Cobs[,5]
-  Co<-CobsA/1000
-  Cp<-out$Cpred/1000
-  #Co<-log(Co)
-  #Cp<-log(Cp)
-  
-  
-  for(f in 1:nf){
-    
-    cat('\n')  
-    cat("### Observed catches (tonnes) for ",fleetnams[f],"\n") 
-    
-    par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.15,0.05))
-    ylim=c(0,max(Co[,,,f],Cp[,,,f],na.rm=T))
-    ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
-    xs<-pretty(seq(yrs[1],yrs[ny],length.out=6))
-  
-    for(s in 1:ns){
-    
-      for(r in 1:nr){
-      
-       plot(yrs,Co[,s,r,f],pch=pch,cex=cex,ylim=ylim,axes=F)
-       lines(yrs,Cp[,s,r,f],col="#ff000099",lwd=lwd)
-       if(r==nr)axis(1,xs,xs)
-       if(r<nr)axis(1,xs,NA)
-       if(s==1)axis(2,ys,ys)
-       if(s<(ns+1))axis(2,ys,NA)
-       if(s==1)mtext(areanams[r],2,line=2.75)
-       if(r==1)mtext(subyrnams[s],3,line=-0.5)
-       
-       if(r==1&s==ns)legend('topright',legend=c("Obs","Pred"),text.col=c("black","red"),bty='n')
-      
-     }
-    
-   }
-  
-   mtext("Year",1,outer=T,line=2)
-  # mtext("Predicted (line) versus observed (point) catches of Atlantic bluefin (log tonnes)",3,line=1.5,outer=T)
-    cat('\n') 
- }
-  
-```
-
-Figure 11. 
-
-
-### Fit to observed size composition ###
-
-```{r fit to length observations, results='asis',echo=FALSE}
-  
-  ny<-out$ny
-  ns<-out$ns
-  nr<-out$nr
-  nf<-out$nf
-  nl<-out$nl
-
-  CLobsA<-array(NA,c(ny,ns,nr,nf,nl))
-  CLobsA[out$CLobs[,1:5]]<-out$CLobs[,6]
-  
-  CLo<-apply(CLobsA,c(1,4,5),sum,na.rm=T)
-  CLo[CLo==0]<-NA
-  CLotot<-array(apply(CLo,1:2,sum,na.rm=T),dim(CLo))
-  CLo<-CLo/CLotot
-  CLp<-apply(out$CLtotpred,c(1,4,5),sum,na.rm=T)#*CLotot
-  CLp<-CLp/array(apply(CLp,1:2,sum,na.rm=T),dim(CLp))
-  
-  for(f in 1:nf){
-    
-    #jpeg(paste(outdir,"Catch_comp_fit_",fleetnams[f],".jpg",sep=""),res=300,height=7,width=8,units='in')
-    cat('\n')  
-    cat("### Length composition fit for",fleetnams[f],"\n") 
-    
-    yrswd<-unique(array(1:ny,dim(CLo[,f,]))[!is.na(CLo[,f,])])
-    yrswd<-yrswd[order(yrswd)]
-    nplotyrs<-length(yrswd)
-    
-    ncs<-6
-    nrs<-ceiling(nplotyrs/ncs)
-    
-    par(mfrow=c(nrs,ncs),mai=c(0.15,0.25,0.01,0.01),omi=c(0.5,0.15,0.4,0.05))
-    
-    ylim=c(0,0.4)
-    ys<-pretty(seq(ylim[1],ylim[2]*1.2,length.out=4))
-    xs<-pretty(seq(1,out$nl,length.out=8))
-    
-    for(i in 1:nplotyrs){
-      
-      y<-yrswd[i]
-      if(i>(nplotyrs-ncs)){
-        barplot(CLo[y,f,],ylim=ylim,names.arg=out$ml,border=NA,col='orange')
-      }else{
-        barplot(CLo[y,f,],ylim=ylim,border=NA,col='orange')
-      }
-      lines(CLp[y,f,],col="#0000ff90",lwd=1.5)
-      legend('topleft',legend=y+firstyr-1,bty='n',cex=0.9)  
-      legend('topright',legend=paste("n=",round(sum(CLobsA[y,,,f,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
-      abline(v=xs,col="#99999980")
-    }   
-    
-    
-    mtext("Length (cm)",1,outer=T,line=2)
-    mtext(paste("Predicted (blue line) versus observed (orange bar) catch at length for the ",fleetnams[f]," fleet (n=",floor(sum(CLobsA[,,,f,],na.rm=T)/1000),"k)",sep=""),3,line=1.25,outer=T)
-    
-    #dev.off()
-    cat('\n') 
-  }  
-
-#for (i in 1:2){
-#cat('\n')  
-#cat("#This is a heading for ", i, "\n") 
-#hist(cars[,i])
-#cat('\n') 
-#}
-```
-
-Figure 12. blue = predicted, orange = observed.
-
 
 
 

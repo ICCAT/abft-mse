@@ -79,10 +79,15 @@ AS2<-array(NA,c(length(Base@areas),Base@ns))
 AS2[as.matrix(AS2tmp[,1:2])]<-AS2tmp$x
 refmin<-array(apply(AS2,1,min,na.rm=T),dim(AS2))
 AS2[is.na(AS2)]<-refmin[is.na(AS2)]
-AS2[10,1]<-AS2[10,2]# to account for observation process
-AS2[1,]<-AS2[1,]*2 # Med adjustment
+AS2[10,1]<-AS2[10,2]*0.66# to account for observation process
+AS2[10,2]<-AS2[10,2]*2# to account for observation process
+
+AS2[1,1:2]<-AS2[1,1:2]*4 # GOM adjustment
+AS2[7,3:4]<-AS2[7,3:4]*2
+AS2[3,3:4]<-AS2[3,3:4]*2
 AS2[1,2]<-AS2[1,2]*2
 AS2[7,]<-AS2[7,]*3
+AS2[5,]<-AS2[5,]/6
 
 #AreaSize<-array(NA,c(Base@nr,Base@ns))
 #AreaSize[as.matrix(AS[,1:2])]<-AS[,3]

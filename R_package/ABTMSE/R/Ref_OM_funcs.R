@@ -23,22 +23,26 @@ Mat_Ref<-function(OMI,lev=NA){
 
   }else{
 
-    matlow<- c(0, 0, 0, 0.25, 0.5, 1,rep(1,OMI@na-6)) # both stocks
-    mathighW<-c(0, 0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-13)) #both stocks
-    mathighE<-c(0, 0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-9)) #both stocks
+    matlow<- c(0, 0, 0.25, 0.5, rep(1,OMI@na-4)) # both stocks
+    mathighW<-c(0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-12)) #both stocks
+    mathighE<-c(0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-8)) #both stocks
 
     if(lev==1){      # East,  West
       tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
     }else if(lev==2){# East,  West
       tmat<-array(c(mathighE,matlow),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
     }else if(lev==3){ # East,  West
       tmat<-array(c(matlow,mathighW),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
     }else{
       tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
     }
 
     return(OMI)

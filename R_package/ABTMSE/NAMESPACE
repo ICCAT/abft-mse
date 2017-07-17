@@ -98,6 +98,8 @@ export(
     "getMSYfast",
     "sdensplot",
     "meanFs",
+    "meanFslen",
+    "Fageprof",
     "timeFs",
 
     "AssignAge",
@@ -119,6 +121,7 @@ export(
     "sourceall",
 
     "MatM_Ref",
+    "Mat_Ref",
     "Steep_Ref",
 
     "read.hessian",
