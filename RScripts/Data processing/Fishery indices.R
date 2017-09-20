@@ -5,7 +5,7 @@
 CPUEdat<-read.csv(file=paste(getwd(),"/Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv",sep=""))
 #CPUEdat<-read.csv(file=paste(getwd(),"/Data/Processed/CPUE indices/CPUE indices compiled.csv",sep=""))
 
-CPUEobs<-CPUEdat[,1:6]
+CPUEobs<-CPUEdat[,1:7]
 CPUEobs<-CPUEobs[CPUEobs$Year>=Base@years[1]&CPUEobs$Year<=Base@years[2],]
 CPUEobs[,1]<-CPUEobs[,1]-Base@years[1]+1
 

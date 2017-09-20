@@ -29,7 +29,7 @@
 #setwd("C:/ABT-MSE/")
 
 #setwd("C:/Users/Tom/Documents/GitHub/abft-mse")
-setwd("C:/Users/tcar_/Documents/abft-mse")
+setwd("C:/abft-mse")
 
 
 # --- Source MSE functions and objects ------
@@ -44,7 +44,7 @@ Base<-new('OMI')
 Base@Date<-as.character(Sys.time())
 Base@Author<-"T. Carruthers (t.carruthers@oceans.ubc.ca)"
 Base@Notes<-"This object serves as a framework for populating the various Trial Specifications"
-Base@PrimarySource<-"ICCAT Bluefin data prep. meeting July 2016"
+Base@PrimarySource<-"ICCAT Bluefin assessment data preparatory meeting, July 2017"
 Base@years<-years<-c(1983,2015)#c(1960,2014)
 Base@Hyears<-Hyears<-c(1864,1982)#c(1864,1959)
 
@@ -82,11 +82,15 @@ Base@nHy<-as.integer(Hyears[2]-Hyears[1]+1)       # No. historical years
 Base@ny<-as.integer(years[2]-years[1]+1)          # No. years
 Base@ns<-as.integer(4)                            # No. subyears
 Base@np<-as.integer(2)                            # No. stocks
-Base@na<-as.integer(18)                           # No. ages
+Base@na<-as.integer(35)                           # No. ages
 Base@nr<-as.integer(length(areas))                # No. areas
 Base@nf<-as.integer(length(Base@Fleets$name)+1)   # No. fleets
 Base@nl<-as.integer(nlen)
 
+
+# --- The index length category set up ------
+
+Base@Ilencat<-array(c(2,5,4,6,7,Base@nl,1,5,7,Base@nl),c(Base@np,5))
 
 # --- Recapture indexing by subyear
 
@@ -134,7 +138,7 @@ Base@len_age<-len_age
 
 #Base@mat<-array(rep(c(0,0,0,0.25,0.5, 1,rep(1,Base@na-6)),each=Base@np),c(Base@np,Base@na,Base@ny))
 #   Age      1  2  3  4     5    6  7  8  9  10 11 12 13 14 15 16 17 18+
-mat<-array(c(0, 0, 0.25, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),c(Base@na,Base@np))
+mat<-array(c(0, 0, 0.25, 0.5, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,rep(1,Base@na-18)),c(Base@na,Base@np))
 Base@mat<-array(t(mat),c(Base@np,Base@na,Base@ny))
 Base@Fec<-Base@mat[,,1]*Base@wt_age[,,1]
 #Base@steep<-c(0.7,0.7)
@@ -147,7 +151,7 @@ Base@canspawn<-matrix(c(0,0,0,0,0,0,0,0,0,1,  1,0,1,0,0,0,0,0,0,0),ncol=Base@np)
 
 #Base@Ma<-c(0.8318,0.864)*wt_age[,,Base@ny]^-0.288
 #   Age             1      2     3     4    5      6    7     8     9     10    11    12    13    14   15   16   17  18+
-Base@Ma<-t(array(c(0.38, 0.30, 0.24, 0.20, 0.18, 0.16, 0.14, 0.13, 0.12, 0.12, 0.11, 0.11, 0.11, 0.1, 0.1, 0.1, 0.1, 0.1),c(Base@na,Base@np)))
+Base@Ma<-t(array(c(0.38, 0.30, 0.24, 0.20, 0.18, 0.16, 0.14, 0.13, 0.12, 0.12, 0.11, 0.11, 0.11, 0.1, 0.1, 0.1, 0.1, 0.1,rep(0.1,Base@na-18)),c(Base@na,Base@np)))
 #surv<-exp(-t(rbind(c(0,0),apply(Base@Ma,1,cumsum)[1:(Base@na-1),])))
 #apply(surv,1,sum)
 #round(Base@Ma[2,],2)
@@ -197,19 +201,19 @@ Base@CLobs<-as.matrix(CLobs)
 
 # --- (i) Calculate historical catches ------
 
-source("Rscripts/Data processing/Historical catches.r") # returns HCobs
+source("Rscripts/Data processing/Historical catches old.r") # returns HCobs
 
 Base@HCobs<-HCobs # a 4D array y x s x a x  r
 
 
 # --- (j) Fishery independent indices ------
 
-source("Rscripts/Data processing/FI indices.r") # returns Iobs
+source("Rscripts/Data processing/FI indices.r") # returns Iobs and Inames
 
 Base@nI<-as.integer(max(Iobs[,5])) # number of series
 Base@nIobs<-nrow(Iobs) # number of data
 Base@Iobs<-Iobs   # y s r i type(biomass/ssb) index
-
+Base@Inames<-Inames
 
 # --- (k) PSAT tags ------
 
@@ -247,9 +251,11 @@ Base@SOOobs<-SOOobs
 Base@nsel<-Base@nf
 
 Base@seltype<-rep(3,Base@nf) # all fleets have thompson (potentially) dome-shaped selectivity except the combined other fleet
-Base@seltype[(1:length(Base@seltype))[Fleets$name%in%c("LLJPN","RRCan","PSWestOld","PSMedRec","BBnew")]]<-2 # set longline to asymptotic
+#Base@seltype[(1:length(Base@seltype))[Fleets$name%in%c("LLJPN","RRCan","PSWestOld","PSMedRec","BBnew")]]<-2 # set longline to asymptotic
+Base@seltype[(1:length(Fleets$name))[Fleets$name%in%c("LLOTH","RRCan")]]<-2 # set longline to asymptotic
 #Base@seltype[Fleets$gearTC=="RR"]<-2 # set rod and reel to asymptotic
-#Base@seltype[c(8,10)]<-2 # PSwestold TPwestold are currently estimated to be asymptotic..
+#Base@seltype[c(8,10)]<-2 # PSwestold TPwestold are currently estimated to be asymptotic.
+#Base@seltype[c(1:5,11:13)]<-2 # logistic where these are typically flat
 
 Base@selind<-1:Base@nf # No selectivity mirroring - selectivities correspond to fleets
 Base@ratiolim<-c(0.1,0.4) # limits on the logistic slope paramter relative to position of inflection point
@@ -271,15 +277,28 @@ Base@mov1<-mov1
 
 # --- Relating to likelihood functions ------
 
-Base@CobsCV<-rep(0.1,Base@nf)         # CV on seasonal catch observations by area
-Base@CPUEobsCV<-rep(0.1,Base@nCPUEq) # CV on seasonal CPUE observations by area
-Base@IobsCV<-rep(0.25,Base@nI)        # CV on fishery independent indices
+Base@CobsCV<-rep(0.05,Base@nf)         # CV on seasonal catch observations by area
+Base@CPUEobsCV<-rep(0.15,Base@nCPUEq) # CV on seasonal CPUE observations by area
+Base@IobsCV<-rep(0.2,Base@nI)        # CV on fishery independent indices
 Base@RDCV<-1/(Base@ny/Base@nRD)^0.5   # CV for penalty on recruitment deviations (if blocked this is Std. Err.)
-Base@SSBprior=c(1,1)                  # dummy prior for SSB (some operating models use fractions of other model estimated current SSB)
+Base@SSBprior = c(300000, 27000)       # dummy prior for SSB (some operating models use fractions of other model estimated current SSB)
 Base@SSBCV=0.01                       # default is a very tight prior on SSB
-Base@nLHw<-as.integer(12)             # number of likelihood components that may be weighted
-#          (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel, 11 SRA, 12 SSB )",datfile,1,append=T)
-Base@LHw<-c(1/5,     5 ,     1,         4,       1,     5,      1,       6,        1/3,    1/2,      10,     0      ) # SSB index for each population
+Base@SSBfit=3                         # the type of SSBfit 1:SSB0, 2:SSBnow, 3:meanSSB
+Base@SSBinc=3                         # the % increase
+Base@SSBincstock=1                    # the stock for the increase
+Base@SSBy=c(Base@ny-9, Base@ny)       # years of the increase
+Base@FCV=0.1                          # Prior precision of season-area deviations around mean F
+Base@movCV=1                          # Prior precision of deviations from homogeneous movement
+Base@selCV=0.9                        # Prior precision of selectivity parameters
+Base@SSBincCV=0.01                    # Prior precision of SSB increase ratio
+Base@nLHw<-as.integer(14)             # number of likelihood components that may be weighted
+#Base@LHw<-c(1,       3 ,     3,         5,       5,     1,      1,       2,        1/2,    20,      10,     0,      0,         0      ) # SSB index for each population
+#Base@LHw<-c(1,       1 ,     1/2,       1,       5,     3,      1,       10,       3,      20,      10,     0,      0,         0      ) # SSB index for each population
+#Base@LHw<- c(1,       1 ,     1/2,       10 ,     5,     2,      1,       4,        5,      1,       10,     0,      0,         0      ) # SSB index for each population
+#Base@LHw<- c(1,       1 ,     1/5,       20,      5,     2,      1,       10,       20,     3,       1,      0,      0,         0      ) # SSB index for each population
+#           (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel,  11 SRA, 12 SSB, 13 SSBinc, Fmod )",datfile,1,append=T)
+Base@LHw<- c(1,       1 ,     1/5,       20,      5,     2,      1,       10,       5,      3,       0,      0,      0,         50    ) # SSB index for each population
+
 # good last fit was recdev 4, SSBrat (M3) 10, Lcomp 2
 
 # --- Initial Values ------
@@ -293,7 +312,7 @@ Base@lnRD_ini<-t(array(seq(-0.1,0.1,length.out=Base@ny),c(Base@ny,Base@np)))
 Base@mov_ini<-tomt(array(1/Base@nr,c(Base@np,Base@ns,Base@na,Base@nr,Base@nr)))
 Base@qCPUE_ini<-rep(1,Base@nCPUEq)
 Base@qI_ini<-rep(1,Base@nI)
-Base@D_ini<-c(sum(Base@RAI[,2,Base@canspawn[,1]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,1]==1][1:3]),sum(Base@RAI[,2,Base@canspawn[,2]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,2]==1][1:3]))# just for comparison with simulations
+Base@D_ini<-c(0.1,0.1)#c(sum(Base@RAI[,2,Base@canspawn[,1]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,1]==1][1:3]),sum(Base@RAI[,2,Base@canspawn[,2]==1][(Base@ny-2):Base@ny])/sum(Base@RAI[,2,Base@canspawn[,2]==1][1:3]))# just for comparison with simulations
 Base@complexRD<-as.integer(0)
 Base@complexF<-as.integer(0)
 Base@nF<-as.integer(1)
@@ -317,15 +336,24 @@ OMI<-Base
 M3write(OMI,OMdir=paste0(getwd(),"/M3"))  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 #M3write(OMI,datfile="C:/M3/M3.dat")  # Store this base operating model in the M3 operating model (precalculation of initial values if desired)
 
+
 save(OMI,file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
 save(OMI,file=paste(getwd(),"/M3/OMI",sep=""))
 
-
-
+# make_fit_reports(dirs="E:/abft-mse/M3",addlab=TRUE)
+# make_fit_reports(dirs="C:/M3",addlab=TRUE)
 # make_fit_reports(dirs="C:/Users/tcar_/Documents/abft-mse/M3",addlab=TRUE)
 # make_fit_reports(dirs="C:/Users/Tom/Documents/GitHub/abft-mse/M3",addlab=TRUE)
-# pin_from_par("C:/Users/tcar_/Documents/abft-mse/M3")
+# pin_from_par("C:/Users/tcar_/Documents/abft-mse/M3")make_fit_reports(dirs="C:/Users/tcar_/Documents/abft-mse/M3",addlab=TRUE)
 # pin_from_par("C:/Users/Tom/Documents/GitHub/abft-mse/M3")
+# pin_from_par("C:/abft-mse/M3")
+
+# par(mfrow=c(2,2))
+# plot(apply(HCobs,1,sum,na.rm=T),type='l')
+# plot(apply(HCobs,2,sum,na.rm=T),type='l')
+# plot(apply(HCobs,3,sum,na.rm=T),type='l')
+# plot(apply(HCobs,4,sum,na.rm=T),type='l')
+
 # ==== END =======================================================================================
 
 

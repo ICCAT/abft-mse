@@ -5,7 +5,7 @@ subtitle: "ABT-MSE"
 author: "Tom Carruthers"
 date:  "`r format(Sys.time(), '%B %d, %Y')`"
 output: pdf_document
-geometry: margin=0.4in
+geometry: margin=0.45in
 fontsize: 10
 ---
 
@@ -38,57 +38,219 @@ kable(T1,format='markdown')
 
 ```
 
-
+\newpage
 
 #### Design matrix
 
 ```{r OMdesigngrid, results='asis',echo=FALSE,fig.width=5}
 
 DM<-cbind(1:nrow(Design$Design_Ref),Design$Design_Ref)
-names(DM)<-c("OM No.","Future Recruitment","Current Abundance","Spawning Fraction")
+names(DM)<-c("OM No.","Future Recruitment","Current Abundance","Maturity / M")
 kable(DM)
 
 ```
 
+### Residuals in indices
 
-### Model estimates / reference points for Eastern stock
+```{r refpoints_E, fig.width=8, fig.height=9,echo=FALSE}
 
-```{r refpoints_E, results='asis',echo=FALSE,fig.width=5}
-
+OMnames<-rep("",nOMs)
 Sres1<-Sres2<-NULL#array(NA,c(nOMs,8))
 out<-M3read(OMdirs[1])
+load(paste0(OMdirs[1],"/OMI"))
 SSBstore<-array(0,c(nOMs,out$np,out$ny))
 SSB0store<-array(0,c(nOMs,out$np))
 
 OMlab<-unlist(lapply(strsplit(OMdirs,"/"),FUN=function(x)x[length(x)]))
+CPUEres<-new('list')
 
+# FI stuff
 
+firstrow<-match(1:OMI@nI,OMI@Iobs[,5])
+Fleetnos<-as.vector(OMI@Iobs[firstrow,5])
+Seasons<-as.vector(OMI@Iobs[firstrow,2])
+Areas<-OMI@areanams[as.vector(OMI@Iobs[firstrow,3])]
+Types<-as.vector(OMI@Iobs[firstrow,6])
+    
 for(i in 1:nOMs){
-  
+
   out<-M3read(OMdirs[i])
+  j<-strsplit(OMdirs[i],"/")
+  j<-as.numeric(j[[1]][length(j[[1]])])
   load(paste0(OMdirs[i],"/OM"))
+  load(paste0(OMdirs[i],"/OMI"))
+  OMnames[i]<-paste(as.character(Design$Design_Ref[j,1]),
+                    paste(as.character(Design$Design_Ref[j,2])),
+                    paste(as.character(Design$Design_Ref[j,3])))
+  
+  VBi<-out$VB/rep(apply(out$VB,4,mean),each=out$ny*out$ns*out$nr)
+
+  for(k in 1:OMI@nCPUEq){
+
+    tempdat<-subset(OMI@CPUEobs,OMI@CPUEobs[,4]==k)
+    obs<-as.numeric(tempdat[,6])
+     
+    if(tempdat[1,7]==0){
+      pred<-exp(out$lnqCPUE[k])*VBi[tempdat[,c(1,2,3,5)]]
+  
+    }else{
+      pred<-apply(out$VL[,tempdat[1,2],tempdat[1,3],tempdat[1,4],],1,sum)
+      pred<-exp(out$lnqCPUE[k])*pred/mean(pred)
+      pred<-pred[tempdat[,1]]
+    }
+    
+   # print(paste(i,k,is.na(sum(pred)),is.na(sum(obs))))
+    
+    if(i==1){
+      CPUEres[[k]]<-log(obs)-log(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],log(obs)-log(pred))
+    }
+
+  }
+  
+  for(k in OMI@nCPUEq+1:OMI@nI){
+  
+    j<-k-OMI@nCPUEq
+    tempdat<-subset(OMI@Iobs,OMI@Iobs[,5]==j)  
+    obs<-as.numeric(tempdat[,7])
+ 
+    pred = out$SSB[tempdat[,c(4,1,2)]]
+    
+    pred<-pred/mean(pred)
+     
+    if(i==1){
+      CPUEres[[k]]<-log(obs)-log(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],log(obs)-log(pred))
+    }
+ 
+  }  
+
+ 
+  opt<-SRopt(out,plot=F,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR*exp(out$lnHR1))
+
   res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
          wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-         R0s=apply(OM@Recpars[,,1,2],2,mean), fixpars=apply(OM@Recpars[,,1,1],2,mean))
+         R0s=out$muR, fixpars=opt$par1,SRtypes=rep("BH",2))
+
   
-  
+  #opt<-SRopt(out,plot=F,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR*exp(out$lnHR1))
+
+  #type<-OM@Rectype[1,]
+  #SRtypes<-unlist(lapply(strsplit(type,"_"),FUN=function(x)x[1]))
+
+  #res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
+   #             wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
+    #            R0s=exp(opt$lnR0), fixpars=opt$par1,SRtypes=SRtypes)
+
   res[,c(2,3,6,7,8)]<-round(res[,c(2,3,6,7,8)],3)
   res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)
   SSBs<-round(out$SSB[,out$ny,out$ns]/1000,0)
- 
+
   OFLs<-round(res$UMSY*(res$BMSY/res$SSBMSY)*SSBs,0)
   Deps<-round(out$SSB[,out$ny,out$spawns[1]]/out$SSB0,3)
   Sres1<-rbind(Sres1,c(OM=OMlab[i],res[1,],D=round(out$D[1],3),Dep=Deps[1],SSB=SSBs[1],OFL=OFLs[1]))
   Sres2<-rbind(Sres2,c(OM=OMlab[i],res[2,],D=round(out$D[2],3),Dep=Deps[2],SSB=SSBs[2],OFL=OFLs[2]))
-  
+
   SSBstore[i,,]<-apply(out$SSB,1:2,mean)/1000
   SSB0store[i,]<-out$SSB0/1000
-  
+
 }
 
 Sres1<-as.data.frame(Sres1)
 Sres2<-as.data.frame(Sres2)
+
 names(Sres1)[c(3,8,9)]<-names(Sres2)[c(3,8,9)]<-c("FMSYa","SSBrel","recMSY")
+#write.csv(as.matrix(Sres1),file="C:/Users/tcar_/Documents/Sres1.csv")
+
+
+retseq<-function(res){
+
+  nres<-length(res)
+  str<-rep(1,nres)
+  i<-1
+  going<-TRUE
+  while(going){
+
+    same=TRUE
+    j<-0
+    while(same){
+
+      if(res[i]!=res[i+j+1]|(j+i+1)==(nres+1)){
+
+        same=FALSE
+        str[i:(i+j)]<-j+1
+
+      }else{
+        j<-j+1
+      }
+    }
+
+    if(i+j+1>nres)going=FALSE
+    i<-i+j+1
+
+  }
+
+  str
+}
+
+
+resplot2<-function(yrs,res,horiz=T){
+
+  resind<-length(res):1
+  col<-rep('blue',length(res))
+  col[res<0]<-'dark grey'
+  ACcol<-c("white","white","#ff000010","#ff000030","#ff000080",rep('red',200))
+  ACval<-retseq(res<0)
+  bcol=ACcol[ACval]
+  par(lwd = 2)
+  barplot(res[resind],names.arg=yrs[resind],border="white",col="white",horiz=horiz)
+  abline(v=c(-0.25,0.25),lty=2,col="grey",lwd=1)
+  abline(v=c(-0.5,0.5),col="grey",lwd=1)
+  barplot(res[resind],names.arg=yrs[resind],border=bcol[resind],col=col[resind],add=T,horiz=horiz)
+  ac<-acf(res,plot=F)$acf[2,1,1]
+  leg<-c(paste("SD =",round(sd(res),2)),paste("AC =", round(ac,2)))
+  legend('topleft',legend=leg,box.col="#ffffff99",bg="#ffffff99",cex=0.8)
+  #legend('topleft',legend=leg, box.col="#ffffff99",bg="#ffffff99")
+
+}
+
+
+chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
+groups<-chunk2(1:(OMI@nCPUEq+OMI@nI),6)
+
+OMsel<-(1:nrow(Design$Design_Ref))[Design$Design_Ref==1]
+
+for(j in 1:length(groups)){
+  
+  par(mfrow=c(length(groups[[j]]),length(OMsel)),mai=c(0.3,0.08,0.1,0.01),omi=c(0.3,0.3,0.2,0.05))
+  
+  for(k in groups[[j]]){
+    
+    for(i in 1:length(OMsel)){
+      resplot2(yrs=rep(NA,length(CPUEres[[k]][,i])),res=CPUEres[[k]][,i])
+      if(i==1)mtext(c(OMI@CPUEnames,OMI@Inames)[k],2,line=1.5)
+      if(k == groups[[j]][1])mtext(OMnames[i],3,line=0.8)
+    }
+    
+  }
+  
+  cat("\n\n\\pagebreak\n")
+  
+}
+
+mtext("Residual error. log(Obs.)-log(Pred.)",1,outer=T,line=0.5)
+
+
+```
+
+\newpage
+
+### Model estimates / reference points for Eastern stock
+
+```{r refpoints_Et, results='asis',echo=FALSE,fig.width=5}
+
 
 kable(Sres1)
 
@@ -105,7 +267,7 @@ kable(Sres2)
 
 ### MSY reference points
 
-```{r refpointvsdesignE, fig.width=8, fig.height=9,echo=FALSE}
+```{r refpointvsdesignE, fig.width=8, fig.height=8,echo=FALSE}
 
 DesignEffect(Sres1,Sres2,Design)
 
@@ -115,33 +277,43 @@ DesignEffect(Sres1,Sres2,Design)
 
 ### SSB trends
 
-```{r SSBtrends, fig.width=5, fig.height=6,echo=FALSE}
+```{r SSBtrends, fig.width=7, fig.height=9,echo=FALSE}
 
-#SSBstore<-array(NA,c(nOMs,out$np,out$ny))
-#SSB0store<-array(NA,c(nOMs,out$np))
-SSBmax<-max(SSBstore)/1000
-SSBWmax<-max(SSB0store[,2])/1000
-SSBadj<-SSBmax/SSBWmax
 
-zlabs<-pretty(seq(0,SSBWmax,length.out=4))
+SSBEmax<-max(SSBstore[,1,],na.rm=T)/1000
+SSBWmax<-max(SSB0store[,2],na.rm=T)/1000
+SSBadj<-SSBEmax/SSBWmax
 
-nr<-ceiling(nOMs/4)
-par(mfrow=c(nr,ceiling(nOMs/nr)),mai=c(0.3,0.4,0.01,0.01),omi=c(0,0.3,0,0))
-yrs<-1960:(1959+out$ny)
+zpos<-pretty(seq(0,SSBWmax,length.out=5))
+zlabs<-zpos
+zpos<-zpos*SSBadj
+
+nr<-ceiling(nOMs/3)
+par(mfrow=c(nr,ceiling(nOMs/nr)),mai=c(0.3,0.4,0.01,0.3),omi=c(0,0.3,0,0.3))
+yrs<-OMI@years[1]:OMI@years[2]
 
 for(i in 1:nOMs){
   
-   plot(yrs,SSBstore[i,1,]/1000,col="red",type="l",ylim=c(0,SSBmax),ylab="",xlab="")
-   #axis(4,at=zlabs,labels=zlabs)
-   lines(yrs,SSBstore[i,2,]/1000,col="blue")
-   if(i==4)legend('topright',legend=c("East","West"),text.col=c("red","blue"),bty='n')
-   
+  plot(yrs,SSBstore[i,1,]/1000,col="#ff000098",type="l",ylim=c(0,SSBEmax),ylab="",xlab="",axes=F)
+  axis(1)
+  axis(2,col="red")
+  axis(4,at=zpos,labels=zlabs,col="blue")
+  
+  lines(yrs,SSBadj*SSBstore[i,2,]/1000,col="#0000ff98")
+  if(i==4)legend('topright',legend=c("East","West"),text.col=c("red","blue"),bty='n')
+  legend('topleft',legend=OMnames[i],bty='n')
+  abline(h=as.numeric(Sres1[i,6])/1000,col="#ff000080",lty=2)
+  abline(h=as.numeric(SSBadj*as.numeric(Sres2[i,6]))/1000,col="#0000ff80",lty=2)
   
 }  
 
-mtext("SSB (000,t)",2,outer=T,line=0.5)
+mtext("SSB (000,t)",2,outer=T,line=0.5,col="red")
+mtext("SSB (000,t)",4,outer=T,line=0.5,col="blue")
+
+
 
 ```
+
 
 
 

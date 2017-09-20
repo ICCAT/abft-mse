@@ -156,7 +156,9 @@ HCobs[,,1,]<-0 # for now ignore any catches in first age class
 
 save(HCobs,file=paste(getwd(),"/Data/Processed/Conditioning/HCobs",sep=""))
 
+
 diag<-F
+
 if(diag){  # some diagnostics
 
   # check disaggregation

@@ -5,10 +5,34 @@
 
 # --- Set working directory ------
 
-setwd("C:/ABT-MSE/")#setwd("C:/Users/tcar_/Documents/GitHub/abft-mse")
+setwd("C:/abft-mse/")#setwd("C:/Users/tcar_/Documents/GitHub/abft-mse")
 source("Source/MSE_source.r")
 source("Source/Objects.r")
-MPind<-read.csv("Data/Processed/MP Indices/MP indices compiled assessment 2017.csv")
+#MPind2<-read.csv("Data/Processed/MP Indices/MP indices compiled assessment 2017.csv")
+load(file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))
+
+CPUEdat<-read.csv(file=paste(getwd(),"/Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv",sep=""))
+Iobs<-read.csv(paste(getwd(),"/Data/Raw/SSB/FI_indices_compiled_assessment_2017.csv",sep=""))
+
+
+CPUEdat<-cbind(CPUEdat,rep(1,nrow(CPUEdat)),rep("Kimoto",nrow(CPUEdat)))
+names(CPUEdat)[10:11]<-c("Type","Source")
+
+Iobs<-cbind(Iobs,rep("Kimoto",nrow(Iobs)))
+names(Iobs)<-c("Year","Quarter","Area","Stock","Ino","Type","Index","CV","Name","Source")
+
+MPind<-rbind(Iobs[,c(1,9,7,8,6,10,3)],CPUEdat[,c(1,9,6,8,10,11,3)])
+
+ToKeep<-c("JPN_LL_NEAtl2","MOR_POR_TRAP","FR_AER_SUV","MED_LAR_SUV","MED_AER_SUV","JPN_LL2","US_GOM_PLL2","US_RR_115_144","US_RR_66_114","CAN_ACO_SUV","GOM_LAR_SUV")
+MPind<-subset(MPind,MPind$Name%in%ToKeep)
+No<-match(MPind$Name,ToKeep)
+MPind<-MPind[order(No),]
+Stock<-c(2,2,2,2,1,1,1,1,1,1)[MPind$Area]
+MPind<-data.frame(Year=MPind$Year,No=No[order(No)],Name=MPind$Name,Index=MPind$Index,CV=MPind$CV,Stock=Stock,Type=MPind$Type,Source=MPind$Source,Areas=MPind$Area)
+names(MPind)<-c('Year','No','Name','Index','CV','Stock','Type','Source','Areas')
+
+MPind<-subset(MPind,MPind$Year>=OMI@years[1]&MPind$Year<=OMI@years[2])
+MPind$Year<-MPind$Year-OMI@years[1]+1
 
 
 # --- Create a bad observation error model

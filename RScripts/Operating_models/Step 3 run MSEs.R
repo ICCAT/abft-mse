@@ -16,7 +16,7 @@ setwd("C:/ABT-MSE/")                              # The working directory
 library(ABTMSE)
 loadABT()
 
-OM<-new('OM',OMd="C:/ABT-MSE/Objects/OMs/1",nsim=8,proyears=30,seed=1,targpop=NA)
+OM<-new('OM',OMd="C:/ABT-MSE/Objects/OMs/1",nsim=48,proyears=30,seed=1,targpop=NA)
 
 sfInit(parallel=T,cpus=detectCores())
 MSE<-new('MSE',OM,Obs=Bad_Obs,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")

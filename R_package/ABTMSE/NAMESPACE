@@ -7,6 +7,7 @@ export(
     "loadABT",
     "make_fit_reports",
     "make_summary_report",
+    "make_comp_report",
 
     "DD_i2",
     "DD_i4",
@@ -123,6 +124,7 @@ export(
     "MatM_Ref",
     "Mat_Ref",
     "Steep_Ref",
+    "SSBref",
 
     "read.hessian",
     "pin_from_par",
@@ -132,6 +134,8 @@ export(
     "runM3",
     "runM3p",
     "M3read",
+
+    "DesignEffect",
 
     "tiny"
 )

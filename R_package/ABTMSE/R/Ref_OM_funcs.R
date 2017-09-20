@@ -57,36 +57,52 @@ MatM_Ref<-function(OMI,lev=NA){
 
   if(is.na(lev)){
 
-    return(3)
+    return(4)
 
   }else if(lev=='Names'){
 
-    return(c("E-HMLMat_W-LMHMat","HMHMat","LMLMat"))
+    return(c("L Mat - L M","L Mat - H M","H Mat - L M", "H Mat - H M"))
 
   }else if(lev=='LongNames'){
 
-    return(c("Level 1: High natural mortality and younger age of maturity for the Eastern stock, Low natural mortality and older age at maturity for the Western stock",
-             "Level 2: High natural mortality and older age of maturity for both stocks",
-             "Level 3: Low natural mortality and younger age of maturity for both stocks"))
+    return(c("Level 1: Younger maturity, high M",
+             "Level 2: Younger maturity, low M",
+             "Level 3: Older maturity, high M",
+             "Level 4: Older maturity, low M"))
 
   }else{
 
-    matlow<- c(0,0,0,0.25,0.5, 1,rep(1,OMI@na-6)) # both stocks
-    mathigh<-c(0,0,0,0,0.08,0.15,0.24,0.33,0.41,0.5,0.58,0.65,0.71,0.82,0.86,0.9,rep(1,OMI@na-16)) #both stocks
-    Ma<-c(0.8318,0.864)*OMI@wt_age[,,OMI@ny]^-0.288
+    matlow<- c(0, 0, 0.25, 0.5, rep(1,OMI@na-4)) # both stocks
+    mathighW<-c(0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-12)) #both stocks
+    mathighE<-c(0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-8)) #both stocks
 
-    if(lev==1){      # East,  West
-      tmat<-array(c(matlow,mathigh),c(OMI@na,OMI@np))
-      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
-      OMI@Ma<-Ma
-    }else if(lev==2){# East,  West
-      tmat<-array(c(mathigh,mathigh),c(OMI@na,OMI@np))
-      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
-      OMI@Ma<-t(array(c(Ma[1,],rep(0.14,OMI@na)),c(OMI@na,OMI@np)))
-    }else{ # East,  West
+
+    if(lev==1){# East,  West
+
       tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
-      OMI@Ma<-Ma
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
+
+    }else if(lev==2){      # East,  West
+
+      tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
+      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07, 0.07, 0.07,rep(0.07,OMI@na-18)),c(OMI@na,OMI@np)))
+
+    }else if(lev==3){
+
+      tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
+
+    }else{ # East,  West
+
+      tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
+      OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
+      OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
+      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07, 0.07, 0.07,rep(0.07,OMI@na-18)),c(OMI@na,OMI@np)))
+
     }
 
     return(OMI)
@@ -94,6 +110,50 @@ MatM_Ref<-function(OMI,lev=NA){
   }
 
 }
+
+
+SSBref<-function(OMI,lev=NA){
+
+  if(is.na(lev)){
+
+    return(3)
+
+  }else if(lev=='Names'){
+
+    return(c("Best estimate","W SSB as VPA","E SSB inc as VPA"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Level 1: Best estimates of spawning biomass",
+             "Level 2: Western SSB like assessment",
+             "Level 3: Eastern SSB increases like assessment"))
+
+  }else{
+
+
+    if(lev==2){      # East,  West
+
+      OMI@SSBfit = 3
+      OMI@SSBprior = c(3E+8, 2.7E+7) # tonnes
+      OMI@SSBCV=0.01
+      OMI@LHw[12]<-100
+
+    }else if(lev==3){# East,  West
+
+      OMI@SSBinc = 3
+      OMI@SSBincstock=1
+      OMI@SSBy = c(OMI@ny-8,OMI@ny)
+      OMI@LHw[13]<-100
+
+    }
+
+    return(OMI)
+
+  }
+
+}
+
+
 
 # Steepness ---------------------------------------------
 

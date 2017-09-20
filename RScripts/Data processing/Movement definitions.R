@@ -10,8 +10,9 @@ nma<-Base@nma
 
 can<-matrix(1,nrow=Base@np,ncol=Base@nr)
 can[1,match("GOM",Base@areanams)]<-0
+can[1,match("CAR",Base@areanams)]<-0
 can[2,match("MED",Base@areanams)]<-0
-
+#can[2,match("SEATL",Base@areanams)]<-0
 
 
 Tagg2<-aggregate(rep(1,nrow(Tracks)),by=list(Tracks$p,Tracks$a,Tracks$s,Tracks$fr,Tracks$tr),sum)
@@ -38,11 +39,11 @@ for(pp in 1:np){
             oR<-grep(1,mov[pp,aa,ss,rr,])
             oR<-oR[oR!=fR]
             for(i in 1:length(oR)){
-              movind<-rbind(movind,c(pp,aa,ss,rr,oR[i])) 
+              movind<-rbind(movind,c(pp,aa,ss,rr,oR[i]))
             }
           }
-        }  
-      }    
+        }
+      }
     }
   }
 }
@@ -51,7 +52,7 @@ movind<-movind[2:nrow(movind),]
 mov1<-mov1[2:nrow(mov1),]
 
 if(Base@movtype==1){ # if a gravity formulation these indices are for the to area that should be estimated by season
-  
+
   firstr<-apply(can,1,which.max)
   ind<-expand.grid(1:ns,1:nma,1:np)[,3:1]
   mov1<-cbind(ind,firstr[ind[,1]],rep(999,ns*np))
@@ -66,7 +67,7 @@ if(Base@movtype==1){ # if a gravity formulation these indices are for the to are
   all<-expand.grid(1:length(rs),1:nma,1:ns)
   all<-cbind(ps[all[,1]],all[,2:3],rs[all[,1]])
   movind<-cbind(all,rep(999,nrow(all)))
-  
+
 }
 
 movind<-as.matrix(movind)

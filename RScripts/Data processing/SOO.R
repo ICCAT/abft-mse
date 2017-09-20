@@ -2,15 +2,15 @@
 # August 2016
 # R Script for formatting Stock of Origin data
 
-SOO<-read.csv(paste(getwd(),"/Data/Raw/SOO/All SOO 29_7_2016.csv",sep=""),header=T)
-
+#SOO1<-read.csv(paste(getwd(),"/Data/Raw/SOO/All SOO 29_7_2016.csv",sep=""),header=T)
+SOO<-read.csv(paste0(getwd(),"/Data/Raw/SOO/Joint East West mixing data updated 23072017.csv"),header=T)[,c(5,10,11,13,15)]
 anyna<-function(x)(sum(is.na(x))+sum(x==""))==0
 SOO<-SOO[apply(SOO,1,anyna),]
-
+names(SOO)<-c("Year","age","Prob.East","BFT_Area","Quarter")
 SOO<-subset(SOO,SOO$Year>(Base@years[1]-1)&SOO$Year<(Base@years[2]+1))
 SOO$Year<-SOO$Year-Base@years[1]+1
 
-org<-c("CAR", "E_ATL","E_MED",  "GOM","GSL","NC_ATL", "NE_ATL", "SC_ATL", "SE_ATL", "W_ATL",   "MED")
+org<-c("CAR", "E_ATL","E_MED",  "GOM","GSL","NC_ATL", "NE_ATL", "SC_ATL", "SE_ATL", "W_ATL",   "W_MED")
 nu<-c(   2,     8,      10,       1,    4,     6,        7,        5,         9,      3,        10)#
 
 SOO$BFT_Area<-nu[match(SOO$BFT_Area,org)]
@@ -27,14 +27,15 @@ SOO2<-aggregate(1-SOO$Prob.East,by=list(SOO$age,SOO$Year,SOO$Quarter,SOO$BFT_Are
 SOO1<-cbind(rep(1,nrow(SOO1)),SOO1)
 SOO2<-cbind(rep(2,nrow(SOO2)),SOO2)
 
-SOOtempGOM<-expand.grid(2,1:3,1,1:4,1,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-SOOtempMed<-expand.grid(1,1:3,1,1:4,10,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-SOOtempSEATL<-expand.grid(1,1:3,1,1:4,9,100) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-SOOtempGSL<-expand.grid(2,1:3,1,1:4,4,50) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+#SOOtempGOM<-expand.grid(2,1:3,1,1:4,1,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+#SOOtempMed<-expand.grid(1,1:3,1,1:4,10,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+#SOOtempSEATL<-expand.grid(1,1:3,1,1:4,9,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
+#SOOtempCAR<-expand.grid(2,1:3,1,1:4,2,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
 
-names(SOO1)<-names(SOO2)<-names(SOOtempGOM)<-names(SOOtempMed)<-names(SOOtempSEATL)<-names(SOOtempGSL)<-c("p","aa","y","s","r","N")
+#names(SOO1)<-names(SOO2)<-names(SOOtempGOM)<-names(SOOtempMed)<-names(SOOtempSEATL)<-names(SOOtempCAR)<-c("p","aa","y","s","r","N")
+names(SOO1)<-names(SOO2)<-c("p","aa","y","s","r","N")
 
-SOOobs<-rbind(SOO1,SOO2,SOOtempGOM,SOOtempMed,SOOtempSEATL,SOOtempGSL)
+SOOobs<-rbind(SOO1,SOO2)#,SOOtempGOM,SOOtempMed,SOOtempSEATL,SOOtempGSL)
 SOOobs<-SOOobs[SOOobs$N>0,]
 SOOobs<-as.matrix(SOOobs)
 

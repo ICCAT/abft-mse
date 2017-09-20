@@ -135,7 +135,7 @@ if(fortrialspec){
   restab<-cbind(c(Base@areanams,"",Base@areanams,"",Base@areanams,"",Base@areanams),restab)
   restab<-as.data.frame(restab)
   names(restab)<-c("",Base@areanams,"",Base@areanams)
-  write.csv(restab,file="G:/BFT MSE/Data/PSATtable.csv")
+  write.csv(restab,file="C:/abft-mse/Data/Raw/PSAT/PSATtableSept2017.csv")
 
 }
 

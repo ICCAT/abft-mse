@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	        v1.5                                   
+//                                	           	        v1.6                                   
 //
-//                                   		          5th July 2017                           
+//                                   		          5th September 2017                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -99,7 +99,7 @@
 //
 // -- Change log since v1.1 (post ICCAT species group meeting)
 // 
-// * Re parameterization of Thompson selectivity
+// * Re parameterizationa of Thompson selectivity
 //
 //
 // -- Change log since v1.2 (post ICCAT core modelling group Nov 2016)
@@ -107,6 +107,11 @@
 // * Added historical stock reduction analysis approach, penalty for U > 90% added to likelihood function
 // * Multiple fleet indices added
 // * Added absolute abundance prior
+//
+// -- Change log since v1.5 (post ICCAT bluefin assessment meeting July 2017)
+//
+// * Added prior to mean SSB
+// * Added prior for SSB trajectory (SSBinc, SSBy, SSBincstock)
 //
 //
 // -- Dev notes --
@@ -167,7 +172,7 @@ DATA_SECTION
 	
 	init_int nCPUEq;                       // Number of estimated catchabilities for CPUE indices
 	init_int nCPUEobs;                     // Number of rows of CPUE data 
-	init_matrix CPUEobs(1,nCPUEobs,1,6);   // A table of CPUE index observations by year, subyear, area, fleet, index No. (nE)
+	init_matrix CPUEobs(1,nCPUEobs,1,7);   // A table of CPUE index observations by year, subyear, area, fleet, index No. (nE)
 		
 	init_int nE;                           // Number of effort series used / partial F's
 	init_int nEobs;                        // Number of effort observations by year, subyear, area, fleet, index No. (nE) 
@@ -217,6 +222,9 @@ DATA_SECTION
 	init_matrix mov1(1,nmov1,1,5);         // Index of first non-estimated movement parameter (fixed to zero)
 	init_int movtype;                      // 1: gravity (nr), 2: Markov ((nr-1) x nr), 3: fractional (nr-1, no viscosity)
 	
+	// -- Indexing ---
+	init_matrix Ilencat(1,5,1,np);          // the upper and lower bounds of length categories for the 5 vulnerability schedules
+	
 	// -- Observation errors --
 	init_vector CobsCV(1,nf);              // Catch observation error   
 	init_vector CPUEobsCV(1,nCPUEq);       // CPUE observation error
@@ -226,6 +234,14 @@ DATA_SECTION
 	init_number RDCV;                      // Recruitment deviation penalty	
 	init_vector SSBprior(1,np);            // SSBnow prior
 	init_number SSBCV;                     // SSBnow prior CV
+	init_int SSBfit;                       // Type of SSB fitting: 1-SSB0 2-SSBnow
+	init_number SSBinc;                    // SSB[SSBy[2]]/SSB[SSBy[1]]
+	init_vector SSBy(1,2);                 // Years for SSBinc calculation
+	init_number SSBincstock;               // Stock for SSBinc calculation
+	init_number FCV;                       // F prior 0.2
+	init_number movCV;                     // Movement prior 1.
+	init_number selCV;                     // Selectivity prior 0.9
+	init_number SSBincCV;                  // SSB ratio CV 0.01
 	
 	// -- Likelihood weights --
 	init_int nLHw;                         // Number of likelihood weights
@@ -236,7 +252,7 @@ DATA_SECTION
 	init_matrix sel_ini(1,nf,1,nl);                   // Selectivity 
 	init_matrix selpars_ini(1,nf,1,3);                // Selectivity parameters
 	init_vector lnF_ini(1,nCobs);                     // Effort (complexF=0) or log fishing mortality rate (complexF=1) 
-	init_matrix lnRD_ini(1,np,1,ny);             // Recruitment deviations
+	init_matrix lnRD_ini(1,np,1,ny);                  // Recruitment deviations
 	init_5darray mov_ini(1,np,1,ns,1,na,1,nr,1,nr);   // Movement parameters
 	init_vector lnqCPUE_ini(1,nCPUEq);                // q estimates for CPUE fleets
 	init_vector lnqI_ini(1,nI);                       // q estimates for Fish. Ind. Indices
@@ -258,22 +274,24 @@ DATA_SECTION
 PARAMETER_SECTION
 		
 	// -- Estimated parameters --
-	//init_bounded_vector lnR0(1,np,11.,17.,1);                 // Unfished recruitment
-	init_bounded_vector lnmuR(1,np,9.5,19.,1);                  // Historical mean recruitment 
-	init_bounded_vector lnHR1(1,np,-2,2,1);                      // Historical mean recruitment 
-	init_bounded_vector lnHR2(1,np,-2,2,1);                      // Historical mean recruitment 
-	init_bounded_matrix selpar(1,nsel,1,seltype,-2.,2.,1);      // Selectivity parameters
+	//init_bounded_vector lnR0(1,np,11.,17.,1);               // Unfished recruitment
+	init_bounded_number lnmuRT(11.5,16.5,1);                  // Total historical mean recruitment 
+	init_number lnPrat(1);                                    // East - west fraction
+	init_bounded_vector lnHR1(1,np,-2,2,1);                   // Historical mean recruitment 
+	init_bounded_vector lnHR2(1,np,-2,2,1);                   // Historical mean recruitment 
+	init_bounded_matrix selpar(1,nsel,1,seltype,-3.,3.,1);    // Selectivity parameters
 	init_bounded_dev_vector lnRD1(1,nRD,-6.,6.,1);
 	init_bounded_dev_vector lnRD2(1,nRD,-6.,6.,1);
-	init_bounded_vector movest(1,nMP,-8.,8.,1);                 // Movement parameters
-	init_bounded_vector lnqE(1,nE,-6.,1.,1);                    // q estimates for E fleets
-        init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                  // q estimates for Fish. Ind. indices
-        init_bounded_vector lnqCPUE(1,nCPUEq,-6.,4.,1);             // q estimates for Fish. Dep. indices
-	init_bounded_dev_vector Fmod(1,ns*nr,-2,2,1);               // F modifier by season and area
+	init_bounded_vector movest(1,nMP,-8.,8.,1);               // Movement parameters
+	init_bounded_vector lnqE(1,nE,-10.,1.,1);                 // q estimates for E fleets
+        init_bounded_vector lnqI(1,nI,-2.3,2.3,1);                // q estimates for Fish. Ind. indices
+        init_bounded_vector lnqCPUE(1,nCPUEq,-6.,4.,1);           // q estimates for Fish. Dep. indices
+	init_bounded_dev_vector Fmod(1,ns*nr,-10.,10.,1);         // F modifier by season and area
 	
 	LOCAL_CALCS
 	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
-	  //cout<<nodemax<<endl;
+	  //cout<<Ilencat<<endl;
+	 // exit(1);
 	END_CALCS
 	
 	vector nodes(1,nodemax);                    // Parameter values stored in nodes vector for mcmc output
@@ -306,11 +324,15 @@ PARAMETER_SECTION
         matrix spawnr(1,np,1,nr);                   // The fraction of spawning in each area
         4darray VB(1,ny,1,ns,1,nr,1,nf);            // Vulnerable biomass
         4darray VBi(1,ny,1,ns,1,nr,1,nf);           // Vulnerable biomass index
+        4darray VBind(1,ny,1,ns,1,nr,1,nf);         // 5 categories of vulnerability (1) 66-115 (2) 115-144 (3) less than 145 (4) greater than 177 (5) greater than 195
+        5darray VL(1,ny,1,ns,1,nr,1,nf,1,nl);       // Vulnerable at length recorded
         3darray B(1,ny,1,ns,1,nr);                  // Biomass
+        vector lnmuR(1,np);
         vector SSB0(1,np);                          // Unfished spawning stock biomass
         vector D(1,np);                             // Stock depletion SSB now / SSB0
         vector Dt(1,np);                            // Stock depletion SSB now / first assessment year
         vector SSBnow(1,np);                        // SSB now
+        vector SSB_EW(1,2);			    // Temporary East- West division 5-10, 1-4 areas
       
         matrix RD(1,np,1,nRD);                      // Recruitment deviations from historical average
         matrix Rec(1,np,1,ny);                      // Recruitment 
@@ -346,6 +368,13 @@ PARAMETER_SECTION
         5darray movcalc(1,np,1,ns,1,nma,1,nr,1,nr);    // Movement calculation matrix
         5darray movm(1,np,1,ns,1,nma,1,nr,1,nr);       // Master movement matrix by movement age class
         5darray mov(1,np,1,ns,1,na,1,nr,1,nr);         // Movement matrix by age
+        
+        // -- Composition likelihood function
+        
+        vector CLprop(1,nCLobs);                       // Calculated proportions
+        vector CLsd(1,nf);                             // Conditional MLE std dev 
+        vector CLn(1,nf); 
+        vector CLvar(1,nf); 
         
         // -- Tagging --
         6darray RecapP(1,np,1,ns,1,nma,1,nRPT,1,nr,1,nr);    // Recapture probabilities
@@ -422,7 +451,10 @@ FUNCTION assignPars
   {
 	// -- Assign estimated parameters --
 	
-	muR=mfexp(lnmuR);                   // Assign historical recruitment
+	muR(1)=mfexp(lnmuRT)*mfexp(2.1+lnPrat)/(1+mfexp(2.1+lnPrat));              // Initializes at 8 times larger in the east 
+	muR(2)=mfexp(lnmuRT)*mfexp(-(2.1+lnPrat))/(1+mfexp(-(2.1+lnPrat)));              // Initializes at 8 times larger in the east 
+	lnmuR=log(muR);	
+	//muR=mfexp(lnmuR);                   // Assign historical recruitment
 	qCPUE=mfexp(lnqCPUE);               // Assign catchability for CPUE indices
 	qI=mfexp(lnqI);                     // Assign fishery independent catchabilities
 	qE=mfexp(lnqE);                     // Assign catchability of partial F series' 
@@ -476,11 +508,11 @@ FUNCTION calcSurvival
 	// -- Calculate survival --
 	for(int pp=1;pp<=np;pp++){                   // Loop over stocks      
 	 
-	  //surv(pp,1)=1.;                             // Survival to age 1 is 100%
+	  surv(pp,1)=1.;                             // Survival to age 1 is 100%
 	  
 	  for(int aa=1;aa<=na;aa++){             // Loop over age classes
 	    
-	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
+	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa-1)));   // Calculate survivial
 	  
 	  }                                          // End of age classes
 	
@@ -694,8 +726,8 @@ FUNCTION calcSelectivities
 		    
 	    case 2: // Logistic selectivity
 	     
-	      spar(2)=ml(nl)*(0.2+0.5*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));        // Inflection point (2) as a fraction of largest length I(0.1|0.8)
-	      spar(1)=ml(nl)*(0.02+0.08*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));    // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
+	      spar(2)=ml(nl)*(0.05+0.85*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));        // Inflection point (2) as a fraction of largest length I(0.1|0.8)
+	      spar(1)=ml(nl)*(0.005+0.11*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));    // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
 	      
 	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
 	      
@@ -708,7 +740,32 @@ FUNCTION calcSelectivities
 	    
 	    break;                                                                         // End of logistic selectivity
 		   
-            case 3: // Thompson dome-shaped selectivity
+            case 3: // Double normal selectivity
+	      
+	      spar(1)=ml(nl)*(0.1+0.8*mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))); // Max selectivity bounded between 5 and 95 percent of length range
+	      spar(2)=spar(1)*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2)));       // Lower sd (divided by 4 just to start at a reasonable guess)
+	      spar(3)=ml(nl)*mfexp(selpar(ss,3));         // Upper sd
+	     
+	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
+	        
+	        if(ml(ll)<spar(1)){
+	            
+	          msel(ss,ll)=pow(2.0,-(ml(ll)-spar(1))/spar(2)*(ml(ll)-spar(1))/spar(2)); 
+	        
+	        }else{
+	        
+	          msel(ss,ll)=pow(2.0,-(ml(ll)-spar(1))/spar(3)*(ml(ll)-spar(1))/spar(3));
+	        
+	        }
+	      
+	      }									           // End of length classes
+	      
+	      
+	      msel(ss)/=max(msel(ss));                                                     // Need to normalize to max 1 or face counfounding with q
+	          
+	    break;
+	    
+	    /*case 4: // Thompson dome-shaped selectivity
 	      
 	      spar(1)=0.01+pow((selpar(ss,1)+2.)/5,3.);            // Dome-shape parameter 
 	      spar(2)=0.01+0.01*pow((selpar(ss,2)+2.),3.);         // Precision as the ratio of the inflection point
@@ -723,7 +780,7 @@ FUNCTION calcSelectivities
 	      
 	      msel(ss)/=max(msel(ss));                                                     // Need to normalize to max 1 or face counfounding with q
 	      
-	    break;									   // End of Thompson selectivity
+	    break;*/									   // End of Thompson selectivity
 		      
 	  }
 	          
@@ -834,6 +891,7 @@ FUNCTION initModel
 	hSSB.initialize();             // historical Spawning stock biomass = 0
 	SSBdist.initialize();          // Spawning distribution = 0
 	SSB0.initialize();             // Unfished spawning stock biomass = 0
+	SSB_EW.initialize();           // SSB by area initialized at 0
 	//SSBpR.initialize();          // SSB per recruit = 0
 	CWtotpred.initialize();        // Total catch (weight) = 0
 	CWpred.initialize();           // Catch (weight) = 0
@@ -844,6 +902,7 @@ FUNCTION initModel
 	CTA.initialize();              // Temporary catch at age = 0
 	VB.initialize();               // Vulnerable biomass = 0
 	VBi.initialize();              // Vulnerable biomass index = 0
+	VL.initialize();               // Vulnerable length
 	D.initialize();                // Spawning Stock depletion = 0
 	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
@@ -1028,7 +1087,7 @@ FUNCTION initModel
 		    for(int rr=1;rr<=nr;rr++){ // Loop over areas
 		    			      
 		      hSSB(pp,yy,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);//*canspawn(pp,rr));    // SSB is summed (+=) over age classes and areas (sum())
-		    
+		      
 		    }                         // End of areas
 		    
 		  }                           // End of ages
@@ -1119,7 +1178,7 @@ FUNCTION initModel
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleet types
 						  
 		VB(1,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));   // Vulnerable biomass summed over stocks
-		 
+		VL(1)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff));  
 	      }                                               // End of fleets
 	  	
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleets
@@ -1179,7 +1238,14 @@ FUNCTION calcTransitions
 	          for(int rr=1;rr<=nr;rr++){  // Loop over areas
 	          
 	            SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
-	          
+	            
+	            if(rr<5){
+	              SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	            }
+	            if(rr>4){
+	              SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	            }
+	            
 	          }                           // End of areas
 	        
 	        }                             // End of ages
@@ -1229,7 +1295,14 @@ FUNCTION calcTransitions
 		     for(int rr=1;rr<=nr;rr++){ // Loop over areas
 		  		      
 		  	SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
-		  		    	            
+		  	
+		  	if(rr<5){
+			  SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+			}
+			if(rr>4){
+			  SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	                }
+		  	
 		     }                          // End of areas
 		  		    
 		  }                            // End of age classes
@@ -1245,6 +1318,14 @@ FUNCTION calcTransitions
 		    for(int rr=1;rr<=nr;rr++){  // Loop over areas
 		    
 		      SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
+		    
+		      if(rr<5){
+		    	SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+		      }
+		      if(rr>4){
+		    	SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+		      }
+
 		    
 		    }	                        // End of areas 
 		  
@@ -1265,7 +1346,7 @@ FUNCTION calcTransitions
 		for(int aa=1;aa<=na;aa++){                            // Loop over age classes
 			      
 		  NLA(aa)=N(pp)(yy)(ss)(aa)(rr)*ALK(pp)(yy)(aa);      // Temporarily store numbers at length
-			      
+		  	      
 		}                                                     // End of age classes
 			      
 	        NLtemp=colsum(NLA);                                   // Calculate numbers by length class (sum over ages)
@@ -1276,7 +1357,8 @@ FUNCTION calcTransitions
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
 		   
 		  VB(yy,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));    // Vulnerable biomass summed over stocks
-		  	  
+		  VL(yy)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff)); 
+		  
 		}                                                     // End of fleets
 				
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
@@ -1373,6 +1455,10 @@ FUNCTION calcObjective
 	objRat.initialize();                    // Ratio on unfished spawning stock size
 	
 	Ipred.initialize();                     // Predicted fishery-independent index
+	CLprop.initialize();                    // Catch at length composition predicted proportions
+	CLsd.initialize();                      // Conditional MLE estimate of the sd 
+	CLn.initialize();
+	CLvar.initialize();
 	
 	dvariable LHtemp;                       // Temporary store of the calculated likelihood values
         double tiny=1E-10;                      // Create a small constant to avoid log(0) error
@@ -1445,14 +1531,36 @@ FUNCTION calcObjective
 	    int rr=CPUEobs(i,3);    // Region
 	    int ii=CPUEobs(i,4);    // index No ID
 	    int ff=CPUEobs(i,5);    // fleet index ID
-	    	    
+	    int lt=CPUEobs(i,7);    // if related to a length group > 0	    
 	    //cout<<yy<<"-"<<ss<<"-"<<rr<<"-"<<ii<<"-"<<ff<<"-"<<CPUEobs(i,5)<<endl;
 	    
-	    CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	    LHtemp=0.; 
+	    
+	    if(lt<1){ // vulnerable biomass
+	    	  		    
+	        CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	            	  	    
+	    }else{// length category according to Ilencat
+	      
+	      CPUEtemp=0.;  		   
+	      	
+	      for(int yy=1;yy<=ny;yy++){
+	
+	    	CPUEtemp+=sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2)))/ny; // mean index over time
+	    	   
+	      }
+	      
+	      LHtemp=sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2)))/CPUEtemp; // the prediced index
+	      //cout<<LHtemp<<endl;
+	      //exit(1);
+	      CPUEtemp=qCPUE(ii)*LHtemp;                                       // Calculate vulnerable biomass
+	            
+	    }
+	    
 	    LHtemp=dnorm(log(CPUEtemp+tiny),log(CPUEobs(i,6)+tiny),CPUEobsCV(ii));    // Log-normal LHF
 	    objCPUE+=LHtemp*LHw(2);                                                   // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(2);                                                      // Weighted likelihood contribution
-	  	  
+  	  
 	  }
 	
 	  if(debug)cout<<"---  * Finished CPUE LHF ---"<<endl;
@@ -1505,6 +1613,26 @@ FUNCTION calcObjective
 	
 	// -- Length composition data --  
 	
+	
+	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
+		
+	  int yy=CLobs(i,1);   // Year
+          int ss=CLobs(i,2);   // Subyear
+	  int rr=CLobs(i,3);   // Region
+	  int ff=CLobs(i,4);   // Fleet type
+	  int ll=CLobs(i,5);   // Length class
+	  CLprop(i)=VL(yy,ss,rr,ff,ll)/sum(VL(yy)(ss)(rr)(ff));
+	  CLn(ff)+=1;
+	  CLvar(ff)+=pow(sqrt(CLprop(i)+tiny)-sqrt(CLobs(i,6)+tiny),2.);
+	  
+	}
+	
+	for(int ff=1;ff<=nf;ff++){
+	
+	  CLsd(ff)=sqrt(CLvar(ff)/CLn(ff));
+	  
+	}
+		
 	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
 	
 	  int yy=CLobs(i,1);   // Year
@@ -1515,7 +1643,9 @@ FUNCTION calcObjective
 	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" l="<<ll<<" CLobs="<<CLobs(i,6)<<" CLpred="<<CLtotpred(yy,ss,rr,ff,ll)<<endl;
 	  //LHtemp=dnorm(log(CLtotpred(yy)(ss)(rr)(ff)(ll)),log(CLobs(i,6)),1);
 	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
-	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
+	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
+	  LHtemp=(-CLobs(i,6)*log(CLprop(i)+tiny));
+	  //LHtemp=log(CLsd(ff))+pow(sqrt(CLobs(i,6)+tiny)-sqrt(CLprop(i)+tiny),2)/(2.*CLsd(ff)); // new log(p) formulation
 	  objCL+=LHtemp*LHw(4);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4);                                      // Weighted likelihood contribution
 	}
@@ -1621,11 +1751,12 @@ FUNCTION calcObjective
 	  objG+=LHtemp*LHw(8);  
 	
 	}
+	
 	// -- Movement parameters ---
 	
 	for(int mm=1;mm<=nMP;mm++){
 	     
-	  LHtemp=dnorm(movest(mm),0.,2);        // Weak(ish) prior 
+	  LHtemp=dnorm(movest(mm),0.,movCV);        // Weak(ish) prior 
           objmov+=LHtemp*LHw(9);                  // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(9);                    // Weighted likelihood contribution
 	  
@@ -1635,32 +1766,66 @@ FUNCTION calcObjective
 	
 	for(int i=1;i<=nsel;i++){ 
 	  
-	  objsel+=dnorm(selpar(i),0,1.25)*LHw(10);  
-	  objG+=dnorm(selpar(i),0,1.25)*LHw(10);   // Prior on selectivity to add numerical stability
+	  objsel+=dnorm(selpar(i),0,selCV)*LHw(10);  
+	  objG+=dnorm(selpar(i),0,selCV)*LHw(10);   // Prior on selectivity to add numerical stability
 	
 	}
 	
-	objG+=objSRA*LHw(11);                      // Add the posfun penalty for SRA harvest rates over 90%
+	if(last_phase()){
+	
+	  objG+=objSRA*LHw(11);                      // Add the posfun penalty for SRA harvest rates over 90%
+	
+	}
+	
+	/*cout<<SSB_EW<<endl;
+	cout<<((ny-1)*ns)<<endl;
+	cout<<SSB_EW/((ny-1)*ns)<<endl;
+	cout<<SSBprior<<endl;
+	exit(1);*/
+	
 	
 	for(int pp=1;pp<=np;pp++){
 	
-	  objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);
-	
+	  switch(SSBfit){
+	  	  		    
+	    case 1:  // SSBnow
+	  	  	      
+	      objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);   
+	  	  	    
+	      break;
+	  	  		   
+	    case 2:  // SSB0
+	  	       
+	      objSSB+=dnorm(log(SSB0(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);  
+	  	         	      
+	      break;
+	      
+	    case 3:  // meanSSB
+	    		  		      
+	      SSBnow(pp)=SSB_EW(pp)/((ny-1)*ns);         // mean SSB (reusing variable SSBnow)
+              objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12); 
+	    	  	         	      
+	      break;
+	      
+	   }
+	  
 	}
 	
 	objG+=objSSB*LHw(12);
 	
+	objRat=dnorm(log(SSB(SSBincstock,SSBy[2],ns)/SSB(SSBincstock,SSBy[1],ns)),log(SSBinc),SSBincCV);
+		
+	objG+=objRat*LHw(13);
+	
 	for(int ll=1;ll<=ns*nr;ll++){
 	  
-	  objFmod+=dnorm(Fmod(ll),0,0.5);
+	  objFmod+=dnorm(Fmod(ll),0,FCV);
 	  
 	}
 	
-	objG+=objFmod;
+	objG+=objFmod*LHw(14);
 	
-	objRat=dnorm(log(SSB0(1)/SSB0(2)),2.079,0.15);
 	
-	objG+=objRat*50;
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	
@@ -1697,14 +1862,14 @@ FUNCTION simsam
         cout<<"lnHR1 sam = "<<lnHR1<<endl;                    // Estimated mu r deviant
         cout<<"lnHR2 sam = "<<lnHR2<<endl;                    // Estimated mu r deviant
       
-        //cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
+        cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
         for(int ff=1;ff<=nf;ff++){
           //cout<<"sel sim f1= "<<sel_ini(1)<<endl;            // Simulated selectivity fleet 1
           cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;            // Estimated selectivity fleet 1
         }
         cout<<"RD= "<<RD<<endl;
-        cout<<"Rec1= "<<RD(1)*muR(1)<<endl;
-        cout<<"Rec2= "<<RD(2)*muR(2)<<endl;
+        //cout<<"Rec1= "<<RD(1)*muR(1)<<endl;
+        //cout<<"Rec2= "<<RD(2)*muR(2)<<endl;
        
         //cout<<"RD sam 1 = "<<RD(1)<<endl;                       // Estimated recruitment deviations
 	//cout<<"RD sam 2 = "<<RD(2)<<endl;                       // Estimated recruitment deviations
@@ -1712,8 +1877,17 @@ FUNCTION simsam
 	
 	//cout<<"mov sim p1 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 1 in subyear 1
 	//cout<<mov_ini(1)(2)(2)<<endl;                           // Simulated movement probabilities for stock 1 in subyear 1
-	cout<<"mov sam p1 s2 m2= "<<endl;                         // Estimated movement probabilities for stock 1 in subyear 1
-	cout<<mov(1)(2)(2)<<endl;                                 // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"East"<<endl;
+	cout<<"mov sam p1 s1 a3 = "<<mov(1)(1)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s2 a3 = "<<mov(1)(2)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s3 a3 = "<<mov(1)(3)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s4 a3 = "<<mov(1)(4)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"West"<<endl;
+	cout<<"mov sam p1 s1 a3 = "<<mov(2)(1)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s2 a3 = "<<mov(2)(2)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s3 a3 = "<<mov(2)(3)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s4 a3 = "<<mov(2)(4)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+		
 	//cout<<"mov sam p1 s3 m2= "<<endl;                       // Estimated movement probabilities for stock 1 in subyear 1
 	//cout<<mov(1)(3)(2)<<endl;                               // Estimated movement probabilities for stock 1 in subyear 1
 	//cout<<"mov sim p2 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 2 in subyear 1
@@ -1725,6 +1899,7 @@ FUNCTION simsam
 	//cout<<"qCE sim= "<<exp(lnqCPUE_ini)<<endl;           // Simulated catchabilities
 	cout<<"qCPUE sam= "<<qCPUE<<endl;                      // Estimated catchabilities
 	cout<<"qE sam= "<<qE<<endl;                             // Simulated FI index catchability
+	cout<<"lnqE sam= "<<lnqE<<endl; 
 	cout<<"qI sam= "<<qI<<endl;                          // Estimated FI index catchability
 	cout<<"Biomass trend = "<<Btrend<<endl;              // Biomass trend
 	for(int pp =1;pp<=np;pp++){
@@ -1852,6 +2027,11 @@ REPORT_SECTION
   	  report <<CLtotpred(yy)<<endl;
   	}
   	
+  	report <<"VL (y,s,r,f,l)"<<endl;
+	for(int yy=1;yy<=ny;yy++){
+	  report <<VL(yy)<<endl;
+  	}
+  	
   	report <<"movement age groups (p,a)"<<endl;
   	report <<ma<<endl;
   	
@@ -1909,6 +2089,9 @@ REPORT_SECTION
 	
 	report<<"movtype"<<endl;             // 1: gravity, 2: markov
 	report<<movtype<<endl;
+	
+	report<<"Ilencat"<<endl;
+	report<<Ilencat<<endl;
 	
 	report<<"Ma (p,a)"<<endl;
 	report<<Ma<<endl;
@@ -1987,7 +2170,10 @@ REPORT_SECTION
 	
 	report<<"SSBnow: current spawning biomass by stock"<<endl;
 	report<<SSBnow<<endl;
-		
+	
+	report<<"objC"<<" objCPUE"<<" objI"<<" objCL"<<" objSOO"<<" objPSAT"<<" objRD"<<" objmov"<<" objsel"<<" objSRA"<<" objSSB"<<" objFmod"<<" objRat"<<" objG"<<endl;
+	report<<objC<<" "<<objCPUE<<" "<<objI<<" "<<objCL<<" "<<objSOO<<" "<<objPSAT<<" "<<objRD<<" "<<objmov<<" "<<objsel<<" "<<objSRA*LHw(11)<<" "<<objSSB<<" "<<objFmod<<" "<<objRat*50<<" "<<objG<<endl;
+			
   	report<<"datacheck"<<endl;
   	report<<datacheck<<endl;
   	

@@ -335,10 +335,10 @@ DesignEffect<-function(Sres1,Sres2,Design){
   nfac<-length(Design$all_levs)
 
   par(mfrow=c(nfac,4),mai=c(0.2,0.4,0.5,0.01),omi=c(0.5,0.4,0.4,0.05))
-  cols=c("#ff000050","#0000ff50","#00ff0050")
-  lcols<-c('red','blue','green')
+  cols=c("#ff000050","#0000ff50","#00ff0050","#99999995")
+  lcols<-c('red','blue','green','black')
 
-  facnam<-paste("-----",c("Mort. / Mat.","Steepness","Index type","Depletion"),"-----")
+  facnam<-paste("-----",c("Factor 1: Future recruitment","Factor 2: Abundance","Factor 3: Maturity / M"),"-----")
 
   nams<-c("UMSY","MSY","D","OFL")
   toplabline<-3.5
@@ -350,7 +350,7 @@ DesignEffect<-function(Sres1,Sres2,Design){
     col<-cols[Design$Design_Ref[OMind,i]]
 
     plot(Sres1[,4],Sres2[,4],col=col,pch=19,cex=1,xlab="",ylab="")
-    legend('topleft',legend=Design$all_lnams[[i]],text.col=lcols[1:max(Design$all_levs[[i]])],bty='n',cex=0.8)
+    legend('topleft',legend=Design$all_levs[[i]],text.col=lcols[1:length(Design$all_levs[[i]])],bty='n',text.font=2)
 
     if(i==1)mtext("UMSY",3,outer=F,line=toplabline)
 
@@ -648,7 +648,7 @@ getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
   if(plot){
     ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="",col="#0000ff95",pch=19)
     SSB2<-seq(0,max(R0*SSBpR,max(SSB)),length.out=500)
     recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
     lines(SSB2,recpred2,col='blue')
@@ -680,7 +680,7 @@ getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
   if(plot){
     ord<-order(SSB)
-    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="")
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="",col="#0000ff95",pch=19)
     SSB2<-seq(0,R0*SSBpR,length.out=500)
     recpred2<-rep(R0,length(SSB2))
     cond<-SSB2<inflect*SSB0

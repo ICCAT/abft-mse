@@ -4,7 +4,7 @@
 library('ABTMSE')
 loadABT()
 
-setwd("C:/ABT-MSE")
+setwd("C:/abft-mse")
 datadir<-paste0(getwd(),"/R_package/ABTMSE/data/")
 
 
@@ -97,7 +97,7 @@ save(Recruitment_example,file=paste0(datadir,"Recruitment_example"))
 
 # MSE_example ----------
 OM_example<-new('OM',OMdirs[10],nsim=48,proyears=30,seed=1)
-load(paste0(getwd(),"/Objects/OMs/1/OM"))
+#load(paste0(getwd(),"/Objects/OMs/1/OM"))
 sfInit(parallel=T,cpus=detectCores())
 myMPs<-list(c('UMSY','UMSY'),
             c('DD_i4','DD_i2'),
@@ -146,12 +146,18 @@ dset_example_West<-dset[[2]]
 save(dset_example_East,file=paste0(datadir,"dset_example_East"))
 save(dset_example_West,file=paste0(datadir,"dset_example_West"))
 
-# The MSE design matrix -------------------------------------------------------------------------------
+# The MSE design matrix ------------------------------------------------------------------------------
+datadir<-paste0(getwd(),"/R_package/ABTMSE/data/")
 
 from_file<-paste0(getwd(),"/Objects/OMs/Design.Rdata")
 to_file<-paste0(datadir,"Design.Rdata")
 file.copy(from_file,to_file,overwrite=T)
 
+# Time series data -----------------------------------------------------------------------------------
+
+ts2017<-read.csv(paste0(getwd(),"/data/Assessment_2017/ts2017.csv"))
+save(ts2017,file=paste0(getwd(),"/R_package/ABTMSE/inst/ts2017.Rdata"))
+# add a copy for ts.Rdata
 
 # END OF CREATE EXAMPLES =========================================================================================
 

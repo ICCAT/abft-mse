@@ -243,6 +243,12 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write(OMI@movtype,datfile,1,append=T)
 
 
+  # -- Extra length selectivity types for indices - basically short to long fish
+
+  write("# Ilencat, the length bin indexing of new indices",datfile,1,append=T)
+  write(OMI@Ilencat,datfile,2,append=T)
+
+
   # -- Observation errors
 
   write("# CobsCV, lognormal CV of the observed catches",datfile,1,append=T)
@@ -263,8 +269,33 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# SSBprior, prior on current SSB",datfile,1,append=T)
   write(OMI@SSBprior,datfile,1,append=T) # Absolute tonnage of SSB in current model year
 
-  write("# SSBCV, lognormal penalty on recruitment deviations",datfile,1,append=T)
+  write("# SSBCV, lognormal penalty SSBprior",datfile,1,append=T)
   write(OMI@SSBCV,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# SSBfit, type of ssb fit",datfile,1,append=T)
+  write(OMI@SSBfit,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# SSBinc, ratio of SSBy[2]/SSBy[1]",datfile,1,append=T)
+  write(OMI@SSBinc,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# SSBy, years for SSBinc ratio calculation",datfile,1,append=T)
+  write(OMI@SSBy,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# SSBincstock, stock for SSBinc ratio calculation",datfile,1,append=T)
+  write(OMI@SSBincstock,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# FCV, prior precision of deviations from mean F from master index x q",datfile,1,append=T)
+  write(OMI@FCV,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# movCV, prior precision of deviations from homogeneous movement",datfile,1,append=T)
+  write(OMI@movCV,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# selCV, prior precision of mean selectivity parameters ",datfile,1,append=T)
+  write(OMI@selCV,datfile,1,append=T) # CV on SSB prior in current model year
+
+  write("# SSBincCV, precision of specified prior on SSB ratio (SSBinc, SSBy, SSBincstock)",datfile,1,append=T)
+  write(OMI@SSBincCV,datfile,1,append=T) # CV on SSB prior in current model year
+
 
 
   # -- Likelihood weights
@@ -425,6 +456,8 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   st<-st+1+out$nCLobs
   out$CLtotpred<-ADMBrep(repfile,st,c(ny,ns,nr,nf,nl),quiet=quiet)
   st<-st+1+ny*ns*nr*nf
+  out$VL<-ADMBrep(repfile,st,c(ny,ns,nr,nf,nl),quiet=quiet)
+  st<-st+1+ny*ns*nr*nf
   out$ma<-ADMBrep(repfile,st,c(np,na),quiet=quiet)
   st<-st+1+np
   out$mov<-ADMBrep(repfile,st,c(np,ns,na,nr,nr),quiet=quiet)
@@ -461,6 +494,8 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   st<-st+1+out$nmov1
   out$movtype<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
+  out$Ilencat<-ADMBrep(repfile,st,c(5,2),quiet=quiet)
+  st<-st+6
   out$M_age<-ADMBrep(repfile,st,c(np,na),quiet=quiet)
   st<-st+1+np
   #out$h<-scan(repfile,skip=st,nlines=1,quiet=quiet)
@@ -516,9 +551,13 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   st<-st+2
   out$SSBnow<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
+  out$objnam<-c("Model","Global","Catch","CPUE","Ind.","Length","SOO","PSAT","P Rec.","P mov","P sel","SRA pen","P SSB","P Fmod","P ratio")
+  #st<-st+1
+  out$obj<-scan(repfile,skip=st,nlines=1,quiet=quiet)
+  st<-st+2
   out$datacheck<-scan(repfile,skip=st,nlines=1,quiet=quiet)
 
-  opt<-SRopt(out,plot=T)
+  opt<-SRopt(out,plot=F)
   out$h<-opt$h
   out$R0<-opt$R0
   out$logith_lnR0_VC<-opt$VC
@@ -706,8 +745,8 @@ make_fit_reports<-function(dirs="C:/M3",addlab=FALSE) {
 
     out<-M3read(input_dir)
     load(paste(input_dir,"/OMI",sep=""))
-    load(system.file("ts.Rdata", package="ABTMSE"))
-    dat<-subset(ts,catchScenario=="Reported")
+    load(system.file("ts2017.Rdata", package="ABTMSE"))
+    dat<-ts2017
     #getM3res(out,outdir=input_dir,firstyr=1960,fleetnams=c(OMI@Fleets$name,'ALL OTH'),   areanams=OMI@areanams)
     #plotM3fit(out,outdir=input_dir,firstyr=1960, fleetnams=c(OMI@Fleets$name,'ALL OTH'), areanams=OMI@areanams)
     if(!addlab){
@@ -741,7 +780,7 @@ make_summary_report<-function(dir,OMdirs=NA){
 
   load(designdir)
 
-  if(is.na(OMdirs)){
+  if(is.na(OMdirs[1])){
     OMdirs<-list.dirs(dir)
     OMdirs<-OMdirs[2:length(OMdirs)]
     nOMs<-length(OMdirs)
@@ -756,7 +795,15 @@ make_summary_report<-function(dir,OMdirs=NA){
   #render(input="Source/OMsummary.Rmd", output_file=paste(dir,"/Summary report.pdf",sep=""))
   render(input=system.file("OMsummary.Rmd", package="ABTMSE"), output_file=paste(dir,"/Summary_Report.pdf",sep=""))
 
-
 }
 
+make_comp_report<-function(OMdirs,dir){
+  load(system.file("ts2017.Rdata", package="ABTMSE"))
+  dat<-ts2017
+
+  nOMs<-length(OMdirs)
+  #render(input="Source/OMsummary.Rmd", output_file=paste(dir,"/Summary report.pdf",sep=""))
+  render(input=system.file("OMcomp.Rmd", package="ABTMSE"), output_file=paste(dir,"/Comparison_Report.pdf",sep=""))
+
+}
 

@@ -1,9 +1,3 @@
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-    #include <cfenv>
-    #include <cstdlib>
-  #endif
-#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -50,7 +44,7 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   Cobs.allocate(1,nCobs,1,5,"Cobs");
   nCPUEq.allocate("nCPUEq");
   nCPUEobs.allocate("nCPUEobs");
-  CPUEobs.allocate(1,nCPUEobs,1,6,"CPUEobs");
+  CPUEobs.allocate(1,nCPUEobs,1,7,"CPUEobs");
   nE.allocate("nE");
   nEobs.allocate("nEobs");
   Eobs.allocate(1,nEobs,1,6,"Eobs");
@@ -82,12 +76,21 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   nmov1.allocate("nmov1");
   mov1.allocate(1,nmov1,1,5,"mov1");
   movtype.allocate("movtype");
+  Ilencat.allocate(1,5,1,np,"Ilencat");
   CobsCV.allocate(1,nf,"CobsCV");
   CPUEobsCV.allocate(1,nCPUEq,"CPUEobsCV");
   IobsCV.allocate(1,nI,"IobsCV");
   RDCV.allocate("RDCV");
   SSBprior.allocate(1,np,"SSBprior");
   SSBCV.allocate("SSBCV");
+  SSBfit.allocate("SSBfit");
+  SSBinc.allocate("SSBinc");
+  SSBy.allocate(1,2,"SSBy");
+  SSBincstock.allocate("SSBincstock");
+  FCV.allocate("FCV");
+  movCV.allocate("movCV");
+  selCV.allocate("selCV");
+  SSBincCV.allocate("SSBincCV");
   nLHw.allocate("nLHw");
   LHw.allocate(1,nLHw,"LHw");
   muR_ini.allocate(1,np,"muR_ini");
@@ -111,19 +114,21 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
  model_data(argc,argv) , function_minimizer(sz)
 {
   initializationfunction();
-  lnmuR.allocate(1,np,9.5,19.,1,"lnmuR");
+  lnmuRT.allocate(11.5,16.5,1,"lnmuRT");
+  lnPrat.allocate(1,"lnPrat");
   lnHR1.allocate(1,np,-2,2,1,"lnHR1");
   lnHR2.allocate(1,np,-2,2,1,"lnHR2");
-  selpar.allocate(1,nsel,1,seltype,-2.,2.,1,"selpar");
+  selpar.allocate(1,nsel,1,seltype,-3.,3.,1,"selpar");
   lnRD1.allocate(1,nRD,-6.,6.,1,"lnRD1");
   lnRD2.allocate(1,nRD,-6.,6.,1,"lnRD2");
   movest.allocate(1,nMP,-8.,8.,1,"movest");
-  lnqE.allocate(1,nE,-6.,1.,1,"lnqE");
+  lnqE.allocate(1,nE,-10.,1.,1,"lnqE");
   lnqI.allocate(1,nI,-2.3,2.3,1,"lnqI");
   lnqCPUE.allocate(1,nCPUEq,-6.,4.,1,"lnqCPUE");
-  Fmod.allocate(1,ns*nr,-2,2,1,"Fmod");
+  Fmod.allocate(1,ns*nr,-10.,10.,1,"Fmod");
 	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
-	  //cout<<nodemax<<endl;
+	  //cout<<Ilencat<<endl;
+	 // exit(1);
   nodes.allocate(1,nodemax,"nodes");
   #ifndef NO_AD_INITIALIZE
     nodes.initialize();
@@ -227,9 +232,21 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     VBi.initialize();
   #endif
+  VBind.allocate(1,ny,1,ns,1,nr,1,nf,"VBind");
+  #ifndef NO_AD_INITIALIZE
+    VBind.initialize();
+  #endif
+  VL.allocate(1,ny,1,ns,1,nr,1,nf,1,nl,"VL");
+  #ifndef NO_AD_INITIALIZE
+    VL.initialize();
+  #endif
   B.allocate(1,ny,1,ns,1,nr,"B");
   #ifndef NO_AD_INITIALIZE
     B.initialize();
+  #endif
+  lnmuR.allocate(1,np,"lnmuR");
+  #ifndef NO_AD_INITIALIZE
+    lnmuR.initialize();
   #endif
   SSB0.allocate(1,np,"SSB0");
   #ifndef NO_AD_INITIALIZE
@@ -246,6 +263,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   SSBnow.allocate(1,np,"SSBnow");
   #ifndef NO_AD_INITIALIZE
     SSBnow.initialize();
+  #endif
+  SSB_EW.allocate(1,2,"SSB_EW");
+  #ifndef NO_AD_INITIALIZE
+    SSB_EW.initialize();
   #endif
   RD.allocate(1,np,1,nRD,"RD");
   #ifndef NO_AD_INITIALIZE
@@ -347,6 +368,22 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     mov.initialize();
   #endif
+  CLprop.allocate(1,nCLobs,"CLprop");
+  #ifndef NO_AD_INITIALIZE
+    CLprop.initialize();
+  #endif
+  CLsd.allocate(1,nf,"CLsd");
+  #ifndef NO_AD_INITIALIZE
+    CLsd.initialize();
+  #endif
+  CLn.allocate(1,nf,"CLn");
+  #ifndef NO_AD_INITIALIZE
+    CLn.initialize();
+  #endif
+  CLvar.allocate(1,nf,"CLvar");
+  #ifndef NO_AD_INITIALIZE
+    CLvar.initialize();
+  #endif
   RecapP.allocate(1,np,1,ns,1,nma,1,nRPT,1,nr,1,nr,"RecapP");
   #ifndef NO_AD_INITIALIZE
     RecapP.initialize();
@@ -432,7 +469,10 @@ void model_parameters::assignPars(void)
 {
   {
 	// -- Assign estimated parameters --
-	muR=mfexp(lnmuR);                   // Assign historical recruitment
+	muR(1)=mfexp(lnmuRT)*mfexp(2.1+lnPrat)/(1+mfexp(2.1+lnPrat));              // Initializes at 8 times larger in the east 
+	muR(2)=mfexp(lnmuRT)*mfexp(-(2.1+lnPrat))/(1+mfexp(-(2.1+lnPrat)));              // Initializes at 8 times larger in the east 
+	lnmuR=log(muR);	
+	//muR=mfexp(lnmuR);                   // Assign historical recruitment
 	qCPUE=mfexp(lnqCPUE);               // Assign catchability for CPUE indices
 	qI=mfexp(lnqI);                     // Assign fishery independent catchabilities
 	qE=mfexp(lnqE);                     // Assign catchability of partial F series' 
@@ -473,9 +513,9 @@ void model_parameters::calcSurvival(void)
   {
 	// -- Calculate survival --
 	for(int pp=1;pp<=np;pp++){                   // Loop over stocks      
-	  //surv(pp,1)=1.;                             // Survival to age 1 is 100%
+	  surv(pp,1)=1.;                             // Survival to age 1 is 100%
 	  for(int aa=1;aa<=na;aa++){             // Loop over age classes
-	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa)));   // Calculate survivial
+	    surv(pp,aa)=exp(-sum(Ma(pp)(1,aa-1)));   // Calculate survivial
 	  }                                          // End of age classes
 	  //surv(pp,na)*=exp(-Ma(pp,na))/(1-exp(-Ma(pp,na))); // final plus group survival is multiplied by the indefinite intergral  
 	}                                            // End of stocks
@@ -597,15 +637,28 @@ void model_parameters::calcSelectivities(void)
 	for(int ss=1;ss<=nsel;ss++){ // Loop over estimated selectivities
 	  switch(seltype(ss)){       // Cases match number of estimated parameters for simplicity
 	    case 2: // Logistic selectivity
-	      spar(2)=ml(nl)*(0.2+0.5*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));        // Inflection point (2) as a fraction of largest length I(0.1|0.8)
-	      spar(1)=ml(nl)*(0.02+0.08*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));    // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
+	      spar(2)=ml(nl)*(0.05+0.85*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2))));        // Inflection point (2) as a fraction of largest length I(0.1|0.8)
+	      spar(1)=ml(nl)*(0.005+0.11*(mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))));    // Logistic slope (1) as fraction of inflection point (2) I(0.01|0.5)
 	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
 	        msel(ss,ll)=1/(1+mfexp((spar(2)-ml(ll))/spar(1)));                         // Logistic selectivity function
 	      } 
 	      msel(ss)/=max(msel(ss)); // Need to normalize at least one index to max 1 or face counfounding with q
 	      // End of length classes
 	    break;                                                                         // End of logistic selectivity
-            case 3: // Thompson dome-shaped selectivity
+            case 3: // Double normal selectivity
+	      spar(1)=ml(nl)*(0.1+0.8*mfexp(selpar(ss,1))/(1+mfexp(selpar(ss,1)))); // Max selectivity bounded between 5 and 95 percent of length range
+	      spar(2)=spar(1)*mfexp(selpar(ss,2))/(1+mfexp(selpar(ss,2)));       // Lower sd (divided by 4 just to start at a reasonable guess)
+	      spar(3)=ml(nl)*mfexp(selpar(ss,3));         // Upper sd
+	      for(int ll=1;ll<=nl;ll++){                                                   // Loop over length classes
+	        if(ml(ll)<spar(1)){
+	          msel(ss,ll)=pow(2.0,-(ml(ll)-spar(1))/spar(2)*(ml(ll)-spar(1))/spar(2)); 
+	        }else{
+	          msel(ss,ll)=pow(2.0,-(ml(ll)-spar(1))/spar(3)*(ml(ll)-spar(1))/spar(3));
+	        }
+	      }									           // End of length classes
+	      msel(ss)/=max(msel(ss));                                                     // Need to normalize to max 1 or face counfounding with q
+	    break;
+	    /*case 4: // Thompson dome-shaped selectivity
 	      spar(1)=0.01+pow((selpar(ss,1)+2.)/5,3.);            // Dome-shape parameter 
 	      spar(2)=0.01+0.01*pow((selpar(ss,2)+2.),3.);         // Precision as the ratio of the inflection point
 	      spar(3)=ml(nl)*(0.1+0.8*(selpar(ss,3)+2)/4);         // Inflection point as a fraction of largest length
@@ -614,7 +667,7 @@ void model_parameters::calcSelectivities(void)
 	        ((1-spar(1))/spar(1)),spar(1)) * mfexp(spar(2)*spar(1)*(spar(3)-ml(ll)))/(1+mfexp(spar(2)*(spar(3)-ml(ll))));	// Thompson selectivity function	
 	      }									           // End of length classes
 	      msel(ss)/=max(msel(ss));                                                     // Need to normalize to max 1 or face counfounding with q
-	    break;									   // End of Thompson selectivity
+	    break;*/									   // End of Thompson selectivity
 	  }
 	}
 	// -- Fleet specific selectivities --
@@ -684,6 +737,7 @@ void model_parameters::initModel(void)
 	hSSB.initialize();             // historical Spawning stock biomass = 0
 	SSBdist.initialize();          // Spawning distribution = 0
 	SSB0.initialize();             // Unfished spawning stock biomass = 0
+	SSB_EW.initialize();           // SSB by area initialized at 0
 	//SSBpR.initialize();          // SSB per recruit = 0
 	CWtotpred.initialize();        // Total catch (weight) = 0
 	CWpred.initialize();           // Catch (weight) = 0
@@ -694,6 +748,7 @@ void model_parameters::initModel(void)
 	CTA.initialize();              // Temporary catch at age = 0
 	VB.initialize();               // Vulnerable biomass = 0
 	VBi.initialize();              // Vulnerable biomass index = 0
+	VL.initialize();               // Vulnerable length
 	D.initialize();                // Spawning Stock depletion = 0
 	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
@@ -846,6 +901,7 @@ void model_parameters::initModel(void)
 	      Btrend(pp)(1)+=B(1,ss,rr)/ns;                   // Record first year of biomass trend (debugging)
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleet types
 		VB(1,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));   // Vulnerable biomass summed over stocks
+		VL(1)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff));  
 	      }                                               // End of fleets
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleets
 	  	for(int ll=1;ll<=nl;ll++){                    // Loop over length classes
@@ -880,6 +936,12 @@ void model_parameters::calcTransitions(void)
 	          N(pp)(yy)(ss)(aa)=elem_prod(mfexp(-Z(pp)(yy-1)(ns)(aa)),N(pp)(yy-1)(ns)(aa))*mov(pp)(ss)(aa); // Mortality then move
 	          for(int rr=1;rr<=nr;rr++){  // Loop over areas
 	            SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
+	            if(rr<5){
+	              SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	            }
+	            if(rr>4){
+	              SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	            }
 	          }                           // End of areas
 	        }                             // End of ages
 	      }else{                          // Could be a spawning season ---------------------------------------------------------------------
@@ -904,6 +966,12 @@ void model_parameters::calcTransitions(void)
 	       	  for(int aa=1;aa<=na;aa++){  // Loop over age classes
 		     for(int rr=1;rr<=nr;rr++){ // Loop over areas
 		  	SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
+		  	if(rr<5){
+			  SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+			}
+			if(rr>4){
+			  SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+	                }
 		     }                          // End of areas
 		  }                            // End of age classes
 	        }else{                          // Not a spawning season ----------------------------------------------------------------
@@ -911,6 +979,12 @@ void model_parameters::calcTransitions(void)
 		    N(pp)(yy)(ss)(aa)=elem_prod(mfexp(-Z(pp)(yy)(ss-1)(aa)),N(pp)(yy)(ss-1)(aa))*mov(pp)(ss)(aa); // M then move	        
 		    for(int rr=1;rr<=nr;rr++){  // Loop over areas
 		      SSB(pp,yy,ss)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); // SSB is summed (+=) over age classes and areas (sum())
+		      if(rr<5){
+		    	SSB_EW(2)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+		      }
+		      if(rr>4){
+		    	SSB_EW(1)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa);
+		      }
 		    }	                        // End of areas 
 		  }                             // End of ages
 	        }                               // Not a spawning season
@@ -928,6 +1002,7 @@ void model_parameters::calcTransitions(void)
 	        Btrend(pp)(yy)+=B(yy,ss,rr)/ns;                       // Record biomass trend (debugging)
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
 		  VB(yy,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));    // Vulnerable biomass summed over stocks
+		  VL(yy)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff)); 
 		}                                                     // End of fleets
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
 		  for(int ll=1;ll<=nl;ll++){                          // Loop over length classes
@@ -993,6 +1068,10 @@ void model_parameters::calcObjective(void)
 	objFmod.initialize();                   // Fmod prior
 	objRat.initialize();                    // Ratio on unfished spawning stock size
 	Ipred.initialize();                     // Predicted fishery-independent index
+	CLprop.initialize();                    // Catch at length composition predicted proportions
+	CLsd.initialize();                      // Conditional MLE estimate of the sd 
+	CLn.initialize();
+	CLvar.initialize();
 	dvariable LHtemp;                       // Temporary store of the calculated likelihood values
         double tiny=1E-10;                      // Create a small constant to avoid log(0) error
 	// -- Catch observations --
@@ -1036,8 +1115,21 @@ void model_parameters::calcObjective(void)
 	    int rr=CPUEobs(i,3);    // Region
 	    int ii=CPUEobs(i,4);    // index No ID
 	    int ff=CPUEobs(i,5);    // fleet index ID
+	    int lt=CPUEobs(i,7);    // if related to a length group > 0	    
 	    //cout<<yy<<"-"<<ss<<"-"<<rr<<"-"<<ii<<"-"<<ff<<"-"<<CPUEobs(i,5)<<endl;
-	    CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	    LHtemp=0.; 
+	    if(lt<1){ // vulnerable biomass
+	        CPUEtemp=VBi(yy,ss,rr,ff)*qCPUE(ii);                                       // Calculate vulnerable biomass
+	    }else{// length category according to Ilencat
+	      CPUEtemp=0.;  		   
+	      for(int yy=1;yy<=ny;yy++){
+	    	CPUEtemp+=sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2)))/ny; // mean index over time
+	      }
+	      LHtemp=sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2)))/CPUEtemp; // the prediced index
+	      //cout<<LHtemp<<endl;
+	      //exit(1);
+	      CPUEtemp=qCPUE(ii)*LHtemp;                                       // Calculate vulnerable biomass
+	    }
 	    LHtemp=dnorm(log(CPUEtemp+tiny),log(CPUEobs(i,6)+tiny),CPUEobsCV(ii));    // Log-normal LHF
 	    objCPUE+=LHtemp*LHw(2);                                                   // Weighted likelihood contribution
 	    objG+=LHtemp*LHw(2);                                                      // Weighted likelihood contribution
@@ -1073,6 +1165,19 @@ void model_parameters::calcObjective(void)
 	// -- Length composition data --  
 	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
 	  int yy=CLobs(i,1);   // Year
+          int ss=CLobs(i,2);   // Subyear
+	  int rr=CLobs(i,3);   // Region
+	  int ff=CLobs(i,4);   // Fleet type
+	  int ll=CLobs(i,5);   // Length class
+	  CLprop(i)=VL(yy,ss,rr,ff,ll)/sum(VL(yy)(ss)(rr)(ff));
+	  CLn(ff)+=1;
+	  CLvar(ff)+=pow(sqrt(CLprop(i)+tiny)-sqrt(CLobs(i,6)+tiny),2.);
+	}
+	for(int ff=1;ff<=nf;ff++){
+	  CLsd(ff)=sqrt(CLvar(ff)/CLn(ff));
+	}
+	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
+	  int yy=CLobs(i,1);   // Year
 	  int ss=CLobs(i,2);   // Subyear
 	  int rr=CLobs(i,3);   // Region
 	  int ff=CLobs(i,4);   // Fleet type
@@ -1080,7 +1185,9 @@ void model_parameters::calcObjective(void)
 	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" l="<<ll<<" CLobs="<<CLobs(i,6)<<" CLpred="<<CLtotpred(yy,ss,rr,ff,ll)<<endl;
 	  //LHtemp=dnorm(log(CLtotpred(yy)(ss)(rr)(ff)(ll)),log(CLobs(i,6)),1);
 	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)/CLobs(i,6))); // Multinomial LHF (A.Punt fix for stability)
-	  LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
+	  //LHtemp=(-CLobs(i,6)*log((CLtotfrac(yy,ss,rr,ff,ll)+tiny)));
+	  LHtemp=(-CLobs(i,6)*log(CLprop(i)+tiny));
+	  //LHtemp=log(CLsd(ff))+pow(sqrt(CLobs(i,6)+tiny)-sqrt(CLprop(i)+tiny),2)/(2.*CLsd(ff)); // new log(p) formulation
 	  objCL+=LHtemp*LHw(4);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4);                                      // Weighted likelihood contribution
 	}
@@ -1149,26 +1256,44 @@ void model_parameters::calcObjective(void)
 	}
 	// -- Movement parameters ---
 	for(int mm=1;mm<=nMP;mm++){
-	  LHtemp=dnorm(movest(mm),0.,2);        // Weak(ish) prior 
+	  LHtemp=dnorm(movest(mm),0.,movCV);        // Weak(ish) prior 
           objmov+=LHtemp*LHw(9);                  // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(9);                    // Weighted likelihood contribution
 	}
 	// -- Selectivity parameters ---
 	for(int i=1;i<=nsel;i++){ 
-	  objsel+=dnorm(selpar(i),0,1.25)*LHw(10);  
-	  objG+=dnorm(selpar(i),0,1.25)*LHw(10);   // Prior on selectivity to add numerical stability
+	  objsel+=dnorm(selpar(i),0,selCV)*LHw(10);  
+	  objG+=dnorm(selpar(i),0,selCV)*LHw(10);   // Prior on selectivity to add numerical stability
 	}
-	objG+=objSRA*LHw(11);                      // Add the posfun penalty for SRA harvest rates over 90%
+	if(last_phase()){
+	  objG+=objSRA*LHw(11);                      // Add the posfun penalty for SRA harvest rates over 90%
+	}
+	/*cout<<SSB_EW<<endl;
+	cout<<((ny-1)*ns)<<endl;
+	cout<<SSB_EW/((ny-1)*ns)<<endl;
+	cout<<SSBprior<<endl;
+	exit(1);*/
 	for(int pp=1;pp<=np;pp++){
-	  objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);
+	  switch(SSBfit){
+	    case 1:  // SSBnow
+	      objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);   
+	      break;
+	    case 2:  // SSB0
+	      objSSB+=dnorm(log(SSB0(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12);  
+	      break;
+	    case 3:  // meanSSB
+	      SSBnow(pp)=SSB_EW(pp)/((ny-1)*ns);         // mean SSB (reusing variable SSBnow)
+              objSSB+=dnorm(log(SSBnow(pp)+tiny),log(SSBprior(pp)+tiny),SSBCV)*LHw(12); 
+	      break;
+	   }
 	}
 	objG+=objSSB*LHw(12);
+	objRat=dnorm(log(SSB(SSBincstock,SSBy[2],ns)/SSB(SSBincstock,SSBy[1],ns)),log(SSBinc),SSBincCV);
+	objG+=objRat*LHw(13);
 	for(int ll=1;ll<=ns*nr;ll++){
-	  objFmod+=dnorm(Fmod(ll),0,0.5);
+	  objFmod+=dnorm(Fmod(ll),0,FCV);
 	}
-	objG+=objFmod;
-	objRat=dnorm(log(SSB0(1)/SSB0(2)),2.079,0.15);
-	objG+=objRat*50;
+	objG+=objFmod*LHw(14);
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
@@ -1200,21 +1325,29 @@ void model_parameters::simsam(void)
         cout<<"muR sam = "<<log(muR)<<endl;                    // Estimated mu r
         cout<<"lnHR1 sam = "<<lnHR1<<endl;                    // Estimated mu r deviant
         cout<<"lnHR2 sam = "<<lnHR2<<endl;                    // Estimated mu r deviant
-        //cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
+        cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
         for(int ff=1;ff<=nf;ff++){
           //cout<<"sel sim f1= "<<sel_ini(1)<<endl;            // Simulated selectivity fleet 1
           cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;            // Estimated selectivity fleet 1
         }
         cout<<"RD= "<<RD<<endl;
-        cout<<"Rec1= "<<RD(1)*muR(1)<<endl;
-        cout<<"Rec2= "<<RD(2)*muR(2)<<endl;
+        //cout<<"Rec1= "<<RD(1)*muR(1)<<endl;
+        //cout<<"Rec2= "<<RD(2)*muR(2)<<endl;
         //cout<<"RD sam 1 = "<<RD(1)<<endl;                       // Estimated recruitment deviations
 	//cout<<"RD sam 2 = "<<RD(2)<<endl;                       // Estimated recruitment deviations
 	cout<<"movest= "<<movest<<endl;                         // Estimated recruitment deviations
 	//cout<<"mov sim p1 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 1 in subyear 1
 	//cout<<mov_ini(1)(2)(2)<<endl;                           // Simulated movement probabilities for stock 1 in subyear 1
-	cout<<"mov sam p1 s2 m2= "<<endl;                         // Estimated movement probabilities for stock 1 in subyear 1
-	cout<<mov(1)(2)(2)<<endl;                                 // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"East"<<endl;
+	cout<<"mov sam p1 s1 a3 = "<<mov(1)(1)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s2 a3 = "<<mov(1)(2)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s3 a3 = "<<mov(1)(3)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s4 a3 = "<<mov(1)(4)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"West"<<endl;
+	cout<<"mov sam p1 s1 a3 = "<<mov(2)(1)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s2 a3 = "<<mov(2)(2)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s3 a3 = "<<mov(2)(3)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
+	cout<<"mov sam p1 s4 a3 = "<<mov(2)(4)(3)(1)<<endl;                        // Estimated movement probabilities for stock 1 in subyear 1
 	//cout<<"mov sam p1 s3 m2= "<<endl;                       // Estimated movement probabilities for stock 1 in subyear 1
 	//cout<<mov(1)(3)(2)<<endl;                               // Estimated movement probabilities for stock 1 in subyear 1
 	//cout<<"mov sim p2 s2 m2= "<<endl;                       // Simulated movement probabilities for stock 2 in subyear 1
@@ -1226,6 +1359,7 @@ void model_parameters::simsam(void)
 	//cout<<"qCE sim= "<<exp(lnqCPUE_ini)<<endl;           // Simulated catchabilities
 	cout<<"qCPUE sam= "<<qCPUE<<endl;                      // Estimated catchabilities
 	cout<<"qE sam= "<<qE<<endl;                             // Simulated FI index catchability
+	cout<<"lnqE sam= "<<lnqE<<endl; 
 	cout<<"qI sam= "<<qI<<endl;                          // Estimated FI index catchability
 	cout<<"Biomass trend = "<<Btrend<<endl;              // Biomass trend
 	for(int pp =1;pp<=np;pp++){
@@ -1334,6 +1468,10 @@ void model_parameters::report(const dvector& gradients)
   	for(int yy=1;yy<=ny;yy++){
   	  report <<CLtotpred(yy)<<endl;
   	}
+  	report <<"VL (y,s,r,f,l)"<<endl;
+	for(int yy=1;yy<=ny;yy++){
+	  report <<VL(yy)<<endl;
+  	}
   	report <<"movement age groups (p,a)"<<endl;
   	report <<ma<<endl;
   	report <<"mov (p,s,a,r,r) Markov movement matrix"<<endl;
@@ -1374,6 +1512,8 @@ void model_parameters::report(const dvector& gradients)
 	report<<mov1<<endl; 
 	report<<"movtype"<<endl;             // 1: gravity, 2: markov
 	report<<movtype<<endl;
+	report<<"Ilencat"<<endl;
+	report<<Ilencat<<endl;
 	report<<"Ma (p,a)"<<endl;
 	report<<Ma<<endl;
 	report<<"RDblock (y)"<<endl;
@@ -1428,6 +1568,8 @@ void model_parameters::report(const dvector& gradients)
 	report<<Dt<<endl;
 	report<<"SSBnow: current spawning biomass by stock"<<endl;
 	report<<SSBnow<<endl;
+	report<<"objC"<<" objCPUE"<<" objI"<<" objCL"<<" objSOO"<<" objPSAT"<<" objRD"<<" objmov"<<" objsel"<<" objSRA"<<" objSSB"<<" objFmod"<<" objRat"<<" objG"<<endl;
+	report<<objC<<" "<<objCPUE<<" "<<objI<<" "<<objCL<<" "<<objSOO<<" "<<objPSAT<<" "<<objRD<<" "<<objmov<<" "<<objsel<<" "<<objSRA*LHw(11)<<" "<<objSSB<<" "<<objFmod<<" "<<objRat*50<<" "<<objG<<endl;
   	report<<"datacheck"<<endl;
   	report<<datacheck<<endl;
   }
@@ -1481,31 +1623,12 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-std::feclearexcept(FE_ALL_EXCEPT);
-  #endif
-#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
-#ifdef DEBUG
-  #ifndef __SUNPRO_C
-bool failedtest = false;
-if (std::fetestexcept(FE_DIVBYZERO))
-  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
-if (std::fetestexcept(FE_INVALID))
-  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
-if (std::fetestexcept(FE_OVERFLOW))
-  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
-if (std::fetestexcept(FE_UNDERFLOW))
-  { cerr << "Error: Detected underflow." << endl; }
-if (failedtest) { std::abort(); } 
-  #endif
-#endif
     return 0;
 }
 

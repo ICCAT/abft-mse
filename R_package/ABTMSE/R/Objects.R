@@ -90,12 +90,21 @@
 #' \item{nmov1}{the number of indices for assiging a zero (not an estimated parameter, rows sum to 1 so the first movement is allocated a zero rather than an estimated parameter)}
 #' \item{mov1}{a data frame containing the indexing (correct destination) of a zero value in the movement matrices}
 #' \item{movtype}{the type of movement model (1: Gravity model, 2: Markov model)}
+#' \item{Ilencat}{the categories of length specific vulnerable biomass}
 #' \item{CobsCV}{a vector nf long, the catch observation error (lognormal sd)}
 #' \item{CPUEobsCV}{a vector nCPUEq long, the index observation error (lognormal sd)}
 #' \item{IobsCV}{a vector nI long, the fishery independent index observation error (lognormal sd)}
 #' \item{RDCV}{the recruitment deviation penalty (sigma R)(lognormal sd)}
+#' \item{SSBfit}{the type of SSBfit 1:SSB0 2:SSBnow}
 #' \item{SSBprior}{a vector np long, an optional prior on current spawning biomass}
 #' \item{SSBpriorCV}{the precision of the SSBprior (lognormal sd)}
+#' \item{SSBinc}{a numerical value representing the ratio of SSB from year SSBy2 / SSBy1}
+#' \item{SSBy}{vector of integers representing years over which desired increase in SSB matches SSBinc}
+#' \item{SSBincstock}{the stock that SSBinc refers to}
+#' \item{FCV}{the prior on deviations from the mean F}
+#' \item{movCV}{the prior on deviations from homogenous movement}
+#' \item{selCV}{the prior on selectivity parameters}
+#' \item{SSBincCV}{the prior precision of SSB trend}
 #' \item{nLHw}{the number of likelihood components (for weighting)}
 #' \item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB}
 #' \item{muR_ini}{a vector np long specifying an initial value of mean absolute recruitment}
@@ -117,6 +126,7 @@
 #' \item{verbose}{a logical (0 or 1) value determing whether more complete information should be provided in each iteration of the model estimation}
 #' \item{datacheck}{a unique number for checking that data were read into the model correctly}
 #' \item{CPUEnames}{a character string nCPUEq long, recording the names of CPUE indices}
+#' \item{Inames}{a character string nI long, recording the names of the fishery indepdendent indices}
 #' }
 setClass("OMI",representation(
   # Description
@@ -155,12 +165,15 @@ setClass("OMI",representation(
   nma='integer',ma='numeric', # na
   nMP='integer',nmovind='integer',movind='matrix',# nmovind x 4 (p s r r)
   nmov1='integer',mov1='matrix', # nmov1 x 4 (p s r r)
+  Ilencat='matrix',
   movtype='integer',
   CobsCV='numeric', CPUEobsCV='numeric',# fleets,
   IobsCV='numeric',# nI (np if SSB)
   RDCV='numeric',
-  SSBprior='numeric',SSBCV='numeric',
-  nLHw='integer',  LHw='numeric', # 12: 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB
+  SSBprior='numeric',SSBCV='numeric',SSBfit="numeric",
+  SSBinc='numeric',SSBy='numeric',SSBincstock="numeric",
+  FCV='numeric', movCV='numeric', selCV='numeric', SSBincCV='numeric',
+  nLHw='integer',  LHw='numeric', # 13: 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB, 13 SSBinc
   muR_ini='numeric',# np
   sel_ini='matrix',# f l (trans)
   selpar_ini='matrix', # f 3 (trans)
@@ -179,11 +192,12 @@ setClass("OMI",representation(
   debug='integer',verbose='integer',datacheck='integer',
 
   # Misc
-  CPUEnames='character'
+  CPUEnames='character',
+  Inames='character'
 
 ))
 
-#' An S4 class object that contains all Operating Model Inputs in the format for M3 operating model estimation
+#' An S4 class object that contains all Operating Model estimates in the format for M3 operating model estimation
 #'
 #'\describe{
 #' \item{Name}{The name of the operating model input}
@@ -418,7 +432,7 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
       just_R0<-grepl("R0",Recruitment$type[tt,pp])
       opt<-SRopt(out,plot=ploty,quiet=F,years=Recruitment$years[,pp,tt],
                  type=type,R0p=out$muR*exp(out$lnHR1))
-      .Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,log(out$muR*exp(out$lnHR1)),0.1)) # always lnR0
+      .Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,log(out$muR[pp]*exp(out$lnHR1[pp])),0.1)) # always lnR0
       if(just_R0){ # only second parameter is subject to error
         .Object@Recpars[,pp,tt,1]<-Recruitment$fixpar[tt,pp] # either logit h or logit inflection
         #.Object@Recpars[,pp,tt,2]<-exp(rnorm(nsim,opt$lnR0[pp],opt$VC[[pp]]^0.5))
@@ -440,7 +454,7 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
       if(tt==1){ # some properties of recruitment deviations
         recpred<-opt$resid[[pp]]$rec-opt$resid[[pp]]$devs
-        .Object@Reccv[,pp]<-sd(opt$resid[[pp]]$devs/recpred)         # sigma R (sd of lognormal rec devs)
+        .Object@Reccv[,pp]<-sd(opt$resid[[pp]]$devs/recpred)/2         # sigma R (sd of lognormal rec devs)
         .Object@AC[,pp]<-acf(opt$resid[[pp]]$devs,plot=ploty)$acf[2,1,1] # lag 1 autocorrelation
       }
 
@@ -484,7 +498,9 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
   .Object@Reccv<-apply(Rdsamps,c(1,3),sd)*sqrt(nyears/nrest) # convert from std err to st dev
   .Object@Recsubyr<-as.integer(out$spawns)
 
-  .Object@muR<-as.matrix(exp(samps[,grep("lnmuR",vcv$names)]))
+  lnPrat<-samps[,grep("lnPrat",vcv$names)]
+  Prat<-exp(2.1+lnPrat)/(1+exp(2.1+lnPrat))
+  .Object@muR<-matrix(rep(exp(samps[,grep("lnmuR",vcv$names)]),2)*c(Prat,1-Prat),nrow=nsim)
   .Object@lnHR1<-as.matrix(samps[,grep("lnHR1",vcv$names)])
   .Object@lnHR2<-as.matrix(samps[,grep("lnHR2",vcv$names)])
 
@@ -580,6 +596,19 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
       sela[ind]<-1/(1+exp((spar2[ind[,1]]-ml[ind[,3]])/spar1[ind[,1]]))
       sela[,ss,]<-sela[,ss,]/apply(sela[,ss,],1,max)
     }else if(out$seltype[ss]==3){
+
+      spar1=ml[nlen]*(0.1+0.8*exp(spars[,1])/(1+exp(spars[,1]))) #// Max selectivity bounded between 5 and 95 percent of length range
+      spar2=spar1*exp(spars[,2])/(1+exp(spars[,2]))      # // Lower sd (divided by 4 just to start at a reasonable guess)
+      spar3=ml[nlen]*exp(spars[,3])         #// Upper sd
+      ind<-as.matrix(expand.grid(1:nsim,ss,1:nlen))
+      par2or3<-matrix(spar2,nrow=nsim,ncol=nlen)
+      cond<-rep(ml,each=nsim)>rep(spar1,nlen) # length is greater than spar1
+      par2or3[cond]<-rep(spar3,nlen)[cond]
+      sela[ind]<-2^(-(ml[ind[,3]]-spar1[ind[,1]]) / par2or3[ind[,c(1,3)]] *
+                   (ml[ind[,3]]-spar1[ind[,1]]) / par2or3[ind[,c(1,3)]] )
+      sela[,ss,]<-sela[,ss,]/apply(sela[,ss,],1,max)
+
+    }else{
       spar1<-0.01+((spars[,1]+2)/5)^3;                     # // Dome-shape parameter I(0|0.2)
       spar2<-0.01+0.01*(spars[,2]+2)^3;               #// Precision as the ratio of the inflection point I(0.1|0.7)
       spar3<-ml[nlen]*(0.1+0.8*(spars[,3]+2)/4);   #// Inflection point as a fraction of largest length I(0.15|0.9)
@@ -897,11 +926,11 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
   surv=tomt(exp(-apply(Mtemp[,,,1],2:1,cumsum)))
   surv[,,nages]<-surv[,,nages]*exp(-Mtemp[,,nages,1])/(1-exp(-Mtemp[,,nages,1]))
 
-  N<-SSN<-NSN<-SSB<-VBA<-Z<-array(NA,c(nsim,npop,nages,nyears,nsubyears,nareas)) # only need aggregated catch for these purposes
+  N<-SSN<-NSN<-SSB<-VBA<-Z<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas)) # only need aggregated catch for these purposes
   FD<-array(NA,c(nsim,nfleets,nyears,nsubyears,nareas))              # Fishing distribution
   Fdist<-array(NA,c(nsim,npop,nfleets,nareas))
-  VB<-C<-array(NA,c(nsim,npop,nages,nyears,nsubyears,nareas,nfleets))
-  CA<-array(NA,c(nsim,npop,nyears,nsubyears,nareas))
+  VB<-C<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas,nfleets))
+  CA<-array(NA,c(nsim,npop,allyears,nsubyears,nareas))
 
   hFAT<-array(NA,c(nsim,nHyears,nsubyears,nages,nareas))
   hZ<-array(NA,c(nsim,npop,nages,nHyears,nsubyears,nareas))
@@ -928,7 +957,7 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
   aseltemp[aselind]<-OM@sel[aselind[,c(1,3,5)]]*iALKs[aselind[,c(1,2,4,5)]]
   asel<-apply(aseltemp,1:4,sum)
 
-  FM<-array(NA,c(nsim,npop,nages,nyears,nsubyears,nareas,nfleets))
+  FM<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas,nfleets))
   Find<-as.matrix(expand.grid(1:nsim,1:npop,1:nages,1:nyears,1:nsubyears,1:nareas,1:nfleets))
   FM[Find]<-OM@qE[Find[,c(1,7)]]*asel[Find[,c(1,2,7,3)]]*OM@E[Find[,c(1,7,4,5,6)]]
 
@@ -1158,7 +1187,7 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
     } # end of subyear
   } # end of year
 
-  apply(SSB[1,    ,   ,nyears,,],c(1,3),sum)
+  #apply(SSB[1,    ,   ,nyears,,],c(1,3),sum)
 
   SSB0=OM@muR[1,]*exp(OM@lnHR1[1,])*apply(surv[1,,]*Wt_age[1,,,1]*mat[1,,,1],1,sum);     #// Unfished Spawning Stock Biomass
   #SSB0<-SSB0+OM@muR[1,]*exp(OM@lnHR1[1,])*surv[1,,nages]*Wt_age[1,,nages,1]*mat[1,,nages,1]*exp(-M[1,,nages,1])/(1-exp(-M[1,,nages,1])) #// indefinite integral of surv added to get plus group SSB0
@@ -1311,8 +1340,11 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
   Regime<-OM@Recind[,y-nyears]
   Rectype<-OM@Rectype[Regime,pp] # rec changes at the same time for both stocks
   proccv<-rep(OM@Reccv,allyears)
+  proccv[proccv>0.8]<-0.8 # max proc error ### for testing purposes
   procmu <- -0.5*(proccv)^2
   Pe<-array(exp(rnorm(nsim*npop*allyears,procmu,proccv)),c(nsim,npop,allyears))
+
+  Pe<-Pe/array(apply(Pe,1:2,mean),dim(Pe))
 
   dset<-new('list')
 

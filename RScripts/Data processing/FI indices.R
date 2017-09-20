@@ -15,7 +15,7 @@
 #ng<-nrow(GOM)
 #IobsGOM<-cbind(GOM$Year,rep(Base@spawns[2],ng),rep(match("GOM",Base@areanams),ng),rep(2,ng),rep(2,ng),rep(2,ng),GOM$ZIDL)
 
-#Year (1), subyear (2), area (3), stock (4)  index number (matching nI, 5), index type (biomass=1, SSB=2, column 6), the observed relative abundance index (column 7) 
+#Year (1), subyear (2), area (3), stock (4)  index number (matching nI, 5), index type (biomass=1, SSB=2, column 6), the observed relative abundance index (column 7)
 
 
 
@@ -25,7 +25,7 @@ RAIind<-TEG(dim(Base@RAI))
 IobsRAI<-cbind(RAIind,rep(1,nrow(RAIind)),rep(3,nrow(RAIind)),rep(3,nrow(RAIind)),Base@RAI[RAIind])
 
 
-#Iobs<-rbind(IobsMED,IobsGOM,IobsRAI) # alternatively add the master index to the biomass index. 
+#Iobs<-rbind(IobsMED,IobsGOM,IobsRAI) # alternatively add the master index to the biomass index.
 #Iobs<-rbind(IobsMED,IobsGOM)
 
 Iobs<-read.csv(paste(getwd(),"/Data/Raw/SSB/FI_indices_compiled_assessment_2017.csv",sep=""))
@@ -35,8 +35,10 @@ for(i in 1:max(Iobs$Ino)){
   cond<-Iobs$Ino==i
   Iobs$index[cond]<-Iobs$index[cond]/mean(Iobs$index[cond])
 }
-
+Inames<-as.character(unique(Iobs[,9]))
 Iobs<-as.matrix(Iobs[,1:7])
+
+
 
 save(Iobs,file=paste(getwd(),"/Data/Processed/Conditioning/Iobs",sep=""))
 

@@ -8,7 +8,7 @@
 # Tom Carruthers UBC
 # Laurie Kell ICCAT
 
-# 12th December 2016
+# 12th July 2017
 
 # Because some operating models (the B scenarios) require prior fitting of other operating models
 # (the A scenarios, since B scenarios are fitted to a fraction of the A scenarios current abundance)
@@ -18,14 +18,15 @@
 
 # (1) Fit the base model (parameterized like the most recent stock assessment)
 # (2) Fitting of various natural-mortality rate and maturity rate scenarios (I, II and III) (1, 7, 13)
-# (3) Taking the outputs of step 2 and fitting the  modified depletion scenarios from them (A and B)
-# (4) Copying the fitted models of 1 and 2 (to expand to the future recruitment scenarios) (1, 2 and 3) (4, 10, 16)
+# (3) Taking the OMs from step 2 and add the  modified abundance scenarios from them (A, B and C)
+# (4) Copying the fitted models of 1 and 2 (to expand to the future recruitment scenarios) (1, 2 and 3)
 # (5) Create the future recruitment scenarios (1, 2, 3) and build operating model objects
 
 
-#rm(list=ls(all=TRUE))                  # Remove all existing objects from environment
-setwd("C:/ABT-MSE/")                   # The working location
+#rm(list=ls(all=TRUE))                       # Remove all existing objects from environment
+#setwd("C:/ABT-MSE/")                        # The working location
 #setwd("C:/Users/tcar_/Documents/abft-mse")
+setwd("C:/abft-mse")
 
 # Some toggles
 runinitialOM<-F
@@ -44,18 +45,19 @@ OMDir<-paste(getwd(),"/M3",sep="")
 
 # --- Set up the MSE design matrix
 
-all_levs<-list(c("1","2","3"),c("A","B"),c("I","II","III","IV"))
+all_levs<-list(c("1","2","3"), c("A","B","C"), c("I","II","III","IV"))
 all_lnams<-list( c("1: West - Hockey stick, East - '83+ B-H h=0.98",
                    "2: West - B-H h estimated, East - '83+ B-H h=0.7",
                    "3: West - Hockey stock changes to B-H after 10 yrs, East - 83+ B-H with h=0.98 changes to '50-82 B-H with h=0.98 after 10 years"),
 
-                 c("A: West - Current SSB is best estimate,  East - Current SSB is best estimate",
-                   "B: West - Current SSB is 75% of best estimate, East - Current SSB is 50% of best estimate"),
+                 c("A: West - Best estimates of SSB",
+                   "B: Western Area SSB matches VPA",
+                   "C: Eastern Area SSB inc as VPA"),
 
-                  c("I: West - younger spawning, East - younger spawning",
-                    "II: West - younger spawning, East - older spawning",
-                    "III: West - older spawning, East - younger spawning",
-                    "IV: West - older spawning, East - older spawning")
+                  c("I: Younger spawning, High M",
+                    "II: Younger spawning, Low M",
+                    "III: Older spawning, High M",
+                    "IV: Older spawning, Low M")
                )
 
 Design_Ref<-expand.grid(all_levs)                                               # The full design grid (all combinations) of the various factors and their levels
@@ -67,6 +69,7 @@ Design$all_lnams<-all_lnams    # Returns a list length(funcs) long of the long n
 Design$Design_Ref<-Design_Ref  #  The full design grid (all combinations) of the various factors and their levels
 Design$LNames_Ref<-LNames_Ref
 save(Design,file=paste0(getwd(),"/Objects/OMs/Design.Rdata"))
+save(Design,file=paste0(getwd(),"/R_package/ABTMSE/data/Design.Rdata"))
 
 nOMs<-nrow(Design_Ref)
 OMcodes<-apply(Design_Ref,1,FUN=function(x)paste(x,collapse="-"))
@@ -95,7 +98,7 @@ if(OMbuild){
     OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")          # the home directory for a new modified operating model
     if(!dir.exists(OMfolder))dir.create(OMfolder)                 # create the directory if necessary
 
-    OMI<-Mat_Ref(OMI,i)
+    OMI<-MatM_Ref(OMI,i)
 
     OMI@Name<-paste0(OMno,"/",nOMs," : ",OMcode)
     OMI@OMfactors<-as.list(LNames_Ref[OMno,])
@@ -111,8 +114,8 @@ if(OMbuild){
 
 }
 
-#setwd("C:/ABT-MSE/")
-setwd("C:/Users/tcar_/Documents/abft-mse")
+setwd("C:/abft-mse/")
+#setwd("C:/Users/tcar_/Documents/abft-mse")
 
 # --- Fit the 1-A-I, 1-A-II and 1-A-III operating models (~ 1 hour)  ----
 
@@ -129,12 +132,13 @@ if(runM3OM){
 }
 
 
-# === Step 3: Use step 2 outputs and fit the  modified current stock abundance scenarios (A and B) ===========================================
+# === Step 3: Use step 2 outputs and fit the  modified current stock abundance scenarios (A,  B  and C) ===========================================
 
 # --- Define the copy-modify-paste ----------
 
-OMrefcodes<-paste0("1-A-",all_levs[[3]])    # The OMs that are being borrowed from 1-A-I, 1-A-II and 1-A-III
-OMnewcodes<-paste0("1-B-",all_levs[[3]])       # The new OMs 1-B-I, 1-B-II and 1-B-III
+OMrefcodes<-rep(paste0("1-A-",all_levs[[3]]),2)    # The OMs that are being borrowed from 1-A-I, 1-A-II and 1-A-III
+OMnewcodes<-c(paste0("1-B-",all_levs[[3]]), paste0("1-C-",all_levs[[3]]))      # The new OMs 1-B-I, 1-B-II and 1-B-III
+
 reffoldernos<-match(OMrefcodes,OMcodes)     # The numbering of the reference OMs 1-A-I, 1-A-II and 1-A-III
 foldernos<-match(OMnewcodes,OMcodes)           # The numbering of the folders
 
@@ -142,15 +146,12 @@ foldernos<-match(OMnewcodes,OMcodes)           # The numbering of the folders
 # --- Copy - modify - paste -----------------
 if(OMbuild){
 
-  for(i in 1:length(all_levs[[3]])){
+  for(i in 1:8){
+
+    j<-rep(2:3,each=4)[i]
 
     load(file=paste0(getwd(),"/Objects/OMs/",reffoldernos[i],"/OMI"))       # load the reference operating model input object
-    out<-M3read(paste0(getwd(),"/Objects/OMs/",reffoldernos[i],"/"))        # read the outputs of the fitted reference operating model
-
-    OMI@SSBprior<-out$SSBnow*c(0.5,0.75)                                    # downward adjustment in estimated current stock size for level B operating models
-    OMI@LHw[12]<-100                                                        # put a likelihood weight on the desired current SSB
-    OMI@SSBCV<-0.025                                                        # specify a very informative (low CV) prior
-
+    OMI<-SSBref(OMI,j)
     OMcode<-OMnewcodes[i]
     OMno<-foldernos[i]
     OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")          # the home directory for a new modified operating model
@@ -166,6 +167,7 @@ if(OMbuild){
     file.copy(paste(OMDir2,"/M3.pin",sep=""),OMfolder,overwrite=T)      # copy over the parameter initialization file
 
     M3write(OMI,OMdir=OMfolder)              # write the appropriate data file into the temporary folder ready to be run in parallel
+
 
   }
 
@@ -216,16 +218,7 @@ if(OMbuild){
 
 }
 
-# === Make all fit reports ===== ===============================
-if(reportbuild){
-  OMdirs<-paste0(getwd(),"/Objects/OMs/",c(1,7,13,19,4,10,16,22)) # the actual fitted models
-  #OMdirs<-list.dirs(OMdir)
-  #OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
 
-  make_fit_reports(dirs=OMdirs,addlab=TRUE)           # make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
-  #make_summary_report(dir=paste0(getwd(),"/Objects/OMs"),OMdirs=OMdirs)
-  make_summary_report(dir=paste0(getwd(),"/Objects/OMs"))
-}
 
 # === Step 5: Create the future recruitment scenarios (1, 2, 3) and build operating model objects================================================
 
@@ -306,6 +299,28 @@ if(OMbuild){
 
 } # end of OMbuild toggle
 
+#setwd("C:/Users/tcar_/Documents/abft-mse")
+
+# === Make all fit reports ===== ===============================
+if(reportbuild){
+
+ # OMdirs<-paste0(getwd(),"/Objects/OMs/",c(1,7,13,19,4,10,16,22))
+  load(file=paste0(getwd(),"/Objects/OMs/Design.Rdata"))
+  OMdirs<-paste0(getwd(),"/Objects/OMs/",grep("1-",OMcodes))# the actual fitted models
+  #OMdirs<-list.dirs(OMdir)
+  #OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
+  #make_fit_reports(dirs=OMdirs[1],addlab=TRUE)
+  make_fit_reports(dirs=OMdirs,addlab=TRUE)           # make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
+  # make_summary_report(dir=paste0(getwd(),"/Objects/OMs"),OMdirs=OMdirs)
+
+
+  OMdir<-grep("1-",OMcodes)
+  OMdir<-OMdir[order(as.numeric(OMdir))]
+  OMdirs<-paste0(getwd(),"/Objects/OMs/",OMdir)
+  nOMs<-length(OMdirs)
+  make_summary_report(dir=paste0(getwd(),"/Objects/OMs"),OMdirs=OMdirs)
+
+}
 
 
 # === Optional code =========================================================================================================================

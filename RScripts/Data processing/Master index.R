@@ -60,8 +60,6 @@ AS3[is.na(AS3)]<-refmin[is.na(AS3)]
 #AS2[10,1]<-AS2[10,2]# to account for observation process
 
 
-
-
 names(by1agg)<-c("Area","Subyear","Lat","Lon","C")
 #              c("GOM","CAR","WATL","GSL","SCATL","NCATL","NEATL","EATL","SEATL","MED")
 numbersbyarea<-c(  0,    1,    10,     0,     1,      1,     0,      0,      10,   1)
@@ -79,15 +77,9 @@ AS2<-array(NA,c(length(Base@areas),Base@ns))
 AS2[as.matrix(AS2tmp[,1:2])]<-AS2tmp$x
 refmin<-array(apply(AS2,1,min,na.rm=T),dim(AS2))
 AS2[is.na(AS2)]<-refmin[is.na(AS2)]
-AS2[10,1]<-AS2[10,2]*0.66# to account for observation process
-AS2[10,2]<-AS2[10,2]*2# to account for observation process
 
-AS2[1,1:2]<-AS2[1,1:2]*4 # GOM adjustment
-AS2[7,3:4]<-AS2[7,3:4]*2
-AS2[3,3:4]<-AS2[3,3:4]*2
-AS2[1,2]<-AS2[1,2]*2
-AS2[7,]<-AS2[7,]*3
-AS2[5,]<-AS2[5,]/6
+Achange<-read.csv("Data/Processed/Area definitions/Area change.csv",header=F)#read.csv("Data/Raw/Task2/T2_errcheck.csv")
+AS2<-AS2*Achange
 
 #AreaSize<-array(NA,c(Base@nr,Base@ns))
 #AreaSize[as.matrix(AS[,1:2])]<-AS[,3]
@@ -218,6 +210,7 @@ addMI<-TRUE
 
 if(addMI){
 
+  # cpue indices
   MIwt<-50
   CPUEind<-read.csv("Data/Processed/CPUE indices/CPUE indices compiled 2017 assessment.csv")#read.csv("Data/Raw/Task2/T2_errcheck.csv")
 
@@ -228,7 +221,6 @@ if(addMI){
   CPUEind$qNo<-match(CPUEind$qNo,fleets)
   CPUEind$Year<-CPUEind$Year-Base@years[1]+1
 
-
   for(i in 1:length(fleets)){
 
     temp<-CPUEind[CPUEind$qNo==i,]
@@ -236,6 +228,26 @@ if(addMI){
     names(temp)<-c("Year","Subyear","Area","E","C","CPUE","N","Fleet")
     temp$N<-MIwt
     temp$Fleet<-temp$Fleet+length(FleetID)
+    CPUE<-rbind(CPUE,temp)
+  }
+  # fishery independent indices
+
+  CPUEind<-read.csv(paste(getwd(),"/Data/Raw/SSB/FI_indices_compiled_assessment_2017.csv",sep=""))
+
+  CPUEind<-CPUEind[CPUEind$Year>=Base@years[1]&CPUEind$Year<=Base@years[2],c(1,2,3,5,5,7,8)]
+
+  fleets<-unique(CPUEind$Ino)
+
+  CPUEind$Ino<-match(CPUEind$Ino,fleets)
+  CPUEind$Year<-CPUEind$Year-Base@years[1]+1
+  prevmaxfleet<-max(as.numeric(CPUE$Fleet))
+  for(i in 1:length(fleets)){
+
+    temp<-CPUEind[CPUEind$Ino==i,]
+    temp<-temp[,c(1,2,3,6,6,6,6,4)]
+    names(temp)<-c("Year","Subyear","Area","E","C","CPUE","N","Fleet")
+    temp$N<-MIwt
+    temp$Fleet<-temp$Fleet+prevmaxfleet
     CPUE<-rbind(CPUE,temp)
   }
 

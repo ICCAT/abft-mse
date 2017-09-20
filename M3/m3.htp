@@ -62,12 +62,21 @@ class model_data : public ad_comm{
   data_int nmov1;
   data_matrix mov1;
   data_int movtype;
+  data_matrix Ilencat;
   data_vector CobsCV;
   data_vector CPUEobsCV;
   data_vector IobsCV;
   data_number RDCV;
   data_vector SSBprior;
   data_number SSBCV;
+  data_int SSBfit;
+  data_number SSBinc;
+  data_vector SSBy;
+  data_number SSBincstock;
+  data_number FCV;
+  data_number movCV;
+  data_number selCV;
+  data_number SSBincCV;
   data_int nLHw;
   data_vector LHw;
   data_vector muR_ini;
@@ -129,7 +138,8 @@ public:
 private:
   ivector integer_control_flags;
   dvector double_control_flags;
-  param_init_bounded_vector lnmuR;
+  param_init_bounded_number lnmuRT;
+  param_init_number lnPrat;
   param_init_bounded_vector lnHR1;
   param_init_bounded_vector lnHR2;
   param_init_bounded_matrix selpar;
@@ -168,11 +178,15 @@ private:
   param_matrix spawnr;
   param_4array VB;
   param_4array VBi;
+  param_4array VBind;
+  param_5array VL;
   param_3array B;
+  param_vector lnmuR;
   param_vector SSB0;
   param_vector D;
   param_vector Dt;
   param_vector SSBnow;
+  param_vector SSB_EW;
   param_matrix RD;
   param_matrix Rec;
   param_vector muR;
@@ -198,6 +212,10 @@ private:
   param_5array movcalc;
   param_5array movm;
   param_5array mov;
+  param_vector CLprop;
+  param_vector CLsd;
+  param_vector CLn;
+  param_vector CLvar;
   param_6array RecapP;
   param_3array stemp;
   param_vector sind;
