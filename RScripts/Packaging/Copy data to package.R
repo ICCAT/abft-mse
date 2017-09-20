@@ -4,7 +4,7 @@
 library('ABTMSE')
 loadABT()
 
-setwd("C:/abft-mse")
+setwd("C:/GitHub/abft-mse")
 datadir<-paste0(getwd(),"/R_package/ABTMSE/data/")
 
 

@@ -657,8 +657,10 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
                            "Linf"=OM@Linfmu[,AS]*.Object@Kb,  # for now these assume same growth by stock
                            "t0"=OM@t0[,AS],                   # no error in t0
                            "M"=OM@M[,AS,,(y-1)]*.Object@Mb,  # assume AS is same as stock
+                           #"Bt"=apply(N[,,,y-1,nsubyears,AA]*
+                            #            array(Wt_age[,,,nyears]*OM@mat[,,,nyears],c(nsim,npop,nages,nA)),1,sum)*.Object@Bterr[,(y-1)],#apply(VBA[,,,(y-1),4,],1,sum)*.Object@Bterr[,(y-1)], # you were here
                            "Bt"=apply(N[,,,y-1,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears]*OM@mat[,,,nyears],c(nsim,npop,nages,nA)),1,sum)*.Object@Bterr[,(y-1)],#apply(VBA[,,,(y-1),4,],1,sum)*.Object@Bterr[,(y-1)], # you were here
+                                        array(Wt_age[,,,nyears]*exp(-Ftot[,,,AA]),c(nsim,npop,nages,nA)),1,sum)*.Object@Bterr[,(y-1)],#
                            "MSY"=OM@MSY[,AS]*.Object@MSYb,
                            "BMSY"=OM@BMSY[,AS]*.Object@BMSYb,
                            "UMSY"=OM@UMSY[,AS]*.Object@FMSYb,
@@ -667,9 +669,11 @@ setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")
                            "nages"=OM@nages,
                            "ageM"=OM@ageM[,AS]*.Object@ageMb,
                            "Mat"=OM@mat[,AS,,nyears],
-                           "Bt_PI"=apply(N[,,,y-1,nsubyears,]*
-                                           array(Wt_age[,,,nyears],c(nsim,npop,nages,nareas)),1,sum),
-                           "UMSY_PI"=apply(array(OM@UMSY[,AS],c(nsim,AS)),1,mean),
+                           "Bt_PI"=apply(N[,,,y-1,nsubyears,AA]*
+                                        array(Wt_age[,,,nyears]*exp(-Ftot[,,,AA]),c(nsim,npop,nages,nA)),1,sum),
+                           #"Bt_PI"=apply(N[,,,y-1,nsubyears,]*
+                            #               array(Wt_age[,,,nyears],c(nsim,npop,nages,nareas)),1,sum),
+                           "UMSY_PI"=OM@UMSY[,AS],
                            "CAA"=CAA,
                            "CAL"=CAL,
                            "CAL_bins"=CAL_bins,
