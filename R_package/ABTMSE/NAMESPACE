@@ -8,6 +8,7 @@ export(
     "make_fit_reports",
     "make_summary_report",
     "make_comp_report",
+    "readme",
 
     "DD_i2",
     "DD_i4",

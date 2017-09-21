@@ -118,7 +118,7 @@ setClass("MSE",representation(
 
 ))
 
-setMethod("initialize", "MSE", function(.Object,OM,Obs,MPs=list(c("UMSY","UMSY")),interval=3,IE="Umax_90",
+setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=list(c("UMSY","UMSY")),interval=3,IE="Umax_90",
                                         curTAC=c(13500000,2000000),Allocation=NA,MPareas=NA,Fdistyrs=3){
   #.Object})
   #.Object<-new('MSE')

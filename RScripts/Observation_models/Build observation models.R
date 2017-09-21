@@ -5,7 +5,7 @@
 
 # --- Set working directory ------
 
-setwd("C:/abft-mse/")#setwd("C:/Users/tcar_/Documents/GitHub/abft-mse")
+setwd("C:/GitHub/abft-mse/")#setwd("C:/Users/tcar_/Documents/GitHub/abft-mse")
 source("Source/MSE_source.r")
 source("Source/Objects.r")
 #MPind2<-read.csv("Data/Processed/MP Indices/MP indices compiled assessment 2017.csv")
@@ -34,6 +34,8 @@ names(MPind)<-c('Year','No','Name','Index','CV','Stock','Type','Source','Areas')
 MPind<-subset(MPind,MPind$Year>=OMI@years[1]&MPind$Year<=OMI@years[2])
 MPind$Year<-MPind$Year-OMI@years[1]+1
 
+Indices<-MPind[match(ToKeep,MPind$Name),c(2,3,6)]
+save(Indices,file=paste0(getwd(),"/R_package/ABTMSE/data/Indices"))
 
 # --- Create a bad observation error model
 

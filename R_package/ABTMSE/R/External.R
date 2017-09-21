@@ -18,6 +18,16 @@ avail<-function(classy){
 
 }
 
+#' Open the help documentation for the ABT-MSE package
+#'
+#' @examples
+#' readme()
+readme<-function(){
+  #utils::browseURL("https://github.com/ICCAT/abft-mse/ReadMe.html")
+  utils::browseURL("https://htmlpreview.github.com/?https://github.com/ICCAT/abft-mse/blob/master/ReadMe.html")
+}
+
+
 getclass <- function(x,classy) inherits(get(x),classy)
 
 #' Load all ABT-MSE objects and functions
