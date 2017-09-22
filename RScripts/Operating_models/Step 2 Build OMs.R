@@ -26,7 +26,7 @@
 #rm(list=ls(all=TRUE))                       # Remove all existing objects from environment
 #setwd("C:/ABT-MSE/")                        # The working location
 #setwd("C:/Users/tcar_/Documents/abft-mse")
-setwd("C:/abft-mse")
+setwd("C:/GitHub/abft-mse")
 
 # Some toggles
 runinitialOM<-F

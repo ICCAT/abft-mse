@@ -324,7 +324,7 @@ getMSYfast<-function(lnq,Fa,Ma,Wa,mat,R0,fixpar,SRtype,mode=1,nits=150){
   if(mode==1){
     return(-MSY)
   }else{
-    return(c(MSY,max(q*Fa),MSY/BMSY,BMSY,SSBMSY,BMSY/B0,SSBMSY/SSB0,Rtemp/R0))
+    return(c(MSY,max(q*Fa),MSY/(BMSY+MSY),BMSY,SSBMSY,BMSY/B0,SSBMSY/SSB0,Rtemp/R0))
   }
 
 }

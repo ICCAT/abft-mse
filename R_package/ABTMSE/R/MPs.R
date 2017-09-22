@@ -11,8 +11,175 @@
 #' @examples
 #' ZeroC(1,dset_example_West)
 #' sapply(1:10,ZeroC,dset_example_West)
-ZeroC <- function(x,dset)C_hist<-mean(dset$Cobs[x,],na.rm=T)*1E-10
+ZeroC <- function(x,dset)mean(dset$Cobs[x,],na.rm=T)*1E-10
 class(ZeroC)<-"MP"
+
+
+
+#' Example Management Procedure 1 west using the GOM_LAR_SUV
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' EMP1w(1,dset_example_West)
+#' sapply(1:10,EMP1w,dset_example_West)
+EMP1w <- function(x,dset,Jtarg=0.6,TACadj=0.1,thresh=0.4){
+  ny<-dim(dset$Iobs)[3]
+  cury<-dim(dset$TAC)[2]
+  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  if(Jratio>(1-thresh) & Jratio<(1+thresh)){
+    rec=dset$TAC[x,cury]
+  }else if(Jratio<(1-thresh)){
+    rec=dset$TAC[x,cury]*(1-TACadj)
+  }else{
+    rec=dset$TAC[x,cury]*(1+TACadj)
+  }
+  rec
+}
+class(EMP1w)<-"MP"
+
+
+
+#' Example Management Procedure 1 east using the JP_LL_NE
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' EMP1e(1,dset_example_West)
+#' sapply(1:10,EMP1e,dset_example_West)
+EMP1e <- function(x,dset,Jtarg=6,TACadj=0.1,thresh=0.4){
+  ny<-dim(dset$Iobs)[3]
+  cury<-dim(dset$TAC)[2]
+  Jratio<-mean(dset$Iobs[x,1,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  if(Jratio>(1-thresh) & Jratio<(1+thresh)){
+    rec=dset$TAC[x,cury]
+  }else if(Jratio<(1-thresh)){
+    rec=dset$TAC[x,cury]*(1-TACadj)
+  }else{
+    rec=dset$TAC[x,cury]*(1+TACadj)
+  }
+  rec
+}
+class(EMP1e)<-"MP"
+
+
+#' Example Management Procedure 2 west.
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' EMP2w(1,dset_example_West)
+#' sapply(1:10,EMP2w,dset_example_West)
+EMP2w <- function(x,dset,Jtarg=0.6,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
+
+  ny<-dim(dset$Iobs)[3]
+  cury<-dim(dset$TAC)[2]
+  Ind<-dset$Iobs[x,11,(-5:0)+ny]
+  slp<-lm(y~x,data=data.frame(y=log(Ind),x=1:6))$coefficients[2]
+  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  oldTAC<-dset$TAC[x,cury]
+
+  if(slp>0){
+    smod<-lup*slp
+  }else{
+    smod<-ldown*slp
+  }
+
+  if(Jratio>1){
+    Jmod<-pup*(Jratio-1)
+  }else{
+    Jmod<-pdown*(Jratio-1)
+  }
+
+  Tmod<-Jmod+smod
+
+  if(Tmod>0.15)Tmod=0.15
+  if(Tmod<(-0.15))Tmod=-0.15
+
+  oldTAC*(1+Tmod)
+
+}
+class(EMP2w)<-"MP"
+
+#' Example Management Procedure 2 east.
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' EMP2e(1,dset_example_West)
+#' sapply(1:10,EMP2e,dset_example_West)
+EMP2e <- function(x,dset,Jtarg=0.6,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
+
+  ny<-dim(dset$Iobs)[3]
+  cury<-dim(dset$TAC)[2]
+  Ind<-dset$Iobs[x,1,(-5:0)+ny]
+  slp<-lm(y~x,data=data.frame(y=log(Ind),x=1:6))$coefficients[2]
+  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  oldTAC<-dset$TAC[x,cury]
+
+  if(slp>0){
+    smod<-lup*slp
+  }else{
+    smod<-ldown*slp
+  }
+
+  if(Jratio>1){
+    Jmod<-pup*(Jratio-1)
+  }else{
+    Jmod<-pdown*(Jratio-1)
+  }
+
+  Tmod<-Jmod+smod
+
+  if(Tmod>0.15)Tmod=0.15
+  if(Tmod<(-0.15))Tmod=-0.15
+
+  oldTAC*(1+Tmod)
+
+}
+class(EMP2e)<-"MP"
+
+#' Current catches x 1.5 (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' CurC150(1,dset_example_West)
+#' sapply(1:10,CurC150,dset_example_West)
+CurC150 <- function(x,dset)dset$TAC[x,1]*1.5
+class(CurC150)<-"MP"
+
+
+#' Current catches (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' CurC100(1,dset_example_West)
+#' sapply(1:10,CurC100,dset_example_West)
+CurC100 <- function(x,dset)dset$TAC[x,1]
+class(CurC100)<-"MP"
+
+
+
+#' Half current catches (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @examples
+#' CurC50(1,dset_example_West)
+#' sapply(1:10,CurC50,dset_example_West)
+CurC50 <- function(x,dset)dset$TAC[x,1]*0.5
+class(CurC50)<-"MP"
+
+
 
 #' Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
 #'

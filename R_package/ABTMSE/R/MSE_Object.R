@@ -535,7 +535,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   if(length(MPareas)!=nareas)stop("You need to specify an MPareas array with  (OM@nareas) columns")
 
   Assess_data<-array(rep(MPareas,each=nAss)==rep(1:nAss,nareas),c(nAss,nareas)) # logical array for later calculations
-  .Object@TAC<-array(NA,c(nsim,nMPs,nAss,proyears))
+  .Object@TAC<-array(NA,c(nsim,nMPs,nAss,proyears+2))
 
   # MP index properties -------------------------------------
 
@@ -547,7 +547,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   Ilev[,1:nyears,,1]<-apply(Biomass[,,,1:nyears,,],c(1,4,6),sum)
   Ilev[,1:nyears,,2]<-apply(SSB[,,,1:nyears,,],c(1,4,6),sum)
   Isim<-array(NA,c(nsim,nind,nyears+proyears,2))
-
+  lastI<-array(NA,c(nsim,nind))
 
   for(i in 1:nind){
 
@@ -566,7 +566,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
       IB2<-Ilev[s,yrs2,Index_areas[i,],Itype[i]]
       if(class(IB2)=="matrix")IB2<-apply(IB2,1,sum)
 
-      Isim[s,i,yrs2,1]<-IB2 # these also have to include the latest model year nyears yrs2
+      Isim[s,i,yrs,1]<-id$Index # these also have to include the latest model year nyears yrs2
+      lastI[s,i]<-mean(Isim[s,i,yrs[length(yrs)],1]) # I = qB, I/B = q scales OM quantities to indices
 
       fitout<-indfit(SSB=IB,ind=id$Index,Year=yrs,sim=F,plot=F)
 
@@ -583,9 +584,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   }
 
 
-  Itemp<-Isim[,,1:nyears,1]^array(Istats[,,1],c(nsim,nind,nyears))                 # add hyperstability / hyper depletion
-  Itemp2<-Itemp[,,1:nyears]/array(apply(Itemp[,,1:nyears],1:2,mean,na.rm=T),dim(Itemp))*Isim[,,1:nyears,2] # normalize to mean 1 pre autocorrelated residuals
-  Iobs<-Itemp2/array(apply(Itemp2,1:2,mean,na.rm=T),dim(Itemp2))                # normalize to mean 1 post residual error
+  #Itemp<-Isim[,,1:nyears,1]#^array(Istats[,,1],c(nsim,nind,nyears))                 # add hyperstability / hyper depletion
+  #Itemp2<-Itemp[,,1:nyears]/array(apply(Itemp[,,1:nyears],1:2,mean,na.rm=T),dim(Itemp))#*Isim[,,1:nyears,2] # normalize to mean 1 pre autocorrelated residuals
+  Iobs<-Isim[,,1:nyears,1]#Itemp1/array(apply(Itemp2,1:2,mean,na.rm=T),dim(Itemp2))                # normalize to mean 1 post residual error
   # !! CHECK !! These historical indices should be identical among simulations (they are the backward recreation of the statistical fits)
 
   Fdist<-apply(FM[,,,(nyears-Fdistyrs+1):nyears,,,],c(1,5,6,7),sum) # F is the same for both stocks so summing makes no difference
@@ -610,16 +611,26 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   dset<-new('list')
 
+  # Preallocated arrays
+  Itemp<-array(NA,c(nsim,nind,allyears,nareas))
+  .Object@TAC[,,,1]<-rep(curTAC,each=nsim*nMPs)
+
   for(MP in 1:nMPs){
 
     cat(paste0(paste0(MP,"/",nMPs," Running MSE for: "),paste0(MPs[[MP]]," (",.Object@Snames,")",collapse="  ")))  # print a progress report
     cat("\n")
     flush.console()                                                  # update the console
 
+    #TAC<-array(NA,c(nsim,nAss,proyears+1))
+    #TAC[,,1]<-array(rep(curTAC,each=nsim),c(nsim,nAss))
+
+    #TAC<-array(NA,c(nsim,nAss)
     TAC<-array(rep(curTAC,each=nsim),c(nsim,nAss))
 
     for(y in nyears:(nyears+proyears)){
 
+      # y<-y+1 # debugging
+      #for(y in nyears:(nyears+2)){
       cat(".")
 
       if(y%in%upyrs){# Operate MP S P A Y M R
@@ -631,15 +642,12 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           Ilev[,(y-interval+1):y,,1]<-apply(Biomass[,,,(y-interval+1):y,,],c(1,4,6),sum)
           Ilev[,(y-interval+1):y,,2]<-apply(SSB[,,,(y-interval+1):y,,],c(1,4,6),sum)
 
-          Itemp<-array(NA,c(nsim,nind,y,nareas))
-          Itemp_ind<-TEG(dim(Itemp))
-          Ilev_ind<-cbind(Itemp_ind[,c(1,3,4)],Itype[Itemp_ind[,2]])
-          Itemp[Itemp_ind]<-Ilev[Ilev_ind]*Index_areas[Itemp_ind[,c(2,4)]]
-          Isim[,,1:y,1]<-apply(Itemp[,,1:y,],1:3,sum)
-
-          Itemp<-Isim[,,1:y,1]^array(Istats[,,1],c(nsim,nind,y))                 # add hyperstability / hyper depletion
-          Itemp2<-Itemp/array(apply(Itemp,1:2,mean,na.rm=T),dim(Itemp))*Isim[,,1:y,2] # normalize to mean 1 pre autocorrelated residuals
-          Iobs<-Itemp2/array(apply(Itemp2,1:2,mean,na.rm=T),dim(Itemp2))                # normalize to mean 1 post residual error
+          mind<-as.matrix(expand.grid(1:nsim,1:nind,1:y,1:nareas))
+          Ilev_ind<-as.matrix(cbind(mind[,c(1,3,4)],Itype[mind[,2]]))
+          Itemp[mind]<-Ilev[Ilev_ind]*as.integer(Index_areas[mind[,c(2,4)]])
+          Isim[,,1:y,1]<-apply(Itemp[,,1:y,],1:3,sum,na.rm=T)^array(Istats[,,1],c(nsim,nind,y))#add hyperstability
+          Isim[,,1:y,1]<-Isim[,,1:y,1]*array(lastI/Isim[,,nyears,1],c(nsim,nind,y)) # normalize to last observed year
+          Iobs<-Isim[,,1:y,1]*Isim[,,1:y,2] # Note last observation is missing (not available SSB for current year recommendation)
 
           # if additional data are required
           nuy<-(upyrs[match(y,upyrs)-1]):(y-1)
@@ -660,7 +668,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            #"Bt"=apply(N[,,,y-1,nsubyears,AA]*
                             #            array(Wt_age[,,,nyears]*OM@mat[,,,nyears],c(nsim,npop,nages,nA)),1,sum)*.Object@Bterr[,(y-1)],#apply(VBA[,,,(y-1),4,],1,sum)*.Object@Bterr[,(y-1)], # you were here
                            "Bt"=apply(N[,,,y-1,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears]*exp(-Ftot[,,,AA]),c(nsim,npop,nages,nA)),1,sum)*.Object@Bterr[,(y-1)],#
+                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA))*exp(-Ftot[,,,AA]),1,sum)*.Object@Bterr[,y-1],#
                            "MSY"=OM@MSY[,AS]*.Object@MSYb,
                            "BMSY"=OM@BMSY[,AS]*.Object@BMSYb,
                            "UMSY"=OM@UMSY[,AS]*.Object@FMSYb,
@@ -670,26 +678,30 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            "ageM"=OM@ageM[,AS]*.Object@ageMb,
                            "Mat"=OM@mat[,AS,,nyears],
                            "Bt_PI"=apply(N[,,,y-1,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears]*exp(-Ftot[,,,AA]),c(nsim,npop,nages,nA)),1,sum),
+                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA))*exp(-Ftot[,,,AA]),1,sum),
                            #"Bt_PI"=apply(N[,,,y-1,nsubyears,]*
                             #               array(Wt_age[,,,nyears],c(nsim,npop,nages,nareas)),1,sum),
                            "UMSY_PI"=OM@UMSY[,AS],
                            "CAA"=CAA,
                            "CAL"=CAL,
                            "CAL_bins"=CAL_bins,
-                           "MPrec"=TAC[,AS])
+                           "TAC"=matrix(.Object@TAC[,MP,AS,1:(y-nyears+1)],ncol=(y-nyears+1),nrow=nsim)
+                           )
 
           assign("dset",dset,envir=globalenv()) # debugging
           sfExport("dset")
           if(MPs[[MP]][AS]=="XSA") TAC[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
-          if(MPs[[MP]][AS]!="XSA")TAC[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
-          if(y<allyears).Object@TAC[,MP,AS,y-nyears+1]<-TAC[,AS]
+          if(MPs[[MP]][AS]!="XSA") TAC[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
+          if(y<allyears).Object@TAC[,MP,AS,y-nyears+2]<-TAC[,AS]
         }
 
         testC[testCind]<-TAC[testCind[,c(1,5)]]*Fdist[testCind[,c(1:4)]]*Allocation[testCind[,c(5,4)]] # predicted catch by TAC
 
         #nsim, nsubyears, nareas, nfleets
         aggC<-apply(testC,1:4,sum)
+
+      }else{
+        .Object@TAC[,MP,,y-nyears+2]<-.Object@TAC[,MP,,y-nyears+1]
 
       } # end of upyrs
 
@@ -794,6 +806,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           } # if its the right subyear
         } # end of pop
       } # end of subyear
+
     } # end of year
 
     # Store results
