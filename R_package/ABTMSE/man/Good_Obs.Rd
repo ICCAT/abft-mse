@@ -11,4 +11,3 @@ Generic good quality observation error model
 Tom Carruthers \email{t.carruthers@oceans.ubc.ca}
 }
 \keyword{data}
-

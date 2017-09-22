@@ -20,4 +20,3 @@ Calculate the lognormal mean from logspace mean and standard deviations
 \examples{
 mconv(0.5,0.2)
 }
-

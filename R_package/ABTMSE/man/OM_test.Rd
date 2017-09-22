@@ -11,4 +11,3 @@ Operating model object for test unit
 Tom Carruthers \email{t.carruthers@oceans.ubc.ca}
 }
 \keyword{data}
-

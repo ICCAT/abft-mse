@@ -20,4 +20,3 @@ Calculate the beta distribution parameter alpha from transformed space mean and 
 \examples{
 alphaconv(0.25,0.1)
 }
-

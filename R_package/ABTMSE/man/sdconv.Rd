@@ -20,4 +20,3 @@ Calculate the lognormal standard deviation from logspace mean and standard devia
 \examples{
 sdconv(0.5,0.2)
 }
-

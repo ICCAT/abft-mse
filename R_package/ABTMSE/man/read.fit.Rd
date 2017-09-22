@@ -21,4 +21,3 @@ Read the outputs of an ADMB model run
 \author{
 this is code that was originally written by Anders Nielsen
 }
-

@@ -4,7 +4,7 @@
 \alias{runM3}
 \title{Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)}
 \usage{
-runM3(OMdir = "C:/ABT-MSE/M3")
+runM3(OMdir = "C:/ABT-MSE/M3", hess = F)
 }
 \arguments{
 \item{OMdir}{a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files}
@@ -18,4 +18,3 @@ Run an M3 operating model (a multistock spatial seasonal statistical catch at le
 \examples{
 #runM3("C:/ABT-MSE/M3")
 }
-

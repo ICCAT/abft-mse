@@ -18,4 +18,3 @@ Transpose an array
 \examples{
 tomt(array(1:120,c(4,5,6)))
 }
-

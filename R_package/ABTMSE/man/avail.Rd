@@ -20,4 +20,3 @@ avail('data.frame')
 avail('matrix')
 avail('ABT_PM')
 }
-

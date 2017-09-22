@@ -18,4 +18,3 @@ Calculate coefficient of variance
 \examples{
 cv(runif(10))
 }
-

@@ -21,4 +21,3 @@ areaplot(OM_1)
 areaplot(OMI_1)
 areaplot(MSE_example)
 }
-

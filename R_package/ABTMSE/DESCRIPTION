@@ -3,7 +3,7 @@ Version: 2.1.0
 Title: Atlantic Bluefin Tuna Management Strategy Evaluation
 Description: Simulation testing of management strategies and data-collection
     protocols for the multi-stock Atlantic bluefin tuna fishery.
-Authors@R:  person("Tom", "Carruthers",, "t.carruthers@oceans.ubc.ca", role=c("aut", "cre"))
+Authors@R: person("Tom", "Carruthers",, "t.carruthers@oceans.ubc.ca", role=c("aut", "cre"))
 License: GPL-2
 Depends: R (>= 3.2.0),
     roxygen2,
@@ -26,7 +26,7 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 BugReports: https://github.com/ICCAT/abft-mse/R_package/ABTMSE/issues
 LazyData: yes
 LazyLoad: yes

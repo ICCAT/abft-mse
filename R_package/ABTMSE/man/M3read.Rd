@@ -18,4 +18,3 @@ Reads the outputs of an M3 model fit into a list
 \examples{
 M3read("C:/ABT-MSE/M3")
 }
-

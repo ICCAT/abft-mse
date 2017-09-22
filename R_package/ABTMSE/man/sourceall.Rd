@@ -15,4 +15,3 @@ Load all ABT-MSE R code including interal functions
 \examples{
 sourceall("C:/ABT-MSE/")
 }
-

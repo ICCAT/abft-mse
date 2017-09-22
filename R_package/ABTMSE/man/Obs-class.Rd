@@ -39,4 +39,3 @@
 \item{MPind_stats}{a list containing the statistical properties of model fits (currently unused)}
 }
 }
-

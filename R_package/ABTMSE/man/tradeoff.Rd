@@ -21,4 +21,3 @@ A generic tradeoff plot based on two functions of class PM
 loadABT()
 tradeoff(MSE_example,list(POF=POF,Y10=Y10))
 }
-

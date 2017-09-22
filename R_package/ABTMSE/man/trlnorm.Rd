@@ -24,4 +24,3 @@ x<-trlnorm(1000,2,0.1)
 mean(x)
 sd(x)/mean(x)
 }
-

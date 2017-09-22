@@ -18,10 +18,15 @@
 \item{areanams}{Full names of the various geographical areas}
 \item{area_defs}{A list of the polygons representing each of the areas (for plotting)}
 \item{Fleets}{A list object containing the definitions of the fleets}
+\item{A2}{Richards growth curve parameter}
 \item{L1}{Richards growth curve parameter}
 \item{L2}{Richards growth curve parameter}
 \item{K}{Richards growth curve parameter}
 \item{p}{Richards growth curve parameter}
+\item{t0}{VB growth curve parameter}
+\item{Linf}{VB growth curve parameter}
+\item{Lvar_a}{Length variability at length parameter}
+\item{Lvar_b}{Length variability at length parameter}
 \item{ageM}{Age at 50 percent maturity (not currently specified)}
 \item{ageMsd}{slope in the maturity ogive (not currently specified)}
 \item{mat}{maturity at age ogive [stock, age class, year]}
@@ -86,12 +91,21 @@
 \item{nmov1}{the number of indices for assiging a zero (not an estimated parameter, rows sum to 1 so the first movement is allocated a zero rather than an estimated parameter)}
 \item{mov1}{a data frame containing the indexing (correct destination) of a zero value in the movement matrices}
 \item{movtype}{the type of movement model (1: Gravity model, 2: Markov model)}
+\item{Ilencat}{the categories of length specific vulnerable biomass}
 \item{CobsCV}{a vector nf long, the catch observation error (lognormal sd)}
 \item{CPUEobsCV}{a vector nCPUEq long, the index observation error (lognormal sd)}
 \item{IobsCV}{a vector nI long, the fishery independent index observation error (lognormal sd)}
 \item{RDCV}{the recruitment deviation penalty (sigma R)(lognormal sd)}
+\item{SSBfit}{the type of SSBfit 1:SSB0 2:SSBnow}
 \item{SSBprior}{a vector np long, an optional prior on current spawning biomass}
 \item{SSBpriorCV}{the precision of the SSBprior (lognormal sd)}
+\item{SSBinc}{a numerical value representing the ratio of SSB from year SSBy2 / SSBy1}
+\item{SSBy}{vector of integers representing years over which desired increase in SSB matches SSBinc}
+\item{SSBincstock}{the stock that SSBinc refers to}
+\item{FCV}{the prior on deviations from the mean F}
+\item{movCV}{the prior on deviations from homogenous movement}
+\item{selCV}{the prior on selectivity parameters}
+\item{SSBincCV}{the prior precision of SSB trend}
 \item{nLHw}{the number of likelihood components (for weighting)}
 \item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB}
 \item{muR_ini}{a vector np long specifying an initial value of mean absolute recruitment}
@@ -113,6 +127,6 @@
 \item{verbose}{a logical (0 or 1) value determing whether more complete information should be provided in each iteration of the model estimation}
 \item{datacheck}{a unique number for checking that data were read into the model correctly}
 \item{CPUEnames}{a character string nCPUEq long, recording the names of CPUE indices}
+\item{Inames}{a character string nI long, recording the names of the fishery indepdendent indices}
 }
 }
-

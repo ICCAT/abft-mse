@@ -20,4 +20,3 @@ Create an M3.dat input file from an object of class OMI
 \examples{
 M3write(OMI_example,C:/ABT-MSE/M3)
 }
-

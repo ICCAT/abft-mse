@@ -18,4 +18,3 @@ Create an M3 parameter initialization file (.pin) from the MLE estimates (.par) 
 \examples{
 #pin_from_par("C:/ABT-MSE/M3")
 }
-

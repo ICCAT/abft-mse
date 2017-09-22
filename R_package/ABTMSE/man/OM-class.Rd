@@ -3,7 +3,7 @@
 \docType{class}
 \name{OM-class}
 \alias{OM-class}
-\title{An S4 class object that contains all Operating Model Inputs in the format for M3 operating model estimation}
+\title{An S4 class object that contains all Operating Model estimates in the format for M3 operating model estimation}
 \description{
 \describe{
 \item{Name}{The name of the operating model input}
@@ -76,4 +76,3 @@
 \item{seed}{a random seed for generation of simulations to ensure reproducibility}
 }
 }
-

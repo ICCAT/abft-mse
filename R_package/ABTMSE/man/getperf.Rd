@@ -4,7 +4,7 @@
 \alias{getperf}
 \title{Calculate performance metrics.}
 \usage{
-getperf(MSE)
+getperf(MSE, rnd = 3, outdir = NA)
 }
 \arguments{
 \item{MSE}{an object of class MSE}
@@ -35,4 +35,3 @@ Calculate performance metrics.
 \examples{
 getperf(MSE_example)
 }
-
