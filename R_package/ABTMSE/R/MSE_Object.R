@@ -188,7 +188,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   surv=tomt(exp(-apply(Mtemp[,,,1],2:1,cumsum)))
   surv[,,nages]<-surv[,,nages]*exp(-Mtemp[,,nages,1])/(1-exp(-Mtemp[,,nages,1]))
 
-  N<-SSN<-NSN<-SSB<-VBA<-Z<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas)) # only need aggregated catch for these purposes
+  N<-SSB<-Z<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas)) # only need aggregated catch for these purposes
   FD<-array(NA,c(nsim,nfleets,nyears,nsubyears,nareas))              # Fishing distribution
   Fdist<-array(NA,c(nsim,npop,nfleets,nareas))
   VB<-C<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas,nfleets))
@@ -208,9 +208,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   cat("Calculating historical fishing mortality rate at length (computationally intensive)")
   cat("\n")
 
-  RFL<-array(NA,c(nsim,nfleets,nlen,nyears,nsubyears,nareas))
-  indL<-TEG(dim(RFL))
-  RFL[indL]<-OM@qE[indL[,c(1,2)]]*OM@sel[indL[,1:3]]*OM@E[indL[,c(1,2,4,5,6)]]
+  #RFL<-array(NA,c(nsim,nfleets,nlen,nyears,nsubyears,nareas))
+  #indL<-TEG(dim(RFL))
+  #RFL[indL]<-OM@qE[indL[,c(1,2)]]*OM@sel[indL[,1:3]]*OM@E[indL[,c(1,2,4,5,6)]]
   iALK<-OM@iALK
 
   aseltemp<-array(NA,c(nsim,npop,nfleets,nages,nlen))
@@ -219,9 +219,14 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   aseltemp[aselind]<-OM@sel[aselind[,c(1,3,5)]]*iALKs[aselind[,c(1,2,4,5)]]
   asel<-apply(aseltemp,1:4,sum)
 
+  rm(aselind)
+
+
   FM<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas,nfleets))
   Find<-as.matrix(expand.grid(1:nsim,1:npop,1:nages,1:nyears,1:nsubyears,1:nareas,1:nfleets))
   FM[Find]<-OM@qE[Find[,c(1,7)]]*asel[Find[,c(1,2,7,3)]]*OM@E[Find[,c(1,7,4,5,6)]]
+
+  rm(Find) # delete F index
 
   apply(FM[1,1,,nyears,3,,],1:2,sum)
 
@@ -231,6 +236,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   sel[Rind]<-sel[Rind]/maxRF[Rind[,c(1,2,4,5,6,7)]]
   sel<-sel[,,,nyears,nsubyears,,] # Take this from last year, in future simulations this may be by year so leave this code!
   sel[is.na(sel)]<-0
+
+  rm(Rind)
 
   # Initializing the simulation ----------------------------------------------
   cat("Initializing simulations")
@@ -813,6 +820,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
     SSBmu<-apply(SSB,c(1:4,6),mean)
     .Object@SSB[MP,,,]<-apply(SSBmu,c(1:2,4),sum)
+
+    rm(SSBmu)
 
     .Object@C[MP,,,]<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,2,4),sum)
 

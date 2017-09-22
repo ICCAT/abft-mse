@@ -5,9 +5,9 @@ loadABT()
 sfInit(parallel=T,cpus=detectCores())
 
 
+memory.limit(size = 24000)
 
-
-OM<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/1",nsim=96,proyears=60,seed=1)
+OM<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/1",nsim=80,proyears=50,seed=1)
 
 #MSE<-new('MSE',OM=OM,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
 
