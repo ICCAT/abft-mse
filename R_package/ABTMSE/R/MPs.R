@@ -24,7 +24,7 @@ class(ZeroC)<-"MP"
 #' @examples
 #' EMP1w(1,dset_example_West)
 #' sapply(1:10,EMP1w,dset_example_West)
-EMP1w <- function(x,dset,Jtarg=0.6,TACadj=0.1,thresh=0.4){
+EMP1w <- function(x,dset,Jtarg=0.66,TACadj=0.1,thresh=0.4){
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
   Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
@@ -49,7 +49,7 @@ class(EMP1w)<-"MP"
 #' @examples
 #' EMP1e(1,dset_example_West)
 #' sapply(1:10,EMP1e,dset_example_West)
-EMP1e <- function(x,dset,Jtarg=6,TACadj=0.1,thresh=0.4){
+EMP1e <- function(x,dset,Jtarg=4.8,TACadj=0.1,thresh=0.4){
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
   Jratio<-mean(dset$Iobs[x,1,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
@@ -73,7 +73,7 @@ class(EMP1e)<-"MP"
 #' @examples
 #' EMP2w(1,dset_example_West)
 #' sapply(1:10,EMP2w,dset_example_West)
-EMP2w <- function(x,dset,Jtarg=0.6,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
+EMP2w <- function(x,dset,Jtarg=0.66,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
 
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
@@ -112,7 +112,7 @@ class(EMP2w)<-"MP"
 #' @examples
 #' EMP2e(1,dset_example_West)
 #' sapply(1:10,EMP2e,dset_example_West)
-EMP2e <- function(x,dset,Jtarg=0.6,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
+EMP2e <- function(x,dset,Jtarg=4.8,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
 
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
