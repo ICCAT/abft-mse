@@ -51,6 +51,7 @@ export(
     "MeanC",
 
     "getperf",
+    "PPlot",
     "Tplot",
     "TOplt",
     "TOPNTplt",

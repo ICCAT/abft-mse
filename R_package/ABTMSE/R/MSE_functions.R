@@ -188,7 +188,6 @@ tradeoff<-function(MSE,PMs){
     }
 
   }
-
   par(mfrow=c(2,2),mai=c(0.5,0.6,0.4,0.05),omi=c(0.01,0.01,0.01,0.01))
 
   for(i in 1:2)    TOplt(apply(perf[1,i,,],1,mean),apply(perf[2,i,,],1,mean),MPnamsj,pmnams[1],pmnams[2],main=MSE@Snames[i])
@@ -197,5 +196,86 @@ tradeoff<-function(MSE,PMs){
 
 }
 
+
+custombar<-function(dat,MPnams,tickwd1=0.05,tickwd2=0.025,lwd1=2,lwd2=1,xlab=T){
+
+  nMPer<-nrow(dat)
+  incr<-(max(dat)-min(dat))*0.05
+  plot(dat[,5],ylim=c(min(dat)-incr,max(dat)+incr),xlim=c(0.25,nMPer+0.25),col='white',axes=F,ylab="",xlab="")
+
+  if(xlab){
+    axis(1,1:nMPer,MPnams)
+  }else{
+    axis(1,1:nMPer,rep("",nMPer))
+  }
+
+  incr<-(max(dat)-min(dat))*0.1
+  yp<-pretty(seq(min(dat)-incr,max(dat)+incr,length.out=10))
+  axis(2,yp,yp)
+  big<-1E20
+  polygon(c(-big,big,big,-big),c(-big,-big,big,big),col='grey92')
+  points(dat[,3],pch=19,cex=1.1)
+  abline(h=yp,col='white')
+
+  for(i in 1:nMPer){
+
+    lines(c(i-tickwd1/2,i+tickwd1/2),c(dat[i,2],dat[i,2]),lwd=lwd1) # lower interquartile
+    lines(c(i-tickwd1/2,i+tickwd1/2),c(dat[i,4],dat[i,4]),lwd=lwd1) # upper interquartile
+
+    lines(c(i-tickwd2/2,i+tickwd2/2),c(dat[i,1],dat[i,1]),lwd=lwd1) # lower 80%
+    lines(c(i-tickwd2/2,i+tickwd2/2),c(dat[i,5],dat[i,5]),lwd=lwd2) # upper 80%
+
+    lines(c(i,i),c(dat[i,1],dat[i,5]),lwd=lwd2) # 80%
+    lines(c(i,i),c(dat[i,2],dat[i,4]),lwd=lwd1) # 80%
+
+  }
+
+}
+
+#' Performance plot
+#'
+#' @param MSE An MSE object
+#' @return a plot showing performance metric statistics accross MPs
+#' @examples
+#' PPlot()
+PPlot<-function(MSE,Pnames=c("C10","C30","D30","LD","DNC","LDNC","PGK","AAVC")){
+
+  nsim<-MSE@nsim
+  nMPs<-MSE@nMPs
+  npop<-MSE@npop
+  nperf<-length(Pnames)
+
+  MPnams_a<-matrix(paste(rep(1:nMPs,each=2),unlist(MSE@MPs),sep=" - "),nrow=npop)
+
+ # MPnams<-paste(MPnams[(1:MSE@nMPs)*2-1],MPnams[(1:MSE@nMPs)*2],sep="-")
+  #                 pop MP perf quantile
+  store<-array(NA,c(2,nMPs,13,5))
+  mult=rep(1,nperf)# multiplier for catch biomass scaling
+
+  for(pp in 1:MSE@npop){
+
+    for(i in 1:nperf){
+
+      store[pp,,i,]<-t(apply(do.call(get(Pnames[i]),list(MSE=MSE,pp=pp))*mult[i],1,quantile,p=c(0.1,0.25,0.5,0.75,0.9)))
+
+    }
+
+  }
+
+  par(mfrow=c(nperf,2),mai=c(0.1,0.3,0.01,0.05),omi=c(0.6,0.4,0.4,0.01))
+
+  for(i in 1:nperf){
+    for(pp in 1:npop){
+      xlab=F
+      if(i==nperf)xlab=T
+      custombar(dat=store[pp,,i,],MPnams=MPnams[pp,],xlab=xlab)
+      if(pp==1)mtext(Pnames[i],2,line=2.8,font=2)
+      if(i==1) mtext(MSE@Snames[pp],3,line=1.3,font=2)
+    }
+  }
+
+  mtext("Candidate Management Procedure",1,line=2.3,font=2,outer=T)
+
+}
 
 

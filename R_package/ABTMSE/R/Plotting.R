@@ -165,3 +165,5 @@ vmovplot<-function(vec,N,mov,anam,custom){
 
 }
 
+
+
