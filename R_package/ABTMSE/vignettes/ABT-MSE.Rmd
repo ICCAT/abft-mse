@@ -608,9 +608,15 @@ The *apply* function calculates the frequency of overfishing events in dimension
 
 Other PMs are quite similar. Here is *Y10* (mean yield over the first 10 years of a projection):
 
+<<<<<<< HEAD
+```{r Step_2_examine_C10}
+?C10
+C10
+=======
 ```{r Step_2_examine_Y10}
 ?Y10
 Y10
+>>>>>>> parent of 531014b... Latest documentation and package
 ```
 
 *Y10* is only concerned with averaging catches which are stored in the slot \*MSE@C\*. Again the apply() function is used to calculate mean catches by MP and simulation. 
