@@ -105,10 +105,9 @@ setMethod("plot", signature(x = "OMd"),function(x){
 #  mtext(paste(tmse@Name," (n =",tmse@nsim,")",sep=""),3,line=0.3,outer=T)
 
 #})
-
 setMethod("plot",
-      signature(x = "MSE"),
-      function(x,quants=c(0.05,0.5,0.95),nworms=10, startyr=2014,rev=T){
+          signature(x = "MSE"),
+          function(x,quants=c(0.05,0.5,0.95),nworms=10, startyr=2016,rev=F){
 
             MSE<-x
             nsim<-MSE@nsim
@@ -116,12 +115,14 @@ setMethod("plot",
             allyears<-MSE@proyears+MSE@nyears
             nMPs<-MSE@nMPs
 
+            MSE@C<-MSE@C/1000
+
             #somenames=c("Green Kobe","Final depletion","AAV Yield","Yield","Yield 5% DR", "Yield 10% DR", "Yield -5% DR")
 
             #stats<-getperf(MSE)
             yrs<-startyr:(startyr+MSE@proyears-1)
             refyears<-MSE@nyears+1:MSE@proyears-1
-            worms<-1:min(nworms,OM@nsim)
+            worms<-1:min(nworms,MSE@nsim)
 
             xtick<-pretty(seq(yrs[1],yrs[MSE@proyears],length.out=3))
 
@@ -140,7 +141,7 @@ setMethod("plot",
             MPnamsj<-paste(MPnams[(1:MSE@nMPs)*2-1],MPnams[(1:MSE@nMPs)*2],sep="-")
 
             par(mfrow=c(MSE@nMPs,MSE@npop*4),mai=c(0.05,0.05,0.35,0.05),omi=c(0.5,0.05,0.15,0.02))
-            rsz<-6
+            rsz<-5
             fill<-NA
             rw<-c(fill,rep(1,rsz),rep(2,rsz),fill,rep(3,rsz),rep(4,rsz),fill,fill,rep(5,rsz),rep(6,rsz),fill,rep(7,rsz),rep(8,rsz))
             lmat<-matrix(NA,ncol=rsz*MSE@nMPs,nrow=rsz*8+5)
@@ -152,11 +153,16 @@ setMethod("plot",
             pind<-1:MSE@npop
             if(rev)pind=MSE@npop:1
 
+            gridcol='light grey'
+
             for(MP in 1:MSE@nMPs){
               for(pp in pind){
                 # Catch projection  ---
                 # Col 1: Catch quantiles
+                ytick<-pretty(seq(0,Clim[pp,2],length.out=4))
                 plot(range(yrs),Clim[pp,],axes=F,col="white",xlab="",ylab="",ylim=Clim[pp,])
+                abline(h=ytick,col=gridcol)
+                abline(v=xtick,col=gridcol)
                 polygon(c(yrs,yrs[MSE@proyears:1]),
                         c(Cq[1,MP,pp,refyears],Cq[3,MP,pp,refyears[MSE@proyears:1]]),
                         col=Catcol,border=F)
@@ -164,20 +170,29 @@ setMethod("plot",
                 if(MP<MSE@nMPs)axis(1,at=xtick,labels=NA)
                 if(MP==MSE@nMPs)axis(1,at=xtick,labels=xtick,las=2)
                 abline(h=0)
-                ytick<-pretty(seq(0,Clim[pp,2],length.out=4))
+
                 axis(2,ytick,labels=ytick)
-                legend('topleft',legend="Catches (kg)",bty='n')
+                #legend('topright',legend="Catches (t)",bty='n')
+
 
                 # Col 2: Catch worms
                 plot(range(yrs),Clim[pp,],axes=F,col="white",xlab="",ylab="",ylim=Clim[pp,])
+                abline(h=ytick,col=gridcol)
+                abline(v=xtick,col=gridcol)
                 for(i in 1:length(worms))lines(yrs,MSE@C[MP,i,pp,refyears],col=linecols[i],lwd=1.2)
                 if(MP<MSE@nMPs)axis(1,at=xtick,labels=NA)
                 if(MP==MSE@nMPs)axis(1,at=xtick,labels=xtick,las=2)
                 abline(h=0)
 
+                mtext('Catches (t)',3,adj=-0.8,line=-1,cex=0.7)
+
+
                 # SSB projection  ---
                 # Col 3: SSB quantiles
+                ytick<-pretty(seq(0,SSBlim[pp,2],length.out=4))
                 plot(range(yrs),SSBlim[pp,],axes=F,col="white",xlab="",ylab="",ylim=SSBlim[pp,])
+                abline(h=ytick,col=gridcol)
+                abline(v=xtick,col=gridcol)
                 polygon(c(yrs,yrs[MSE@proyears:1]),
                         c(SSBq[1,MP,pp,refyears],SSBq[3,MP,pp,refyears[MSE@proyears:1]]),
                         col=SSBcol,border=F)
@@ -186,24 +201,28 @@ setMethod("plot",
                 if(MP==MSE@nMPs)axis(1,at=xtick,labels=xtick,las=2)
                 abline(h=0)
                 abline(h=1,lty=2)
-                ytick<-pretty(seq(0,SSBlim[pp,2],length.out=4))
                 axis(2,ytick,labels=ytick)
-                legend('topleft',legend="Relative SSB",bty='n')
+                #legend('topright',legend="Relative SSB",bty='n')
 
-                mtext(MPnams[(MP-1)*2+pp],3,adj=-0.25,line=0.3,cex=0.9)
+                mtext(MPnams[(MP-1)*2+pp],3,adj=-0.35,line=0.3,cex=0.9)
 
                 # Col 4: SSB worms
                 plot(range(yrs),SSBlim[pp,],axes=F,col="white",xlab="",ylab="",ylim=SSBlim[pp,])
+                abline(h=ytick,col=gridcol)
+                abline(v=xtick,col=gridcol)
                 for(i in 1:length(worms))lines(yrs,SSBnorm[MP,i,pp,refyears],col=linecols[i],lwd=1.2)
                 if(MP<MSE@nMPs)axis(1,at=xtick,labels=NA)
                 if(MP==MSE@nMPs)axis(1,at=xtick,labels=xtick,las=2)
                 abline(h=0)
                 abline(h=1,lty=2)
 
-               }
+                mtext('Relative SSB',3,adj=-0.8,line=-1,cex=0.7)
+
+
+              }
             }
 
-           mtext(MSE@Snames[pind],3,adj=c(0.26,0.78),line=-0.35,outer=T,font=2)
+            mtext(MSE@Snames[pind],3,adj=c(0.26,0.78),line=-0.45,outer=T,font=2)
 
-  })
+          })
 
