@@ -305,6 +305,7 @@ PPlot<-function(MSE,Pnames=c("C10","C30","D30","LD","DNC","LDNC","PGK","AAVC")){
   #                 pop MP perf quantile
   store<-array(NA,c(2,nMPs,13,5))
   mult=rep(1,nperf)# multiplier for catch biomass scaling
+  for(i in 1:nperf)if(substr(Pnames[i],1,1)=="C")mult[i]=1/1000
 
   for(pp in 1:MSE@npop){
 

@@ -19,6 +19,7 @@ OM2<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/36",nsim=70,proyears=50,seed=1
 MSE2<-new('MSE',OM=OM2,MPs=list(c("CurC50","CurC50"),c("CurC100","CurC100"),c("CurC150","CurC150"),c("EMP1e","EMP1w"),c("EMP2e","EMP2w")),interval=3,IE="Umax_90")
 
 save(MSE2,file="C:/temp/MSE2.Rdata")
+load(file="C:/temp/MSE2.Rdata")
 
 jpeg("C:/GitHub/abft-mse/Outputs/Example PPlot.jpg",res=300,width=7,height=10,units='in')
 PPlot(MSE)
@@ -26,7 +27,7 @@ dev.off()
 
 
 jpeg("C:/GitHub/abft-mse/Outputs/Example plot.jpg",res=600,width=7,height=10,units='in')
-plot(MSE,rev=T)
+plot(MSE,rev=F)
 dev.off()
 
 
