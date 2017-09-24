@@ -266,6 +266,31 @@ The full file structure looks like this:
 
 <br>
 
+## Software Design
+
+### Aims and Objectives
+
+The ABT-MSE software was designed to be: (1) open-source with straightforward distribution and installation; (2) well documented with an intuitive system for accessing documentation; (3) as concise as possible; (4) easy to use, yet hard to misuse; (5) extensible, allowing for users to specify operating models and easily develop and test new MPs; and (6) sufficiently flexible in design to respond to feedback from stakeholders or member of the GBYP core modelling group. These objectives determined the environment, programming language and programming paradigm, all of which are described in more detail below. 
+
+### Open Source
+
+ABT-MSE freely available online from a dedicated GitHub code repository (www.github.com/iccat/abft-mse) which contains all data, code and documentation. The GitHub repository allows users to request software features, report bugs, and track software updates. GitHub also supports continuous integration of code from multiple developers and feature ‘branching’ a form of version control where additions can be coded in parallel and merged with the master branch. The principal challenge of developing MSE for bluefin was  adopting a language and a programming paradigm that was sufficiently flexible to allow for increasingly complex additions. 
+
+### Environment, Programming Language and Software Dependencies
+
+ABT-MSE was developed in the statistical environment R (R Core Team 2017) and is primarily coded in the R language. There are important reasons for using R in this context. It is arguably the most widely used and most flexible software for scientific and statistical analysis, and is commonly applied in quantitative fisheries science for the processing and analysis of data. R has proven popular with the scientific community due to a large and diverse range of freely available packages and the ability to produce well-designed publication-quality figures. It follows that R provides an ideal environment for specifying operating models and then interpreting MSE outputs.
+
+R allows for the development of self-contained packages which offers the attractive possibility of distributing complex software in a single file. Installation of ABT-MSE is achieved in a single command from the R console. R packages provide users with a certain degree of confidence since they must meet CRAN policy (CRAN 2017), which includes error checking, installation size limits, compatibility among operating systems and documentation requirements. ABT-MSE makes use of integrated R help and includes detailed documentation including worked examples for all objects and functions. The ABT_MSE manuals and training materials are automatically rebuilt from the latest software release using R markdown (Allaire et al. 2017). 
+
+A principal limitation of computing in R is that calculations can be slow compared with languages such as C++, Python and Java. This is particularly important in this context because MSE has relatively high computational requirements. To address this, ABT-MSE defaults to parallel processing using the package ‘parallel’ (R Core Team 2017) to distribute calculations over either multiple cores of a workstation or a larger cluster of many hundreds of virtual machines – ABT-MSE is compatible with online computing resources such as Amazon Web Services (2017) and Google Cloud (2017). 
+
+### Programming Paradigm and Design
+
+An important feature of R is that it supports Object-Oriented Programming (OOP) (Jacobsen et al. 1992) in which data, models and results are organized in standardized objects (classes) on which standardized functions (methods) may be applied. In general OOP is desirable because it allows for the reuse of code, can impose stricter requirements of object attributes (e.g. annual catches must be a vector of non-negative real numbers), it demands careful software planning from the outset and is generally more extensible and easy to maintain that non-OOP code. ABT-MSE adopts the OOP paradigm to standardize the formatting of data and support rapid building of operating models. For example, evaluating the robustness of management procedures across a range of operating models (OM). 
+
+
+<br>
+
 # Installation
 
 1. Install [R for Windows](https://cran.r-project.org/bin/windows/)
@@ -459,7 +484,7 @@ In this preliminary run we select the example operating model *OM\_example*, the
 MSE_example<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=myMPs,interval=3,IE="Overage_10")
 ```
 
-You may have noticed that while we specified only three management systems (three pairs of East/West MPs) in fact, four were tested and that the first, labelled *ZeroC (West) and ZeroC (East)* we did not specify. 
+You may have noticed that while we specified only three management systems (three pairs of East/West MPs) in fact, four were tested and that the first, labelled *ZeroC (East) and ZeroC (West)* we did not specify. 
 
 ZeroC is a reference management procedure that recommends close to zero catches (enough to generate CPUE data but essentially none). 
 
@@ -483,7 +508,7 @@ The tables show performance by MP (row) and performance metric (column). Each of
 
 ```{r qs_help_PMs}
 avail('PM')
-?Y10
+?C10
 ?PGK
 ```
 
@@ -569,13 +594,13 @@ For example, the probability of overfishing metric *POF* calculated for the `r M
 round(POF(MSE=MSE_example,pp=1),0)
 ```
 
-This convention allows statistics to be generated for any metric. The Tplot function of the [quick-start section](#QS_Tplot) just plotted point values that were the mean values of the MPs. Lets calculate some other quantities for long term yield (*Y30*) and Final depletion (*D30*) and plot the simulation by simulation tradeoff in median (percentile = 0.5,second column) estimates of Yield and Depletion:
+This convention allows statistics to be generated for any metric. The Tplot function of the [quick-start section](#QS_Tplot) just plotted point values that were the mean values of the MPs. Lets calculate some other quantities for long term yield (*C30*) and Final depletion (*D30*) and plot the simulation by simulation tradeoff in median (percentile = 0.5,second column) estimates of Yield and Depletion:
 
 ```{r qs_PMs_det, fig.width=3, fig.height=3.5}
-Y30arr<-Y30(MSE_example)
+C30arr<-C30(MSE_example)
 D30arr<-D30(MSE_example)
-apply(Y30arr,1,quantile,c(0.025,0.5,0.975)) # median and percentiles by MP (column)
-plot(Y30arr[2,],D30arr[2,],xlab="Median yield",ylab="Median depletion",col="#0000ff95",pch=19) # plot of individual simulations
+apply(C30arr,1,quantile,c(0.025,0.5,0.975)) # median and percentiles by MP (column)
+plot(C30arr[2,],D30arr[2,],xlab="Median yield",ylab="Median depletion",col="#0000ff95",pch=19) # plot of individual simulations
 ```
 
 Lets take a closer look at the probability of overfishing (*POF*) function. 
@@ -606,20 +631,15 @@ The POF function extracts F/FMSY data for the projection time period, calculates
 
 The *apply* function calculates the frequency of overfishing events in dimensions 1 and 2 of the \*MSE@FMSY\* array which correspond to MP and simulation number. This returns a matrix of percentages (interpreted here as probabilities) MP rows by nsim columns. 
 
-Other PMs are quite similar. Here is *Y10* (mean yield over the first 10 years of a projection):
+Other PMs are quite similar. Here is *C10* (mean yield over the first 10 years of a projection):
 
-<<<<<<< HEAD
+
 ```{r Step_2_examine_C10}
 ?C10
 C10
-=======
-```{r Step_2_examine_Y10}
-?Y10
-Y10
->>>>>>> parent of 531014b... Latest documentation and package
 ```
 
-*Y10* is only concerned with averaging catches which are stored in the slot \*MSE@C\*. Again the apply() function is used to calculate mean catches by MP and simulation. 
+*C10* is only concerned with averaging catches which are stored in the slot \*MSE@C\*. Again the apply() function is used to calculate mean catches by MP and simulation. 
 
 Once you are familiar with the MSE object class it is straighforward to design your own PMs and make these compatible with the ABTMSE package.
 
@@ -715,7 +735,7 @@ dim(OMI_6@mat)
 The current maturity schedules are time-invariant (the same among model years) and quite different among the stocks:
 
 ```{r Step_3_OMI_6_old_mat,fig.width=4, fig.height=4}
-matplot(t(OMI_6@mat[,,55]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="Previous maturity, OMI_6")
+matplot(t(OMI_6@mat[,,30]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="Previous maturity, OMI_6")
 legend('bottomright',legend=c("East","West"),text.col=c('blue','red'),bty='n')
 ```
 
@@ -727,14 +747,14 @@ OMI<-OMI_6 # copy the object
 OMI@Name<-"Logistic maturity 7/10"
 OMI@mat[1,,]= 1/(1+exp(7-(1:OMI@na))/1.5)
 OMI@mat[2,,]= 1/(1+exp(10-(1:OMI@na))/1.5)
-matplot(t(OMI@mat[,,55]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="New maturity, OMI")
+matplot(t(OMI@mat[,,30]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="New maturity, OMI")
 legend('bottomright',legend=c("East","West"),text.col=c('blue','red'),bty='n')
 ```
 
 Now that we have a new modified *OMI* object we need to write the M3 input file. For the purposes of this example we're just going to use the M3 model folder in your ABT-MSE directory. 
 
 ```{r Step_3_write_M3}
-M3dir<-"C:/ABT-MSE/M3"   # Or whereever you put the /ABT-MSE/ directory on your computer
+M3dir<-"C:/GitHub/abft-mse/M3"   # Or whereever you put the /ABT-MSE/ directory on your computer
 M3write(OMI,M3dir)
 ```
 
@@ -1310,12 +1330,12 @@ alt_Allocation<-alt_Allocation/apply(alt_Allocation,1,sum)      # even fractions
 MSE_alt_Allocation<-new('MSE',OM_example,Bad_Obs,MPs,Allocation=alt_Allocation)
 ```
 
-Using the *Y30* PM we can compare these runs for the MPs tested:
+Using the *C30* PM we can compare these runs for the MPs tested:
 
 ```{r Allocation_yield_comp}
-apply(Y30(MSE_default,pp=1),1,mean)
-apply(Y30(MSE_alt_MPareas,pp=1),1,mean)
-apply(Y30(MSE_alt_Allocation,pp=1),1,mean)
+apply(C30(MSE_default,pp=1),1,mean)
+apply(C30(MSE_alt_MPareas,pp=1),1,mean)
+apply(C30(MSE_alt_Allocation,pp=1),1,mean)
 
 ```
 
@@ -1391,7 +1411,7 @@ A simple way to do this in our analyses is to related the bias in a particular o
 
 ```{r VOI_better,fig.width=5,fig.height=5}
 MSE_example@MPs
-plot(MSE_example@Cb,Y30(MSE_example,pp=1)[3,],xlab="Catch bias",ylab="Long term yield",main="Delay difference assessment performance",col='blue')
+plot(MSE_example@Cb,C30(MSE_example,pp=1)[3,],xlab="Catch bias",ylab="Long term yield",main="Delay difference assessment performance",col='blue')
 abline(v=1,col='red',lty=2)
 legend('topright',legend='unbiased',text.col='red',bty='n')
 
@@ -1417,7 +1437,7 @@ The cost of current uncertainties is driven by asymmetry in performance among MP
 Cost of current uncertainties can be evaluated in the current version of the MSE package in a similar way to value of better data; by correlating MP performance with simulated conditions.
 
 ```{r VOI_Cost_Cur_Un,fig.width=5,fig.height=5}
-plot(MSE_example@SSB0[,1],Y30(MSE_example,pp=1)[3,],xlab="Unfished spawning biomass",ylab="Long term yield",main="Delay difference assessment performance",col='blue')
+plot(MSE_example@SSB0[,1],C30(MSE_example,pp=1)[3,],xlab="Unfished spawning biomass",ylab="Long term yield",main="Delay difference assessment performance",col='blue')
 
 ```
 
@@ -1463,8 +1483,8 @@ Here is some code for visualizing the movement from (rows) to (columns) areas un
 *Note that this only works for the default MSE objects that have two stock and three movement age classes*
 
 ```{r plot_mov_dist, fig.width=9,fig.height=5}
-out<-M3read("C:/ABT-MSE/M3") # get the raw M3 model fit 
-load("C:/ABT-MSE/M3/OMI")    # load the corresponding OMI object in the same folder
+out<-M3read("C:/GitHub/abft-mse/M3") # get the raw M3 model fit 
+load("C:/GitHub/abft-mse/M3/OMI")    # load the corresponding OMI object in the same folder
 par(mfcol=c(3,2),mai=rep(0.01,4),omi=rep(0.01,4))
 plot_mov_dist(out,OMI_1,pnam=c("Eastern stock","Western stock"),custom=T)
 

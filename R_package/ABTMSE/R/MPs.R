@@ -25,9 +25,11 @@ class(ZeroC)<-"MP"
 #' EMP1w(1,dset_example_West)
 #' sapply(1:10,EMP1w,dset_example_West)
 EMP1w <- function(x,dset,Jtarg=0.66,TACadj=0.1,thresh=0.4){
-  ny<-dim(dset$Iobs)[3]
-  cury<-dim(dset$TAC)[2]
+
+  ny<-dim(dset$Iobs)[3]                          # Last year of index observations
+  cury<-dim(dset$TAC)[2]                         # Last year of past TAC recommendations
   Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+
   if(Jratio>(1-thresh) & Jratio<(1+thresh)){
     rec=dset$TAC[x,cury]
   }else if(Jratio<(1-thresh)){
@@ -35,6 +37,7 @@ EMP1w <- function(x,dset,Jtarg=0.66,TACadj=0.1,thresh=0.4){
   }else{
     rec=dset$TAC[x,cury]*(1+TACadj)
   }
+
   rec
 }
 class(EMP1w)<-"MP"
