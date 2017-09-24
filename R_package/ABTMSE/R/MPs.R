@@ -121,7 +121,7 @@ EMP2e <- function(x,dset,Jtarg=4.8,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
   cury<-dim(dset$TAC)[2]
   Ind<-dset$Iobs[x,1,(-5:0)+ny]
   slp<-lm(y~x,data=data.frame(y=log(Ind),x=1:6))$coefficients[2]
-  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  Jratio<-mean(dset$Iobs[x,1,(-4:0)+ny])/Jtarg  # Index 1 is the JPN_LL_NEAtl2
   oldTAC<-dset$TAC[x,cury]
 
   if(slp>0){
