@@ -104,6 +104,29 @@ Tplot<-function(MSE){
   }
 }
 
+Tplot2<-function(MSE){
+
+  MPnams<-matrix(unlist(MSE@MPs),nrow=2)
+  MPnamsj<-paste(MPnams[(1:MSE@nMPs)*2-1],MPnams[(1:MSE@nMPs)*2],sep="-")
+
+  par(mfrow=c(2,3),mai=c(0.6,0.6,0.25,0.05),omi=rep(0.05,4))
+
+  for(pp in 1:MSE@npop){
+
+    C30a<-apply(C30(MSE,pp)/1000,1,mean)
+    PGKa<-apply(PGK(MSE,pp),1,mean)
+    C10a<-apply(C10(MSE,pp),1,mean)
+    LDa<-apply(LD(MSE,pp),1,mean)
+    D30a<-apply(D30(MSE,pp),1,mean)
+    AAVCa<-apply(AAVC(MSE,pp),1,mean)
+    TOplt(LDa,C10a,MPnams[pp,],"LD","C10",0.5,NA)
+    TOplt(AAVCa,C30a,MPnams[pp,],"AAVC","C30",0.5,0.5)
+    mtext(MSE@Snames[pp],3,line=0.3,font=2)
+    TOplt(D30a,C30a,MPnams[pp,],"D30","C30",0.1,0.2)
+
+  }
+}
+
 TplotS<-function(MSE){
 
   MPnams<-matrix(unlist(MSE@MPs),nrow=2)
@@ -130,6 +153,37 @@ TplotS<-function(MSE){
   TOplt(PGK_1,PGK_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"PGK, P(Green Kobe)")
   TOplt(POF_1,POF_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"POF, P(F>FMSY)")
   TOplt(POS_1,POS_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"POS, P(B<BMSY)")
+  TOplt(D30_1,D30_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"D30 (mean depln. yrs 21-30")
+  TOplt(AAVC_1,AAVC_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"AAVC (Av. Ann. Var. Catch)")
+
+}
+
+TplotS2<-function(MSE){
+
+  MPnams<-matrix(unlist(MSE@MPs),nrow=2)
+  MPnamsj<-paste(MPnams[(1:MSE@nMPs)*2-1],MPnams[(1:MSE@nMPs)*2],sep="-")
+
+  par(mfrow=c(2,3),mai=c(0.6,0.6,0.25,0.05),omi=rep(0.05,4))
+
+  C30_1<-apply(C30(MSE,1)/1000,1,mean)
+  LD_1<-apply(LD(MSE,1),1,mean)
+  C10_1<-apply(C10(MSE,1),1,mean)
+  D10_1<-apply(D10(MSE,1),1,mean)
+  D30_1<-apply(D30(MSE,1),1,mean)
+  AAVC_1<-apply(AAVC(MSE,1),1,mean)
+
+  C30_2<-apply(C30(MSE,pp=2)/1000,1,mean)
+  LD_2<-apply(LD(MSE,pp=2),1,mean)
+  C10_2<-apply(C10(MSE,2),1,mean)
+  D10_2<-apply(D10(MSE,2),1,mean)
+  D30_2<-apply(D30(MSE,2),1,mean)
+  AAVC_2<-apply(AAVC(MSE,2),1,mean)
+
+  TOplt(C10_1,C10_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"C10 (mean catch yrs 1-10)")
+  TOplt(C30_1,C30_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"C30 (mean catch yrs 21-30)")
+
+  TOplt(LD_1,LD_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"LD, (lowest depletion)")
+  TOplt(D10_1,D10_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"D10 (mean depln. yrs 1-10")
   TOplt(D30_1,D30_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"D30 (mean depln. yrs 21-30")
   TOplt(AAVC_1,AAVC_2,MPnamsj,MSE@Snames[1],MSE@Snames[2],NA,NA,"AAVC (Av. Ann. Var. Catch)")
 
@@ -204,14 +258,14 @@ custombar<-function(dat,MPnams,tickwd1=0.05,tickwd2=0.025,lwd1=2,lwd2=1,xlab=T){
   plot(dat[,5],ylim=c(min(dat)-incr,max(dat)+incr),xlim=c(0.25,nMPer+0.25),col='white',axes=F,ylab="",xlab="")
 
   if(xlab){
-    axis(1,1:nMPer,MPnams)
+    axis(1,-1:(nMPer+1),c("","",MPnams,""),las=2,font=2,cex.axis=1.2)
   }else{
-    axis(1,1:nMPer,rep("",nMPer))
+    axis(1,-1:(nMPer+1),rep("",nMPer+3))
   }
 
-  incr<-(max(dat)-min(dat))*0.1
-  yp<-pretty(seq(min(dat)-incr,max(dat)+incr,length.out=10))
-  axis(2,yp,yp)
+  incr<-(max(dat)-min(dat))*0.2
+  yp<-pretty(seq(min(dat)-incr,max(dat)+incr,length.out=12))
+  axis(2,yp,yp,las=2)
   big<-1E20
   polygon(c(-big,big,big,-big),c(-big,-big,big,big),col='grey92')
   points(dat[,3],pch=19,cex=1.1)
@@ -256,25 +310,25 @@ PPlot<-function(MSE,Pnames=c("C10","C30","D30","LD","DNC","LDNC","PGK","AAVC")){
 
     for(i in 1:nperf){
 
-      store[pp,,i,]<-t(apply(do.call(get(Pnames[i]),list(MSE=MSE,pp=pp))*mult[i],1,quantile,p=c(0.1,0.25,0.5,0.75,0.9)))
+      store[pp,,i,]<-t(apply(do.call(get(Pnames[i]),list(MSE=MSE,pp=pp))*mult[i],1,quantile,p=c(0.05,0.25,0.5,0.75,0.95)))
 
     }
 
   }
 
-  par(mfrow=c(nperf,2),mai=c(0.1,0.3,0.01,0.05),omi=c(0.6,0.4,0.4,0.01))
+  par(mfrow=c(nperf,2),mai=c(0.1,0.6,0.01,0.05),omi=c(1.2,0.4,0.4,0.01))
 
   for(i in 1:nperf){
     for(pp in 1:npop){
       xlab=F
       if(i==nperf)xlab=T
-      custombar(dat=store[pp,,i,],MPnams=MPnams[pp,],xlab=xlab)
-      if(pp==1)mtext(Pnames[i],2,line=2.8,font=2)
-      if(i==1) mtext(MSE@Snames[pp],3,line=1.3,font=2)
+      custombar(dat=store[pp,,i,],MPnams=MPnams_a[pp,],xlab=xlab)
+      if(pp==1)mtext(Pnames[i],2,line=5,font=2)
+      if(i==1) mtext(MSE@Snames[pp],3,line=1,font=2)
     }
   }
 
-  mtext("Candidate Management Procedure",1,line=2.3,font=2,outer=T)
+  mtext("Candidate Management Procedure",1,line=6.8,font=2,outer=T)
 
 }
 

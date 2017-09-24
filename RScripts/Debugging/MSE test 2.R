@@ -7,7 +7,7 @@ sfInit(parallel=T,cpus=detectCores())
 
 memory.limit(size = 24000)
 
-OM<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/1",nsim=80,proyears=50,seed=1)
+OM<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/1",nsim=70,proyears=50,seed=1)
 
 #MSE<-new('MSE',OM=OM,MPs=list(c("UMSY","UMSY"),c("UMSY_PI","UMSY_PI")),interval=3,IE="Umax_90")
 
@@ -18,6 +18,26 @@ OM<-new('OM',OMd="C:/GitHub/abft-mse/Objects/OMs/1",nsim=80,proyears=50,seed=1)
 
 MSE<-new('MSE',OM=OM,MPs=list(c("CurC50","CurC50"),c("CurC100","CurC100"),c("CurC150","CurC150"),c("EMP1e","EMP1w"),c("EMP2e","EMP2w")),interval=3,IE="Umax_90")
 
+save(MSE,file="C:/temp/MSE.Rdata")
+
+jpeg("C:/GitHub/abft-mse/Outputs/Example PPlot.jpg",res=300,width=7,height=10,units='in')
+PPlot(MSE)
+dev.off()
+
+
+jpeg("C:/GitHub/abft-mse/Outputs/Example plot.jpg",res=600,width=7,height=10,units='in')
+plot(MSE)
+dev.off()
+
+
+jpeg("C:/GitHub/abft-mse/Outputs/Example Tplot2.jpg",res=600,width=7.5,height=5.5,units='in')
+Tplot2(MSE)
+dev.off()
+
+
+jpeg("C:/GitHub/abft-mse/Outputs/Example TplotS2.jpg",res=600,width=7.5,height=5.5,units='in')
+TplotS2(MSE)
+dev.off()
 
 
 plot(MSE)

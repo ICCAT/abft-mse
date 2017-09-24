@@ -52,7 +52,11 @@ export(
 
     "getperf",
     "PPlot",
+    "custombar",
     "Tplot",
+    "Tplot2",
+    "TplotS",
+    "TplotS2",
     "TOplt",
     "TOPNTplt",
     "tradeoff",
