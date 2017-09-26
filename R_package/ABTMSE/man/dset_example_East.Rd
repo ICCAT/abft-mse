@@ -25,7 +25,7 @@
 \item{UMSY_PI}{A vector nsim long of UMSY nown perfectly (PI: Perfect Information)}
 \item{CAA}{A 3D array of catch at age observations [sim x age x year]}
 \item{CAL}{A vector of lengths representing the start-end points of the length bins corresponding to CAL data]}
-\item{MPrec}{A vector nsim long of the previous recommendations of the management procedure}
+\item{TAC}{A matrix nsim rows by nyears columns of the previous recommendations of the management procedure}
 }
 }
 \author{

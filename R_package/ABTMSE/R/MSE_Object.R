@@ -66,6 +66,7 @@
 #' \item{Snames}{a character vector naming the stocks [nstocks]}
 #' \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 #' \item{areanams}{a character vector of area names}
+#' \item{Istats}{an array of index fit statistics nsim x nind x 4 (beta, AC, sd, cor)}
 #' \item{MPs}{a list object containing the names of the MPs [nMPs]}
 #' }
 setClass("MSE",representation(
@@ -113,6 +114,7 @@ setClass("MSE",representation(
   Snames="character",
   area_defs="list",
   areanams="character",
+  Istats="array",
 
   MPs="list"
 
@@ -512,11 +514,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@D<-array(NA,c(nMPs,nsim,npop,allyears))
   .Object@ageMb<-trlnorm(nsim,1,Obs@ageMbcv)
   .Object@SSB<-array(NA,c(nMPs,nsim,npop,allyears))
-
   # Run projections ------------------------------------------------
   cat("Running projections")
   cat("\n")
-  sfExport(list=c("XSA","DD_i4","DD_i2","DD_i4_4010","Islope1",
+  if(sfIsRunning())sfExport(list=c("XSA","DD_i4","DD_i2","DD_i4_4010","Islope1",
                   "DD_i2_4010","CDD_i4","CDD_i2","SPslope","DD",
                   "DD_R","UMSY","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
   upyrs<-nyears+(0:(floor(OM@proyears/interval)-1))*interval  # the years in which there are updates (every three years)
@@ -548,7 +549,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   nind<-max(Obs@MPind$No)
   Index_areas<-array(FALSE,c(nind,nareas))
-  Istats<-array(NA,c(nsim,nind,4)) # beta, AC, sd, cor
+  Istats<-array(NA,c(nsim,nind,6)) # beta, AC, sd, cor, AC2, sd2
   Itype<-rep(1,nind)
   Ilev<-array(NA,c(nsim,nyears+proyears,nareas,2))
   Ilev[,1:nyears,,1]<-apply(Biomass[,,,1:nyears,,],c(1,4,6),sum)
@@ -589,7 +590,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     }
 
   }
-
+  .Object@Istats<-Istats
 
   #Itemp<-Isim[,,1:nyears,1]#^array(Istats[,,1],c(nsim,nind,nyears))                 # add hyperstability / hyper depletion
   #Itemp2<-Itemp[,,1:nyears]/array(apply(Itemp[,,1:nyears],1:2,mean,na.rm=T),dim(Itemp))#*Isim[,,1:nyears,2] # normalize to mean 1 pre autocorrelated residuals
@@ -696,8 +697,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            )
 
           assign("dset",dset,envir=globalenv()) # debugging
-          sfExport("dset")
-          if(MPs[[MP]][AS]=="XSA") TAC[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
+          if(sfIsRunning())sfExport("dset")
+          if(MPs[[MP]][AS]=="XSA"|!sfIsRunning()) TAC[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
           if(MPs[[MP]][AS]!="XSA") TAC[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
           if(y<allyears).Object@TAC[,MP,AS,y-nyears+2]<-TAC[,AS]
         }
@@ -823,7 +824,14 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
     rm(SSBmu)
 
-    .Object@C[MP,,,]<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,2,4),sum)
+    Cind<-expand.grid(MP,
+                      SPAYMRF2)
+
+    Ctemp<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,2,4,6),sum)
+    Ctemp<-apply(Ctemp,c(1,3,4),sum)# SYR
+
+    for(pp in 1:npop).Object@C[MP,,pp,]=apply(Ctemp[,,MPareas==pp],1:2,sum)
+   # .Object@C[MP,,,]<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,2,4),sum)
 
     SSB2<-apply(N[,,,1:allyears,4,]*array(mat[,,,nyears]*Wt_age[,,,nyears],c(nsim,npop,nages,allyears,nareas)),c(1,2,4),sum)
     .Object@D[MP,,,]<-SSB2/array(SSB2[,,1],dim(SSB2))

@@ -71,6 +71,7 @@
 \item{Snames}{a character vector naming the stocks [nstocks]}
 \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 \item{areanams}{a character vector of area names}
+\item{Istats}{an array of index fit statistics nsim x nind x 4 (beta, AC, sd, cor)}
 \item{MPs}{a list object containing the names of the MPs [nMPs]}
 }
 }

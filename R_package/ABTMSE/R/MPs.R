@@ -28,7 +28,7 @@ EMP1w <- function(x,dset,Jtarg=0.66,TACadj=0.1,thresh=0.4){
 
   ny<-dim(dset$Iobs)[3]                          # Last year of index observations
   cury<-dim(dset$TAC)[2]                         # Last year of past TAC recommendations
-  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  Jratio<-mean(dset$Iobs[x,7,(-4:0)+ny])/Jtarg  # Index 7 is the GOM_LAR_SUV
 
   if(Jratio>(1-thresh) & Jratio<(1+thresh)){
     rec=dset$TAC[x,cury]
@@ -55,7 +55,7 @@ class(EMP1w)<-"MP"
 EMP1e <- function(x,dset,Jtarg=4.8,TACadj=0.1,thresh=0.4){
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
-  Jratio<-mean(dset$Iobs[x,1,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  Jratio<-mean(dset$Iobs[x,1,(-4:0)+ny])/Jtarg  # Index 1 is the JPN_LL_NEAtl
   if(Jratio>(1-thresh) & Jratio<(1+thresh)){
     rec=dset$TAC[x,cury]
   }else if(Jratio<(1-thresh)){
@@ -80,9 +80,9 @@ EMP2w <- function(x,dset,Jtarg=0.66,lup=0.05,ldown=0.15,pup=0.05,pdown=0.15){
 
   ny<-dim(dset$Iobs)[3]
   cury<-dim(dset$TAC)[2]
-  Ind<-dset$Iobs[x,11,(-5:0)+ny]
+  Ind<-dset$Iobs[x,7,(-5:0)+ny]
   slp<-lm(y~x,data=data.frame(y=log(Ind),x=1:6))$coefficients[2]
-  Jratio<-mean(dset$Iobs[x,11,(-4:0)+ny])/Jtarg  # Index 11 is the GOM_LAR_SUV
+  Jratio<-mean(dset$Iobs[x,7,(-4:0)+ny])/Jtarg  # Index 7 is the GOM_LAR_SUV
   oldTAC<-dset$TAC[x,cury]
 
   if(slp>0){

@@ -120,6 +120,8 @@ indfit<-function(SSB,ind,Year,sim=F,plot=T,lcex=0.8){
   res<-ind-(SSB^opt$minimum)
   ac<-acf(res,plot=F)$acf[2,1,1] # lag-1 autocorrelation
 
+  res2<-ind-SSB                  # linear, without hyperdepletion / hyperstability
+  ac2<-acf(res2,plot=F)$acf[2,1,1] # linear AC
 
   if(plot){
     SSBseq<-seq(min(SSB),max(SSB),length.out=1000)
@@ -136,7 +138,7 @@ indfit<-function(SSB,ind,Year,sim=F,plot=T,lcex=0.8){
     legend('topright',legend=c("Model estimate","Index"),text.col=c("black","red"),bty='n',cex=lcex)
   }
 
-  list(stats=data.frame(beta=opt$minimum,AC=ac,sd=sd(ind/(SSB^opt$minimum)),cor=cor(SSB,ind)),mult=ind/(SSB^opt$minimum))
+  list(stats=data.frame(beta=opt$minimum,AC=ac,sd=sd(ind/(SSB^opt$minimum)),cor=cor(SSB,ind),AC2=ac2,sd2=sd(ind/SSB)),mult=ind/(SSB^opt$minimum))
 
 }
 

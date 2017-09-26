@@ -33,7 +33,7 @@ EMP1 = function(x, dset){                     # Calculate TAC from simulated dat
   cury = dim(dset$TAC)[2]                     # Last year of past TAC recommendations
   previousTAC =  dset$TAC[x, cury]            # Get previous TAC for simulation x
 
-  if(Jratio > 0.6 & Jratio < 1.4)){           # If Jratio is greater than 0.6 and less than 1.4
+  if(Jratio > 0.6 & Jratio < 1.4){           # If Jratio is greater than 0.6 and less than 1.4
 
     TAC = previousTAC                         # No change in TAC
 
@@ -56,16 +56,16 @@ class(EMP1) = "MP"                            # Assign EMP1 a class 'MP'
 
 
 
-EMP2 <- function(x, dset,                     # Calculate TAC from simulated data dset for simulation x
-                 IndexNo = 11, Jtarg = 0.6,   # Index is #11, (GOM_LAR_SUV), target index level is 0.6
-                 lup = 0.05, ldown = 0.15,    # TAC change fraction of slope in index
-                 pup = 0.05, pdown = 0.15){   # TAC change fraction of ratio of recent index to Jtarg
+EMP2 <- function(x, dset,                      # Calculate TAC from simulated data dset for simulation x
+                 IndexNo = 11, Jtarg = 0.6,    # Index is #11, (GOM_LAR_SUV), target index level is 0.6
+                 lup = 0.05, ldown = 0.15,     # TAC change fraction of slope in index
+                 pup = 0.05, pdown = 0.15){    # TAC change fraction of ratio of recent index to Jtarg
 
   ny = dim(dset$Iobs)[3]                       # Last year of index observations
   Ind = dset$Iobs[x,1,(-5:0)+ny]               # Last six years of index observations
 
-  linmod = lm(y~x,data=data.frame(y = log(Ind), x = 1:6))
-  slp = linmod$coefficients[2] # log-linear slope in index
+  linmod = lm(y ~ x, data = data.frame(y = log(Ind), x = 1:6)) # fit a log-linear model
+  slp = linmod$coefficients[2]                 # log-linear slope in index
 
   Jratio = mean(dset$Iobs[x, IndexNo, (-4:0)+ny]) / Jtarg  # Ratio of recent Index / Jtarg
 
@@ -84,24 +84,52 @@ EMP2 <- function(x, dset,                     # Calculate TAC from simulated dat
     Jmod = pdown*(Jratio-1)
   }
 
-  Tmod<-Jmod+smod
+  Tmod<-Jmod+smod                              # Total TAC modification
 
-  if(Tmod>0.15)Tmod=0.15
-  if(Tmod<(-0.15))Tmod=-0.15
+  if(Tmod > 0.15) Tmod = 0.15                  # Maximum upward change is 15%
+  if(Tmod < (-0.15)) Tmod = -0.15              # Maximum downward change is 15%
 
-  oldTAC*(1+Tmod)
+  previousTAC*(1+Tmod)                         # Adjust previous TAC
 
 }
-class(EMP2e)<-"MP"
+
+class(EMP2e)<-"MP"                             # Assign EMP1 a class 'MP'
 
 
 
+# --- Load the library ---
 
 
 
+library(ABTMSE)                                # Load library
+loadABT()                                      # Load all the package data
+
+nsim = nrow(dset_example_East$TAC)             # Get the number of example simulations
+
+sapply(1:nsim, EMP1, dset = dset_example_East) # Make sure EMP1 works with an example dataset
+
+sapply(1:nsim, EMP2, dset = dset_example_West) # Make sure EMP1 works with an example dataset
 
 
 
+library(ABTMSE)                          # Load library
+loadABT()                                # Load all the package data
+sfInit(parallel = T, cpus=detectCores()) # Start up the cluster for parallel computing
+
+MPs = list(c("MeanCat", "MeanCat"),      # First MP is mean historical catches in the East and West
+           c("EMP1",    "EMP2"))         # Second MP is EMP1 in the East and EMP2 in the West
+
+myMSE = new("MSE", OM_1, MPs=MPs)        # Run MSE with OM_1
+
+plot(myMSE)                              # Projection plot
+PPlot(myMSE)                             # Performance plot
+Tplot(myMSE)                             # Trade-off plot
+perf = getperf(myMSE)                    # Calculate the mean performance tables
+
+write.csv(perf[[1]], "C:/East_perf.csv") # Write the eastern performance table to disk
+write.csv(perf[[2]], "C:/West_perf.csv") # Write the western performance table to disk
+
+save(myMSE, "C:/temp/myMSE.Rdata")       # Save the MSE object
 
 
 

@@ -227,7 +227,7 @@ if(OMbuild){
   # --- MSE control variables --------------------------------------------
 
   nsim<-48
-  proyears<-30
+  proyears<-50
   seed<-1
 
   # --- Define the three recruitment scenarios ---------------------------

@@ -139,6 +139,8 @@ save(MSE_alt_Allocation,file=paste0(datadir,"MSE_alt_Allocation"))
 
 
 # Example pset (requires MSE run) --------------------------------------------------------------------
+setup()
+MSE<-new('MSE',interval=10,IE="Umax_90")
 
 dset_example_East<-dset[[1]]
 dset_example_West<-dset[[2]]
