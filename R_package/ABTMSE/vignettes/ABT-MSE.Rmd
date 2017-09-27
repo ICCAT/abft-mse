@@ -728,22 +728,22 @@ Design$all_lnams[[3]][1]
 
 We want to change the maturity schedule which is an array in the *OMI* object with the dimensions stock x age x year:
 
-```{r Step_3_OMI_6_interrogation2}
-dim(OMI_6@mat)
+```{r Step_3_OMI_7_interrogation2}
+dim(OMI_7@mat)
 ```
 
 The current maturity schedules are time-invariant (the same among model years) and quite different among the stocks:
 
-```{r Step_3_OMI_6_old_mat,fig.width=4, fig.height=4}
-matplot(t(OMI_6@mat[,,30]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="Previous maturity, OMI_6")
+```{r Step_3_OMI_7_old_mat,fig.width=4, fig.height=4}
+matplot(t(OMI_7@mat[,,30]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="Previous maturity, OMI_6")
 legend('bottomright',legend=c("East","West"),text.col=c('blue','red'),bty='n')
 ```
 
-In this example we're going to copy the *OMI\_6* object, and change maturity to a logistic model of selectivity with an age at 50% maturity (inflection point) of 7 in the East and 10 in the West, and slope of 1.5 for both stocks:
+In this example we're going to copy the *OMI\_7* object, and change maturity to a logistic model of selectivity with an age at 50% maturity (inflection point) of 7 in the East and 10 in the West, and slope of 1.5 for both stocks:
 
 
-```{r Step_3_OMI_6_new_mat,fig.width=4, fig.height=4}
-OMI<-OMI_6 # copy the object
+```{r Step_3_OMI_7_new_mat,fig.width=4, fig.height=4}
+OMI<-OMI_7 # copy the object
 OMI@Name<-"Logistic maturity 7/10"
 OMI@mat[1,,]= 1/(1+exp(7-(1:OMI@na))/1.5)
 OMI@mat[2,,]= 1/(1+exp(10-(1:OMI@na))/1.5)

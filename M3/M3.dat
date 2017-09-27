@@ -16612,18 +16612,18 @@
 0.2 0.2
 0.2
 # RDCV, lognormal penalty on recruitment deviations
-0.7177406
+0.35
 # SSBprior, prior on current SSB
-3e+08
-2.7e+07
+3e+05
+27000
 # SSBCV, lognormal penalty SSBprior
 0.01
 # SSBfit, type of ssb fit
 3
 # SSBinc, ratio of SSBy[2]/SSBy[1]
-3
+5
 # SSBy, years for SSBinc ratio calculation
-24
+22
 33
 # SSBincstock, stock for SSBinc ratio calculation
 1
@@ -16638,7 +16638,7 @@
 # nLHw, number of likelihood components
 14
 # LHw,  likelihood components
-1 1 0.2 20 5 2 1 10 5 3 0 100 0 50
+1 1 0.2 20 5 2 1 50 5 3 0 0 100 50
 # muR_ini, initial values for mean historical recruitment
 1.4e+07 1750000
 # sel_ini, initial values for selectivity
