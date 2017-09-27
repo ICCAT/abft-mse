@@ -140,10 +140,12 @@ SSBref<-function(OMI,lev=NA){
 
     }else if(lev==3){# East,  West
 
-      OMI@SSBinc = 3
+      OMI@SSBinc = 5
       OMI@SSBincstock=1
-      OMI@SSBy = c(OMI@ny-8,OMI@ny)
+      OMI@SSBy = c(OMI@ny-11,OMI@ny)
       OMI@LHw[13]<-100
+      OMI@LHw[8]<-50
+      OMI@RDCV<-0.35
 
     }
 
