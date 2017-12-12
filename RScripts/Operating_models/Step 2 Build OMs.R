@@ -8,7 +8,7 @@
 # Tom Carruthers UBC
 # Laurie Kell ICCAT
 
-# 12th July 2017
+# 12th November 2017
 
 # Because some operating models (the B scenarios) require prior fitting of other operating models
 # (the A scenarios, since B scenarios are fitted to a fraction of the A scenarios current abundance)
