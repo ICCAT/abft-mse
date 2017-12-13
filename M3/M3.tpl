@@ -289,7 +289,7 @@ PARAMETER_SECTION
 	init_bounded_dev_vector Fmod(1,ns*nr,-10.,10.,1);         // F modifier by season and area
 	
 	LOCAL_CALCS
-	  nodemax = np+sum(seltype)+np*nRD+nMP+nCPUEq+nI;
+	  nodemax = 6+sum(seltype)+np*nRD+nMP+nE+nI+nCPUEq+ns*nr;
 	  //cout<<Ilencat<<endl;
 	 // exit(1);
 	END_CALCS
@@ -1919,12 +1919,15 @@ FUNCTION simsam
 FUNCTION popnodes
   {
 	// -- Populate nodes for mcmc output --
-	j=0;
+			
+	nodes(1)=lnmuRT;
+	nodes(2)=lnPrat;
+	nodes(3)=lnHR1(1);
+	nodes(4)=lnHR1(2);
+	nodes(5)=lnHR2(1);
+	nodes(6)=lnHR2(2);
 	
-	for(int pp=1;pp<=np;pp++){
-	  j+=1;
-	  nodes(j)=lnmuR(pp);
-	}
+	j=6;
 	
 	for(int ff=1; ff<=nsel;ff++){
 	  for(int sp=1; sp<=seltype(ff);sp++){
@@ -1933,16 +1936,29 @@ FUNCTION popnodes
 	  }   
 	}
 	
-	for(int pp=1; pp<=np;pp++){
-	  for(int yy=1; yy<=nRD;yy++){
-	    j+=1;
-            nodes(j)=RD(pp,yy);
-          }
+        for(int yy=1; yy<=nRD;yy++){
+	   j+=1;
+           nodes(j)=lnRD1(yy);
+        }
+        
+	for(int yy=1; yy<=nRD;yy++){
+	   j+=1;
+	   nodes(j)=lnRD2(yy);
 	}
-	
+		
 	for(int mm=1; mm<=nMP;mm++){
 	  j+=1;
           nodes(j)=movest(mm);
+	}
+	
+	for(int ff=1; ff<=nE;ff++){
+	  j+=1;
+	  nodes(j)=lnqE(ff);
+	}
+	
+	for(int ff=1; ff<=nI;ff++){
+	  j+=1;
+	  nodes(j)=lnqI(ff);
 	}
 	
 	for(int ff=1; ff<=nCPUEq;ff++){
@@ -1950,9 +1966,9 @@ FUNCTION popnodes
 	  nodes(j)=lnqCPUE(ff);
 	}
 	
-	for(int pp=1; pp<=nI;pp++){
+	for(int ii=1; ii<=(ns*nr);ii++){
 	  j+=1;
-          nodes(j)=lnqI(pp);
+          nodes(j)=Fmod(ii);
 	}
 	
 	if(debug)cout<<"--- Finished popnodes ---"<<endl;
@@ -2198,8 +2214,8 @@ GLOBALS_SECTION
         
         #include <admodel.h>
 	#include "stats.cxx"
-	//#include <fstream>
-        //ofstream nodesout("nodes.cha");
+	#include <fstream>
+        ofstream nodesout("nodes.cha");
        	
 	
 	
