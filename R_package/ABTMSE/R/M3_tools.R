@@ -363,14 +363,7 @@ M3write<-function(OMI,OMdir="C:/M3"){
 
 }
 
-#' Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)
-#'
-#' @param x the position in the vector OMdir (one of the folders containing the M3 exe)
-#' @param OMdir a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files
-#' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
-#' @examples
-#' #runM3p(1,"C:/ABT-MSE/M3")
-runM3p<-function(x,OMdir='C:/M3temp',hess=F){
+runM3p1<-function(x,OMdir='C:/M3temp',hess=F){
   setwd(paste0(OMdir,"/",x))
   if(hess){
     system("M3.exe",wait=T,show.output.on.console = F)
@@ -382,21 +375,50 @@ runM3p<-function(x,OMdir='C:/M3temp',hess=F){
 
 }
 
+
+#' Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)
+#'
+#' @param x the position in the vector OMdir (one of the folders containing the M3 exe)
+#' @param OMdir a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files
+#' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
+#' @examples
+#' #runM3p(1,"C:/ABT-MSE/M3")
+runM3p<-function(x,OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=20000,thin=100){
+  setwd(paste0(OMdir,"/",x))
+  
+  if(hess&!mcmc){
+    system("M3.exe",wait=T,show.output.on.console = F)
+    return(paste("M3 ran with hessian calculation at",OMdir[x]))
+  }else if(!mcmc){
+    system("M3.exe -est",wait=T,show.output.on.console = F)
+    return(paste("M3 ran at",OMdir[x]))
+  }else{
+    system(paste0("M3.exe -est -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
+    system("M3.exe -mceval",wait=T,show.output.on.console = F)
+    return(paste("M3 ran with mcmc calculation at",OMdir[x]))
+  }
+  
+}
+
 #' Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)
 #'
 #' @param OMdir a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
 #' @examples
 #' #runM3("C:/ABT-MSE/M3")
-runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F){
+runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=40000,thin=100){
   setwd(OMdir)
 
-  if(hess){
+  if(hess&!mcmc){
     system("M3.exe",wait=T,show.output.on.console = F)
     return(paste("M3 ran with hessian calculation at",OMdir[x]))
-  }else{
+  }else if(!mcmc){
     system("M3.exe -est",wait=T,show.output.on.console = F)
-    return(paste("M3 ran at",OMdir[x]))
+    return(paste("M3 ran at",OMdir))
+  }else{
+    system(paste0("M3.exe -est -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
+    system("M3.exe -mceval",wait=T,show.output.on.console = F)
+    return(paste("M3 ran with mcmc calculation at",OMdir))
   }
 
 }

@@ -13,11 +13,9 @@
 # There are four high priority robustness OMs 
 
 # (1) 20% overages in both East and West areas 
-# (2) F
-# (3) Taking the OMs from step 2 and add the  modified abundance scenarios from them (A, B and C)
-# (4) Copying the fitted models of 1 and 2 (to expand to the future recruitment scenarios) (1, 2 and 3)
-# (5) Create the future recruitment scenarios (1, 2, 3) and build operating model objects
-
+# (2) Undetected increase in catchability of 1% (OM@qinc=1)
+# (3) Non-linear index relationships (hyperstability / hyper depletion) (OM@Ibeta_ignore=F)
+# (4) Alternative mixing scenario (Frac East stock in West area is halved and vice-versa)
 
 #rm(list=ls(all=TRUE))                       # Remove all existing objects from environment
 #setwd("C:/ABT-MSE/")                        # The working location
@@ -38,39 +36,7 @@ loadABT()
 #source("Source/Objects.r")
 OMDir<-paste(getwd(),"/M3",sep="")
 
-
-# --- Set up the MSE design matrix
-
-all_levs<-list(c("1","2","3"), c("A","B","C"), c("I","II","III","IV"))
-all_lnams<-list( c("1: West - Hockey stick, East - '83+ B-H h=0.98",
-                   "2: West - B-H h estimated, East - '83+ B-H h=0.7",
-                   "3: West - Hockey stock changes to B-H after 10 yrs, East - 83+ B-H with h=0.98 changes to '50-82 B-H with h=0.98 after 10 years"),
-
-                 c("A: West - Best estimates of SSB",
-                   "B: Western Area SSB matches VPA",
-                   "C: Eastern Area SSB inc as VPA"),
-
-                  c("I: Younger spawning, High M",
-                    "II: Younger spawning, Low M",
-                    "III: Older spawning, High M",
-                    "IV: Older spawning, Low M")
-               )
-
-Design_Ref<-expand.grid(all_levs)                                               # The full design grid (all combinations) of the various factors and their levels
-LNames_Ref<-expand.grid(all_lnams)
-
-Design<-list()                 # Summarize the MSE OM design
-Design$all_levs<-all_levs      # Returns a list length(funcs) long of 1:nlevels for all funcs
-Design$all_lnams<-all_lnams    # Returns a list length(funcs) long of the long names of the levels for all funcs
-Design$Design_Ref<-Design_Ref  #  The full design grid (all combinations) of the various factors and their levels
-Design$LNames_Ref<-LNames_Ref
-save(Design,file=paste0(getwd(),"/Objects/OMs/Design.Rdata"))
-save(Design,file=paste0(getwd(),"/R_package/ABTMSE/data/Design.Rdata"))
-
-nOMs<-nrow(Design_Ref)
-OMcodes<-apply(Design_Ref,1,FUN=function(x)paste(x,collapse="-"))
-
-
+OMnames<-paste0("ROM_",1:4)
 
 # === Step 1: Fit the base operating model (~ 1 hour) =============================================================================================================
 

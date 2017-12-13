@@ -29,7 +29,7 @@
 setwd("C:/GitHub/abft-mse")
 
 # Some toggles
-runinitialOM<-F
+runinitialOM<-T
 runM3OM<-T                             # Should the operating models be fitted (ie only new OMI and OM objects?)
 reportbuild<-T                         # should the OM reports / summary reports be built?
 OMbuild<-T                             # should the OM objects be built?
@@ -79,7 +79,7 @@ OMcodes<-apply(Design_Ref,1,FUN=function(x)paste(x,collapse="-"))
 # === Step 1: Fit the base operating model (~ 1 hour) =============================================================================================================
 
 if(runinitialOM){
-  runM3(OMDir)                      # Run the base M3 operating model
+  runM3(OMDir,mcmc=TRUE)                      # Run the base M3 operating model
   pin_from_par(OMDir)               # Record the MLE parameter estimates as initial values
   make_fit_reports(OMDir)           # Make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
 }
@@ -125,7 +125,7 @@ if(runM3OM){
 
   foldernos<-match(paste0("1-A-",all_levs[[3]]),OMcodes)                     # Get correct folder numbers
 
-  sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"))             # Run the M3 executables in parallel
+  sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"),mcmc=T)             # Run the M3 executables in parallel
 
   for(i in foldernos)pin_from_par(paste0(getwd(),"/Objects/OMs/",i))   # Record the MLE parameter estimates as initial values
 
@@ -181,7 +181,7 @@ if(runM3OM){
 
   #sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"))             # Run the M3 executables in parallel
   #sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs/",foldernos))             # Run the M3 executables in parallel
-  sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"))             # Run the M3 executables in parallel
+  sfLapply(foldernos,runM3p,OMdir=paste0(getwd(),"/Objects/OMs"),mcmc=TRUE)             # Run the M3 executables in parallel
 
   for(i in foldernos)pin_from_par(paste0(getwd(),"/Objects/OMs/",i))   # Record the MLE parameter estimates as initial values
 

@@ -467,13 +467,52 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
 
   # ---- Get covariance matrix and sample correlated parameters -------
-
+  
   vcv<-read.fit(paste(OMd))
+  pnam<-vcv$names[1:vcv$nopar]
+  nparams<-length(pnam)
+  
+  if(file.exists(paste0(OMd,"/nodes.cha"))){
+    
+    message(paste0("MCMC output file located (",OMdir,"/nodes.cha), posterior samples used to specify uncertainty among simulations"))
+    samps<-read.table(paste(getwd(),"/nodes.cha",sep=""), sep=" ") 
+    if(ncol(samps) != nparams+1) stop(paste0("Error: a different number of parameters (", vcv$nopar,") were estimated than mcmc posteriors are available (", ncol(samps)-1,")"))
+    samps<-samps[,2:(nparams+1)]
+    
+    #mupar<-apply(samps,2,mean)
+    mupar<-samps[1,]
+    testratio<-(((mupar-vcv$est[1:vcv$nopar])/mupar)^2)^0.5
+    testlev<-1
+    if(sum(testratio>testlev)>0)stop(paste("Error: it seems that one or more parameters are significantly different among MLE and MCMC (mean) estimators: ", pnam[testratio>testlev]))
+    keep<-(1:nrow(samps))[samps[,1]!=samps[1,1]]
+    samps<-samps[keep,]
+    nmcmc<-nrow(samps)
+    
+    if(nsim<nmcmc){
+      
+      samps<-samps[sample(1:nmcmc,nsim,replace=F),]
+      
+    }else{
+      
+      message(paste0("Fewer simulations required (",nsim,") than mcmc samples provided (",nmcmc,") - resampling with replacement"))
+      samps<-samps[sample(1:nmcmc,nsim,replace=T),]
+      
+    }
+    
+  }else{
+    
+    message("No MCMC output file located, using variance-covariance matrix to specify uncertainty among simulations")
+    samps<-as.data.frame(matrix(rep(vcv$est[1:vcv$nopar],each=nsim)+rnorm(vcv$nopar*nsim,0,0.1),nrow=nsim))
+  
+  } 
+  
+  names(samps)<-pnam
+  
+ 
   #if(length(vcv$cov)==1){ # no valid variance-covariance matrix from which to sample parameter valuecat(paste('You specified a directory',OMd,'that does not contain a valid M3.cor file. The M3.cor file is generated when the convergence
     #            criterion of a positive definite hessian, is met.'))
     #cat("\n")
-  samps<-as.data.frame(matrix(rep(vcv$est[1:vcv$nopar],each=nsim)+rnorm(vcv$nopar*nsim,0,0.1),nrow=nsim))
-  names(samps)<-vcv$names[1:vcv$nopar]
+  
   #}else{
    # samps<-as.data.frame(mvrnorm(nsim,vcv$est,vcv$cov))
    # names(samps)<-vcv$names
