@@ -267,6 +267,8 @@ setClass("OMI",representation(
 #' \item{Snames}{a vector nstock long naming each stock}
 #' \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 #' \item{areanams}{a character vector of area names}
+#' \item{Ibeta_ignore}{logical, should hyperstability of indices be included?}
+#' \item{qinc}{real number, percentage annual changes in catchability affecting the CPUE indices}
 #' \item{seed}{a random seed for generation of simulations to ensure reproducibility}
 #' }
 setClass("OM",representation(
@@ -315,6 +317,8 @@ setClass("OM",representation(
               Snames="character",                              # Name of the stocks
               area_defs="list",                                # Area definitions list (copied from OMI)
               areanams="character",                            # Names of areas        (copied from OMI)
+              Ibeta_ignore = "character",                      # Logical, should hyperstability and hyperdepletion be ignored?
+              qinc="numeric",                                  # % annual changes in catchability affecting CPUE indices
               seed="numeric"                                   # Random seed from which this object was made
               ))
 
@@ -677,6 +681,9 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
   }
 
+  .Object@Ibeta_ignore = TRUE                      # hyperstability and hyperdepletion should be ignored?
+  .Object@qinc=0                                   # no catchability increases affecting cpue indices
+
   .Object
 
 })
@@ -732,6 +739,7 @@ setClass("Obs",representation(Name="character",
                Recbcv="numeric",IMSYbcv="numeric",                            # Bias in observation of recent recrutiment, target CPUE (CPUE @ MSY)
                MSYbcv="numeric",BMSYbcv="numeric",                            # Bias in observation of target catch and biomass (MSY and BMSY)
                MPind="data.frame",MPind_stats="list"                          # Indices that may be used in MPs
+
 ))
 
 

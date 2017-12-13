@@ -10,10 +10,10 @@
 
 # 12th December 2017
 
-# There are five phases to reference operating model specification:
+# There are four high priority robustness OMs 
 
-# (1) Fit the base model (parameterized like the most recent stock assessment)
-# (2) Fitting of various natural-mortality rate and maturity rate scenarios (I, II and III) (1, 7, 13)
+# (1) 20% overages in both East and West areas 
+# (2) F
 # (3) Taking the OMs from step 2 and add the  modified abundance scenarios from them (A, B and C)
 # (4) Copying the fitted models of 1 and 2 (to expand to the future recruitment scenarios) (1, 2 and 3)
 # (5) Create the future recruitment scenarios (1, 2, 3) and build operating model objects

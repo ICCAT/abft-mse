@@ -663,7 +663,6 @@ Alternatively you might want to rank MPs according to a user defined utility fun
 ```{r Step_2_create U1}
 
 U1<-function(MSE, pp){
-  DC<-0.8^(1:MSE@proyears)
   yearindex<-MSE@nyears+(MSE@proyears-4):MSE@proyears
   Y<-apply(MSE@C[,,pp,yearindex],1:2,mean)
   SSB<-apply(MSE@SSB[,,pp,yearindex],1:2,mean)
@@ -732,7 +731,7 @@ We want to change the maturity schedule which is an array in the *OMI* object wi
 dim(OMI_7@mat)
 ```
 
-The current maturity schedules are time-invariant (the same among model years) and quite different among the stocks:
+The current maturity schedules are time-invariant (the same among model years) and the same for both stocks:
 
 ```{r Step_3_OMI_7_old_mat,fig.width=4, fig.height=4}
 matplot(t(OMI_7@mat[,,30]),col=c('blue','red'),type='l',ylab="Maturity",xlab="Age",main="Previous maturity, OMI_6")

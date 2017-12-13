@@ -653,7 +653,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           mind<-as.matrix(expand.grid(1:nsim,1:nind,1:y,1:nareas))
           Ilev_ind<-as.matrix(cbind(mind[,c(1,3,4)],Itype[mind[,2]]))
           Itemp[mind]<-Ilev[Ilev_ind]*as.integer(Index_areas[mind[,c(2,4)]])
-          Isim[,,1:y,1]<-apply(Itemp[,,1:y,],1:3,sum,na.rm=T)^array(Istats[,,1],c(nsim,nind,y))#add hyperstability
+          Isim[,,1:y,1]<-apply(Itemp[,,1:y,],1:3,sum,na.rm=T)^(as.integer(!OM@Ibeta_ignore)*array(Istats[,,1],c(nsim,nind,y)))#add hyperstability
+          Isim[,,1:y,1]<-Isim[,,1:y,1]*rep((1+OM@qinc/100)^(1:y),each=nsim*nind)
           Isim[,,1:y,1]<-Isim[,,1:y,1]*array(lastI/Isim[,,nyears,1],c(nsim,nind,y)) # normalize to last observed year
           Iobs<-Isim[,,1:y,1]*Isim[,,1:y,2] # Note last observation is missing (not available SSB for current year recommendation)
 
