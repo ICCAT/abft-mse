@@ -1,3 +1,9 @@
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+    #include <cfenv>
+    #include <cstdlib>
+  #endif
+#endif
         
         #include <admodel.h>
 	#include "stats.cxx"
@@ -87,10 +93,12 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   SSBinc.allocate("SSBinc");
   SSBy.allocate(1,2,"SSBy");
   SSBincstock.allocate("SSBincstock");
+  BSfrac.allocate(1,np,1,ns,"BSfrac");
   FCV.allocate("FCV");
   movCV.allocate("movCV");
   selCV.allocate("selCV");
   SSBincCV.allocate("SSBincCV");
+  BSfracCV.allocate("BSfracCV");
   nLHw.allocate("nLHw");
   LHw.allocate(1,nLHw,"LHw");
   muR_ini.allocate(1,np,"muR_ini");
@@ -128,7 +136,7 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   Fmod.allocate(1,ns*nr,-10.,10.,1,"Fmod");
 	  nodemax = 6+sum(seltype)+np*nRD+nMP+nE+nI+nCPUEq+ns*nr;
 	  //cout<<Ilencat<<endl;
-	 // exit(1);
+	  // exit(1);
   nodes.allocate(1,nodemax,"nodes");
   #ifndef NO_AD_INITIALIZE
     nodes.initialize();
@@ -191,6 +199,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   objRat.allocate("objRat");
   #ifndef NO_AD_INITIALIZE
   objRat.initialize();
+  #endif
+  objBSfrac.allocate("objBSfrac");
+  #ifndef NO_AD_INITIALIZE
+  objBSfrac.initialize();
   #endif
   N.allocate(1,np,1,ny,1,ns,1,na,1,nr,"N");
   #ifndef NO_AD_INITIALIZE
@@ -391,6 +403,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   stemp.allocate(1,np,1,ns,1,nr,"stemp");
   #ifndef NO_AD_INITIALIZE
     stemp.initialize();
+  #endif
+  BSfrac_pred.allocate(1,np,1,ns,"BSfrac_pred");
+  #ifndef NO_AD_INITIALIZE
+    BSfrac_pred.initialize();
   #endif
   sind.allocate(1,nRPT,"sind");
   #ifndef NO_AD_INITIALIZE
@@ -1067,6 +1083,7 @@ void model_parameters::calcObjective(void)
 	objSSB.initialize();                    // SSB prior
 	objFmod.initialize();                   // Fmod prior
 	objRat.initialize();                    // Ratio on unfished spawning stock size
+	objBSfrac.initialize();                 // Proportion of E/W stock biomass in W/E area
 	Ipred.initialize();                     // Predicted fishery-independent index
 	CLprop.initialize();                    // Catch at length composition predicted proportions
 	CLsd.initialize();                      // Conditional MLE estimate of the sd 
@@ -1288,12 +1305,23 @@ void model_parameters::calcObjective(void)
 	   }
 	}
 	objG+=objSSB*LHw(12);
+	// SSB ratio for increases 
 	objRat=dnorm(log(SSB(SSBincstock,SSBy[2],ns)/SSB(SSBincstock,SSBy[1],ns)),log(SSBinc),SSBincCV);
 	objG+=objRat*LHw(13);
+	// F modifier prior
 	for(int ll=1;ll<=ns*nr;ll++){
 	  objFmod+=dnorm(Fmod(ll),0,FCV);
 	}
 	objG+=objFmod*LHw(14);
+	// BSfrac prior
+	for(int ss=1; ss<=ns;ss++){
+	  BSfrac_pred(1,ss)=sum(stemp(1)(ss)(1,4))/sum(stemp(1)(ss)); // East stock (1) in western areas (1-4)
+	  BSfrac_pred(2,ss)=sum(stemp(2)(ss)(5,nr))/sum(stemp(2)(ss)); // West stock (2) in eastern areas (5-10)
+	  objBSfrac+=dnorm(log(BSfrac_pred(1,ss)+tiny),log(BSfrac(1,ss)+tiny),BSfracCV);
+	  objBSfrac+=dnorm(log(BSfrac_pred(2,ss)+tiny),log(BSfrac(2,ss)+tiny),BSfracCV);
+	}  
+	objG+=objBSfrac*LHw(15);
+	// End of OBJ calcs
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
@@ -1635,12 +1663,31 @@ int main(int argc,char * argv[])
 	gradient_structure::set_NUM_DEPENDENT_VARIABLES(5000);
 	
     gradient_structure::set_NO_DERIVATIVES();
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+std::feclearexcept(FE_ALL_EXCEPT);
+  #endif
+#endif
     gradient_structure::set_YES_SAVE_VARIABLES_VALUES();
     if (!arrmblsize) arrmblsize=15000000;
     model_parameters mp(arrmblsize,argc,argv);
     mp.iprint=10;
     mp.preliminary_calculations();
     mp.computations(argc,argv);
+#ifdef DEBUG
+  #ifndef __SUNPRO_C
+bool failedtest = false;
+if (std::fetestexcept(FE_DIVBYZERO))
+  { cerr << "Error: Detected division by zero." << endl; failedtest = true; }
+if (std::fetestexcept(FE_INVALID))
+  { cerr << "Error: Detected invalid argument." << endl; failedtest = true; }
+if (std::fetestexcept(FE_OVERFLOW))
+  { cerr << "Error: Detected overflow." << endl; failedtest = true; }
+if (std::fetestexcept(FE_UNDERFLOW))
+  { cerr << "Error: Detected underflow." << endl; }
+if (failedtest) { std::abort(); } 
+  #endif
+#endif
     return 0;
 }
 

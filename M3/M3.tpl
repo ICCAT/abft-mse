@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	        v1.6                                   
+//                                	           	        v1.7                                   
 //
-//                                   		          5th September 2017                           
+//                                   		          5th December 2017                           
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -113,14 +113,15 @@
 // * Added prior to mean SSB
 // * Added prior for SSB trajectory (SSBinc, SSBy, SSBincstock)
 //
+// -- Change log since v1.6 (post ICCAT bluefin assessment meeting September 2017)
+//
+// * Robustness OM 4: added prior to Biomass ratio E/W by E/W stock, matrix 2 x 4 (frac E stock in W season), (frac W stock in E season)
 //
 // -- Dev notes --
 //
-// * inflect lim was commented out.. maybe for real data... hmm
-// * make sure pass through works for new movement estimation and nZeq etc
+// * inflect lim was commented out.. maybe for real data... 
 // * adjustment factor was used for reconstructing historical eastern catches - validate
 // * remove 5th column from Eobs dataset (and adjust code)
-// * add absolute abundance prior
 // * Historical SRA years current are fixed to have the same spawning season, this might not be the case in other applications - recoding needed
 //
 
@@ -238,10 +239,12 @@ DATA_SECTION
 	init_number SSBinc;                    // SSB[SSBy[2]]/SSB[SSBy[1]]
 	init_vector SSBy(1,2);                 // Years for SSBinc calculation
 	init_number SSBincstock;               // Stock for SSBinc calculation
+	init_matrix BSfrac(1,np,1,ns);         // The predicted biomass of East Stock in West Area (1st row), West Stock in East area (2nd row)
 	init_number FCV;                       // F prior 0.2
 	init_number movCV;                     // Movement prior 1.
 	init_number selCV;                     // Selectivity prior 0.9
 	init_number SSBincCV;                  // SSB ratio CV 0.01
+	init_number BSfracCV; 		       // BSfrac ratio CV 0.01
 	
 	// -- Likelihood weights --
 	init_int nLHw;                         // Number of likelihood weights
@@ -291,7 +294,7 @@ PARAMETER_SECTION
 	LOCAL_CALCS
 	  nodemax = 6+sum(seltype)+np*nRD+nMP+nE+nI+nCPUEq+ns*nr;
 	  //cout<<Ilencat<<endl;
-	 // exit(1);
+	  // exit(1);
 	END_CALCS
 	
 	vector nodes(1,nodemax);                    // Parameter values stored in nodes vector for mcmc output
@@ -312,6 +315,7 @@ PARAMETER_SECTION
         number objSSB;                              // The prior on current SSB
         number objFmod;                             // The Fmod prior
         number objRat;                              // The SSB ratio prior
+        number objBSfrac;                           // The prior on unfished eqbrm E/W stock biomass in the W/E area
 
         // -- Transitions --
         5darray N(1,np,1,ny,1,ns,1,na,1,nr);        // Stock numbers
@@ -381,6 +385,7 @@ PARAMETER_SECTION
         
         // -- Temporary arrays --
         3darray stemp(1,np,1,ns,1,nr);                 // Temporary season index
+        matrix BSfrac_pred(1,np,1,ns);                 // Predicted fraction of E/W stock in W/E area
         vector sind(1,nRPT);                           // Temporary season index for calculation of recapture probabilities
         vector NLtemp(1,nl);                           // Stores a temporary vector of numbers at length (efficiency)
         number Ntemp;                                  // A temporarly record of stock numbers (SRA)
@@ -1453,6 +1458,7 @@ FUNCTION calcObjective
 	objSSB.initialize();                    // SSB prior
 	objFmod.initialize();                   // Fmod prior
 	objRat.initialize();                    // Ratio on unfished spawning stock size
+	objBSfrac.initialize();                 // Proportion of E/W stock biomass in W/E area
 	
 	Ipred.initialize();                     // Predicted fishery-independent index
 	CLprop.initialize();                    // Catch at length composition predicted proportions
@@ -1813,10 +1819,11 @@ FUNCTION calcObjective
 	
 	objG+=objSSB*LHw(12);
 	
+	// SSB ratio for increases 
 	objRat=dnorm(log(SSB(SSBincstock,SSBy[2],ns)/SSB(SSBincstock,SSBy[1],ns)),log(SSBinc),SSBincCV);
-		
 	objG+=objRat*LHw(13);
 	
+	// F modifier prior
 	for(int ll=1;ll<=ns*nr;ll++){
 	  
 	  objFmod+=dnorm(Fmod(ll),0,FCV);
@@ -1825,7 +1832,19 @@ FUNCTION calcObjective
 	
 	objG+=objFmod*LHw(14);
 	
+	// BSfrac prior
 	
+	for(int ss=1; ss<=ns;ss++){
+	  BSfrac_pred(1,ss)=sum(stemp(1)(ss)(1,4))/sum(stemp(1)(ss)); // East stock (1) in western areas (1-4)
+	  BSfrac_pred(2,ss)=sum(stemp(2)(ss)(5,nr))/sum(stemp(2)(ss)); // West stock (2) in eastern areas (5-10)
+	  objBSfrac+=dnorm(log(BSfrac_pred(1,ss)+tiny),log(BSfrac(1,ss)+tiny),BSfracCV);
+	  objBSfrac+=dnorm(log(BSfrac_pred(2,ss)+tiny),log(BSfrac(2,ss)+tiny),BSfracCV);
+	
+	}  
+	
+	objG+=objBSfrac*LHw(15);
+	
+	// End of OBJ calcs
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	

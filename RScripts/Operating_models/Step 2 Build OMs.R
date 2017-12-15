@@ -30,9 +30,9 @@ setwd("C:/GitHub/abft-mse")
 
 # Some toggles
 runinitialOM<-T
-runM3OM<-T                             # Should the operating models be fitted (ie only new OMI and OM objects?)
-reportbuild<-T                         # should the OM reports / summary reports be built?
-OMbuild<-T                             # should the OM objects be built?
+runM3OM<-F                             # Should the operating models be fitted (ie only new OMI and OM objects?)
+reportbuild<-F                        # should the OM reports / summary reports be built?
+OMbuild<-T                           # should the OM objects be built?
 
 # --- Source MSE functions and objects ------
 
@@ -114,7 +114,7 @@ if(OMbuild){
 
 }
 
-setwd("C:/abft-mse/")
+setwd("C:/GitHub/abft-mse/")
 #setwd("C:/Users/tcar_/Documents/abft-mse")
 
 # --- Fit the 1-A-I, 1-A-II and 1-A-III operating models (~ 1 hour)  ----

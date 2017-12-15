@@ -6,13 +6,12 @@
 # are modifications of the base model
 
 # Tom Carruthers UBC
-# Laurie Kell ICCAT
 
 # 12th December 2017
 
-# There are four high priority robustness OMs 
+# There are four high priority robustness OMs
 
-# (1) 20% overages in both East and West areas 
+# (1) 20% overages in both East and West areas
 # (2) Undetected increase in catchability of 1% (OM@qinc=1)
 # (3) Non-linear index relationships (hyperstability / hyper depletion) (OM@Ibeta_ignore=F)
 # (4) Alternative mixing scenario (Frac East stock in West area is halved and vice-versa)
@@ -36,29 +35,66 @@ loadABT()
 #source("Source/Objects.r")
 OMDir<-paste(getwd(),"/M3",sep="")
 
-OMnames<-paste0("ROM_",1:4)
+nOMs<-4
+OMnams<-paste0("ROM_",1:nOMs)
+OMcode<-paste0("R",1:nOMs)
+OMfolder<-paste(getwd(),"/Objects/OMs/",OMcode,sep="")
 
 # === Step 1: Fit the base operating model (~ 1 hour) =============================================================================================================
 
 if(runinitialOM){
-  runM3(OMDir)                      # Run the base M3 operating model
+  runM3(OMDir,mcmc=T)                      # Run the base M3 operating model
   pin_from_par(OMDir)               # Record the MLE parameter estimates as initial values
   make_fit_reports(OMDir)           # Make_fit_reports(dirs=paste(getwd(),"/Objects/OMs/",1,sep="")) #make_fit_reports(dirs=paste0(getwd(),"/M3"))
 }
 
 
-# === Step 2: Fit the various Fitting of various natural-mortality rate and maturity rate scenarios (I, II and III) ====================================
+# === Step 2: Specify OMs 1-3  ====================================
 
 # --- Build operating model objects and write them to folders ------------
 if(OMbuild){
 
-  for(i in 1:length(all_levs[[3]])){
+  OMDir1<-paste(getwd(),"/Objects/OMs/1",sep="")
 
-    load(file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))       # reference base operating model
-    OMcode<-paste0("1-A-",all_levs[[3]][i])
-    OMno<-match(OMcode,OMcodes)
-    OMfolder<-paste(getwd(),"/Objects/OMs/",OMno,sep="")          # the home directory for a new modified operating model
-    if(!dir.exists(OMfolder))dir.create(OMfolder)                 # create the directory if necessary
+  for(i in 1:nOMs){
+
+    if(!dir.exists(OMfolder[i]))dir.create(OMfolder[i])                 # create the directory if necessary
+    file.copy(paste(OMDir1,list.files(OMDir1),sep="/"),OMfolder[i],overwrite=T)  # copy files from 1
+
+    # Update OMI file
+    load(file=paste0(getwd(),"/Objects/OMs/",OMcode[i],"/OMI"))       # load the reference operating model input object
+
+    OMI@Name<-paste0("R",i,"/",nOMs," : ",OMcode[i])
+    save(OMI,file=paste(OMfolder[i],"/OMI",sep=""))                       # save the input object into its home folder
+
+  }
+
+}
+
+# ROM1 - no change just like OM1 but with 20% overages
+
+# ROM2 - 1% catchability increase for CPUE indices
+
+load(file=paste0(getwd(),"/Objects/OMs/1/OM"))
+OM@qinc<-1
+save(OM,file=paste0(OMfolder[2],"/OM"))
+
+# ROM3 - non-linear relationship between indices and abundance
+
+load(file=paste0(getwd(),"/Objects/OMs/1/OM"))
+OM@Ibeta_ignore=FALSE
+save(OM,file=paste0(OMfolder[3],"/OM"))
+
+
+# ROM 4 - prior on mixing
+
+
+  load(file=paste(getwd(),"/Objects/OMs/Base_OM",sep=""))       # reference base operating model
+
+  OM<-new('OM',OMd=OMfolder,nsim=nsim,proyears=proyears,seed=1,Recruitment=Recs[[j]])
+  save(OM,file=paste0(OMfolder,"/OM"))
+  cat(".")
+
 
     OMI<-MatM_Ref(OMI,i)
 

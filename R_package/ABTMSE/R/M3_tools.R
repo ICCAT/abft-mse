@@ -284,6 +284,9 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# SSBincstock, stock for SSBinc ratio calculation",datfile,1,append=T)
   write(OMI@SSBincstock,datfile,1,append=T) # CV on SSB prior in current model year
 
+  write("# BSfrac, mixing assumptions the proportion of E/W stock biomass in W/E areas",datfile,1,append=T)
+  write(t(OMI@BSfrac),datfile,4,append=T) # CV on SSB prior in current model year
+
   write("# FCV, prior precision of deviations from mean F from master index x q",datfile,1,append=T)
   write(OMI@FCV,datfile,1,append=T) # CV on SSB prior in current model year
 
@@ -296,7 +299,8 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# SSBincCV, precision of specified prior on SSB ratio (SSBinc, SSBy, SSBincstock)",datfile,1,append=T)
   write(OMI@SSBincCV,datfile,1,append=T) # CV on SSB prior in current model year
 
-
+  write("# BSfracCV, precision of mixing prior E/W stock biomass in W/E area",datfile,1,append=T)
+  write(OMI@BSfracCV,datfile,1,append=T) # CV on SSB prior in current model year
 
   # -- Likelihood weights
 
@@ -304,7 +308,7 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write(OMI@nLHw,datfile,1,append=T)
 
   write("# LHw,  likelihood components",datfile,1,append=T)
-  write(OMI@LHw,datfile,OMI@nLHw,append=T) # Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA penalty, SSB prior)
+  write(OMI@LHw,datfile,OMI@nLHw,append=T) # Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA penalty, 12 SSB prior, 13 SSBinc, 14 Fmod, 15 BSfrac)
 
   # -- Initial values
 
@@ -383,22 +387,33 @@ runM3p1<-function(x,OMdir='C:/M3temp',hess=F){
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
 #' @examples
 #' #runM3p(1,"C:/ABT-MSE/M3")
-runM3p<-function(x,OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=20000,thin=100){
-  setwd(paste0(OMdir,"/",x))
-  
+runM3p<-function(x,OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
+
+  curdir<-paste0(OMdir,"/",x)
+  setwd(curdir)
+
   if(hess&!mcmc){
     system("M3.exe",wait=T,show.output.on.console = F)
-    return(paste("M3 ran with hessian calculation at",OMdir[x]))
+    return(paste("M3 ran with hessian calculation at",curdir))
   }else if(!mcmc){
     system("M3.exe -est",wait=T,show.output.on.console = F)
-    return(paste("M3 ran at",OMdir[x]))
+    return(paste("M3 ran at",curdir))
   }else{
-    system(paste0("M3.exe -est -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
+    system(paste0("M3.exe -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
     system("M3.exe -mceval",wait=T,show.output.on.console = F)
-    return(paste("M3 ran with mcmc calculation at",OMdir[x]))
+    return(paste("M3 ran with mcmc calculation at",curdir))
   }
-  
+
 }
+
+runM3mcmcp<-function(x,OMdir='C:/ABT-MSE/M3'){
+  curdir<-paste0(OMdir,"/",x)
+  setwd(curdir)
+  system(paste0("M3.exe -mceval"),wait=T,show.output.on.console = F)
+  return(paste("M3 ran with mcmc calculation at",curdir))
+}
+
+
 
 #' Run an M3 operating model (a multistock spatial seasonal statistical catch at length model)
 #'
@@ -416,7 +431,7 @@ runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=40000,thin=100){
     system("M3.exe -est",wait=T,show.output.on.console = F)
     return(paste("M3 ran at",OMdir))
   }else{
-    system(paste0("M3.exe -est -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
+    system(paste0("M3.exe -mcmc ",nits," -mcsave ",thin),wait=T,show.output.on.console = F)
     system("M3.exe -mceval",wait=T,show.output.on.console = F)
     return(paste("M3 ran with mcmc calculation at",OMdir))
   }

@@ -287,19 +287,15 @@ Base@SSBfit=3                         # the type of SSBfit 1:SSB0, 2:SSBnow, 3:m
 Base@SSBinc=3                         # the % increase
 Base@SSBincstock=1                    # the stock for the increase
 Base@SSBy=c(Base@ny-9, Base@ny)       # years of the increase
+Base@BSfrac=matrix(0,nrow=Base@np,ncol=Base@ns) # Fraction of seasonal biomass of the Eastern / Western stock in the Western and Eastern areas respectively
 Base@FCV=0.1                          # Prior precision of season-area deviations around mean F
 Base@movCV=1                          # Prior precision of deviations from homogeneous movement
 Base@selCV=0.9                        # Prior precision of selectivity parameters
 Base@SSBincCV=0.01                    # Prior precision of SSB increase ratio
-Base@nLHw<-as.integer(14)             # number of likelihood components that may be weighted
-#Base@LHw<-c(1,       3 ,     3,         5,       5,     1,      1,       2,        1/2,    20,      10,     0,      0,         0      ) # SSB index for each population
-#Base@LHw<-c(1,       1 ,     1/2,       1,       5,     3,      1,       10,       3,      20,      10,     0,      0,         0      ) # SSB index for each population
-#Base@LHw<- c(1,       1 ,     1/2,       10 ,     5,     2,      1,       4,        5,      1,       10,     0,      0,         0      ) # SSB index for each population
-#Base@LHw<- c(1,       1 ,     1/5,       20,      5,     2,      1,       10,       20,     3,       1,      0,      0,         0      ) # SSB index for each population
-#           (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel,  11 SRA, 12 SSB, 13 SSBinc, Fmod )",datfile,1,append=T)
-Base@LHw<- c(1,       1 ,     1/5,       20,      5,     2,      1,       10,       5,      3,       0,      0,      0,         50    ) # SSB index for each population
-
-# good last fit was recdev 4, SSBrat (M3) 10, Lcomp 2
+Base@BSfracCV=0.01                    # Prior precision of Biomass fraction (mixing)
+Base@nLHw<-as.integer(15)             # number of likelihood components that may be weighted
+#           (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel,  11 SRA, 12 SSB, 13 SSBinc, 14 Fmod, 15 BSfrac)",datfile,1,append=T)
+Base@LHw<- c(1,       1 ,     1/5,       20,      5,     2,      1,       10,       5,      3,       0,      0,      0,         50,      0 ) # SSB index for each population
 
 # --- Initial Values ------
 

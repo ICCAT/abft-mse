@@ -101,12 +101,14 @@
 #' \item{SSBinc}{a numerical value representing the ratio of SSB from year SSBy2 / SSBy1}
 #' \item{SSBy}{vector of integers representing years over which desired increase in SSB matches SSBinc}
 #' \item{SSBincstock}{the stock that SSBinc refers to}
+#' \item{BSfrac}{a matrix of fractions, stock by season that is the predicted seasonal biomass of Eastern / Western biomass in Western and Eastern areas, respectively}
 #' \item{FCV}{the prior on deviations from the mean F}
 #' \item{movCV}{the prior on deviations from homogenous movement}
 #' \item{selCV}{the prior on selectivity parameters}
 #' \item{SSBincCV}{the prior precision of SSB trend}
+#' \item{BSfracCV}{the prior precision of the Seasonal biomass fraction}
 #' \item{nLHw}{the number of likelihood components (for weighting)}
-#' \item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB}
+#' \item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB, 13 E-W Distr}
 #' \item{muR_ini}{a vector np long specifying an initial value of mean absolute recruitment}
 #' \item{sel_ini}{a matrix of initial values for selectivity [nf x nl]}
 #' \item{selpar_ini}{a matrix of initial value of selectivity parameters [nf x 3]}
@@ -171,8 +173,8 @@ setClass("OMI",representation(
   IobsCV='numeric',# nI (np if SSB)
   RDCV='numeric',
   SSBprior='numeric',SSBCV='numeric',SSBfit="numeric",
-  SSBinc='numeric',SSBy='numeric',SSBincstock="numeric",
-  FCV='numeric', movCV='numeric', selCV='numeric', SSBincCV='numeric',
+  SSBinc='numeric',SSBy='numeric',SSBincstock="numeric",BSfrac="matrix",
+  FCV='numeric', movCV='numeric', selCV='numeric', SSBincCV='numeric',BSfracCV="numeric",
   nLHw='integer',  LHw='numeric', # 13: 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB, 13 SSBinc
   muR_ini='numeric',# np
   sel_ini='matrix',# f l (trans)
@@ -317,7 +319,7 @@ setClass("OM",representation(
               Snames="character",                              # Name of the stocks
               area_defs="list",                                # Area definitions list (copied from OMI)
               areanams="character",                            # Names of areas        (copied from OMI)
-              Ibeta_ignore = "character",                      # Logical, should hyperstability and hyperdepletion be ignored?
+              Ibeta_ignore = "logical",                        # Logical, should hyperstability and hyperdepletion be ignored?
               qinc="numeric",                                  # % annual changes in catchability affecting CPUE indices
               seed="numeric"                                   # Random seed from which this object was made
               ))
@@ -467,18 +469,18 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
 
   # ---- Get covariance matrix and sample correlated parameters -------
-  
+
   vcv<-read.fit(paste(OMd))
   pnam<-vcv$names[1:vcv$nopar]
   nparams<-length(pnam)
-  
+
   if(file.exists(paste0(OMd,"/nodes.cha"))){
-    
-    message(paste0("MCMC output file located (",OMdir,"/nodes.cha), posterior samples used to specify uncertainty among simulations"))
-    samps<-read.table(paste(getwd(),"/nodes.cha",sep=""), sep=" ") 
+
+    message(paste0("MCMC output file located (",OMd,"/nodes.cha), posterior samples used to specify uncertainty among simulations"))
+    samps<-read.table(paste(OMd,"/nodes.cha",sep=""), sep=" ")
     if(ncol(samps) != nparams+1) stop(paste0("Error: a different number of parameters (", vcv$nopar,") were estimated than mcmc posteriors are available (", ncol(samps)-1,")"))
     samps<-samps[,2:(nparams+1)]
-    
+
     #mupar<-apply(samps,2,mean)
     mupar<-samps[1,]
     testratio<-(((mupar-vcv$est[1:vcv$nopar])/mupar)^2)^0.5
@@ -487,32 +489,32 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
     keep<-(1:nrow(samps))[samps[,1]!=samps[1,1]]
     samps<-samps[keep,]
     nmcmc<-nrow(samps)
-    
+
     if(nsim<nmcmc){
-      
+
       samps<-samps[sample(1:nmcmc,nsim,replace=F),]
-      
+
     }else{
-      
+
       message(paste0("Fewer simulations required (",nsim,") than mcmc samples provided (",nmcmc,") - resampling with replacement"))
       samps<-samps[sample(1:nmcmc,nsim,replace=T),]
-      
+
     }
-    
+
   }else{
-    
+
     message("No MCMC output file located, using variance-covariance matrix to specify uncertainty among simulations")
     samps<-as.data.frame(matrix(rep(vcv$est[1:vcv$nopar],each=nsim)+rnorm(vcv$nopar*nsim,0,0.1),nrow=nsim))
-  
-  } 
-  
+
+  }
+
   names(samps)<-pnam
-  
- 
+
+
   #if(length(vcv$cov)==1){ # no valid variance-covariance matrix from which to sample parameter valuecat(paste('You specified a directory',OMd,'that does not contain a valid M3.cor file. The M3.cor file is generated when the convergence
     #            criterion of a positive definite hessian, is met.'))
     #cat("\n")
-  
+
   #}else{
    # samps<-as.data.frame(mvrnorm(nsim,vcv$est,vcv$cov))
    # names(samps)<-vcv$names

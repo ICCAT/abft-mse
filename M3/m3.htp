@@ -73,10 +73,12 @@ class model_data : public ad_comm{
   data_number SSBinc;
   data_vector SSBy;
   data_number SSBincstock;
+  data_matrix BSfrac;
   data_number FCV;
   data_number movCV;
   data_number selCV;
   data_number SSBincCV;
+  data_number BSfracCV;
   data_int nLHw;
   data_vector LHw;
   data_vector muR_ini;
@@ -168,6 +170,7 @@ private:
   param_number objSSB;
   param_number objFmod;
   param_number objRat;
+  param_number objBSfrac;
   param_5array N;
   param_matrix NLA;
   param_matrix surv;
@@ -218,6 +221,7 @@ private:
   param_vector CLvar;
   param_6array RecapP;
   param_3array stemp;
+  param_matrix BSfrac_pred;
   param_vector sind;
   param_vector NLtemp;
   param_number Ntemp;
