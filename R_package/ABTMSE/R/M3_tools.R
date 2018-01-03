@@ -421,7 +421,7 @@ runM3mcmcp<-function(x,OMdir='C:/ABT-MSE/M3'){
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
 #' @examples
 #' #runM3("C:/ABT-MSE/M3")
-runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=40000,thin=100){
+runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
   setwd(OMdir)
 
   if(hess&!mcmc){

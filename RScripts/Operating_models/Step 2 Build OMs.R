@@ -29,7 +29,7 @@
 setwd("C:/GitHub/abft-mse")
 
 # Some toggles
-runinitialOM<-T
+runinitialOM<-F
 runM3OM<-F                             # Should the operating models be fitted (ie only new OMI and OM objects?)
 reportbuild<-F                        # should the OM reports / summary reports be built?
 OMbuild<-T                           # should the OM objects be built?
