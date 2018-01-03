@@ -16627,8 +16627,8 @@
 # SSBincstock, stock for SSBinc ratio calculation
 1
 # BSfrac, mixing assumptions the proportion of E/W stock biomass in W/E areas
-0.064205 0.001066882 0.002695293 0.001453937
-0.2589529 0.1953634 0.2923634 0.4491324
+0 0 0 0
+0 0 0 0
 # FCV, prior precision of deviations from mean F from master index x q
 0.1
 # movCV, prior precision of deviations from homogeneous movement
@@ -16642,7 +16642,7 @@
 # nLHw, number of likelihood components
 15
 # LHw,  likelihood components
-1 1 0.2 20 5 2 1 10 5 3 0 0 0 50 10
+1 1 0.2 20 5 2 1 10 5 3 0 0 0 50 0
 # muR_ini, initial values for mean historical recruitment
 1.4e+07 1750000
 # sel_ini, initial values for selectivity

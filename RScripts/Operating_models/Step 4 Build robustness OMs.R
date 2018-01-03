@@ -23,7 +23,7 @@ setwd("C:/GitHub/abft-mse")
 
 # Some toggles
 runinitialOM<-F
-runM3OM<-T                             # Should the operating models be fitted (ie only new OMI and OM objects?)
+runM3OM<-F                             # Should the operating models be fitted (ie only new OMI and OM objects?)
 reportbuild<-T                         # should the OM reports / summary reports be built?
 OMbuild<-T                             # should the OM objects be built?
 
@@ -51,6 +51,11 @@ if(runinitialOM){
 
 # === Step 2: Specify OMs 1-3  ====================================
 
+facs1<-rep("Robustness",4)
+facs2<-paste("Operating Model",1:4)
+facs3<-c("20% catch overages in East and West areas", "Undetected increase in catchability of 1%",
+"Non-linear index relationships (hyperstability / hyper depletion)","Alternative mixing scenario (Frac East stock in West area is halved and vice-versa)")
+
 # --- Build operating model objects and write them to folders ------------
 if(OMbuild){
 
@@ -65,6 +70,7 @@ if(OMbuild){
     load(file=paste0(getwd(),"/Objects/OMs/",OMcode[i],"/OMI"))       # load the reference operating model input object
 
     OMI@Name<-paste0("R",i,"/",nOMs," : ",OMcode[i])
+    OMI@OMfactors<-list(facs1[i],facs2[i],facs3[i])
     save(OMI,file=paste(OMfolder[i],"/OMI",sep=""))                       # save the input object into its home folder
 
   }

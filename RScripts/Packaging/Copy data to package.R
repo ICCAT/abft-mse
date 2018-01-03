@@ -33,6 +33,7 @@ for(o in 1:length(OMdirs)){
   objname<-paste0("OM_",OMcode)
   assign(objname,OM)
   do.call(save, list(objname,file=to_file))
+  cat(paste0(o," - "))
 
 }
 
@@ -100,7 +101,7 @@ OM_example<-new('OM',OMdirs[10],nsim=48,proyears=30,seed=1)
 #load(paste0(getwd(),"/Objects/OMs/1/OM"))
 sfInit(parallel=T,cpus=detectCores())
 myMPs<-list(c('UMSY','UMSY'),
-            c('DD_i4','DD_i2'),
+            c('DD_i2','DD_i4'),
             c('MeanC','MeanC'))
 MSE_example<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=myMPs,interval=5,IE="Umax_90")
 save(MSE_example,file=paste0(datadir,"MSE_example"))
@@ -108,10 +109,10 @@ save(MSE_example,file=paste0(datadir,"MSE_example"))
 # myMSE -----------------
 MPs<-list(
   c("MeanC",      "MeanC"),
-  c("SP_i4",      "SP_i2"),
-  c("DD_i4",      "DD_i2"),
-  c("DD_i4_4010", "DD_i2_4010"),
-  c("Islope1_i4", "Islope1_i2"))
+  c("SP_i2",      "SP_i4"),
+  c("DD_i2",      "DD_i4"),
+  c("DD_i2_4010", "DD_i4_4010"),
+  c("Islope1_i2", "Islope1_i4"))
 
 myMSE<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=MPs)
 save(myMSE,file=paste0(datadir,"myMSE"))
