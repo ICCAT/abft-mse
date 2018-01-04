@@ -102,12 +102,14 @@
 \item{SSBinc}{a numerical value representing the ratio of SSB from year SSBy2 / SSBy1}
 \item{SSBy}{vector of integers representing years over which desired increase in SSB matches SSBinc}
 \item{SSBincstock}{the stock that SSBinc refers to}
+\item{BSfrac}{a matrix of fractions, stock by season that is the predicted seasonal biomass of Eastern / Western biomass in Western and Eastern areas, respectively}
 \item{FCV}{the prior on deviations from the mean F}
 \item{movCV}{the prior on deviations from homogenous movement}
 \item{selCV}{the prior on selectivity parameters}
 \item{SSBincCV}{the prior precision of SSB trend}
+\item{BSfracCV}{the prior precision of the Seasonal biomass fraction}
 \item{nLHw}{the number of likelihood components (for weighting)}
-\item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB}
+\item{LHw}{a vector nLHw long specifying the relative weight of the various data types 1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel, 11 SRA, 12 SSB, 13 E-W Distr}
 \item{muR_ini}{a vector np long specifying an initial value of mean absolute recruitment}
 \item{sel_ini}{a matrix of initial values for selectivity [nf x nl]}
 \item{selpar_ini}{a matrix of initial value of selectivity parameters [nf x 3]}

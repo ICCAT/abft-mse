@@ -517,8 +517,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   # Run projections ------------------------------------------------
   cat("Running projections")
   cat("\n")
-  if(sfIsRunning())sfExport(list=c("XSA","DD_i4","DD_i2","DD_i4_4010","Islope1",
-                  "DD_i2_4010","CDD_i4","CDD_i2","SPslope","DD",
+  if(sfIsRunning())sfExport(list=c("XSA","DD_i3","DD_i7","DD_i3_4010","Islope1",
+                  "DD_i7_4010","CDD_i3","CDD_i7","SPslope","DD",
                   "DD_R","UMSY","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
   upyrs<-nyears+(0:(floor(OM@proyears/interval)-1))*interval  # the years in which there are updates (every three years)
 

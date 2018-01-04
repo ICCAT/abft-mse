@@ -73,6 +73,8 @@
 \item{Snames}{a vector nstock long naming each stock}
 \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 \item{areanams}{a character vector of area names}
+\item{Ibeta_ignore}{logical, should hyperstability of indices be included?}
+\item{qinc}{real number, percentage annual changes in catchability affecting the CPUE indices}
 \item{seed}{a random seed for generation of simulations to ensure reproducibility}
 }
 }

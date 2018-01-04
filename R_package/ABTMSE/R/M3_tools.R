@@ -5,6 +5,7 @@
 #' @param OMI and object of class OMI
 #' @param OMdir a character string representing the location of an M3 folder containing M3.exe and stats.cxx files
 #' @return creates an M3.dat file of the correct format in \code{OMdir}
+#' @export
 #' @examples
 #' M3write(OMI_example,C:/ABT-MSE/M3)
 M3write<-function(OMI,OMdir="C:/M3"){
@@ -385,6 +386,7 @@ runM3p1<-function(x,OMdir='C:/M3temp',hess=F){
 #' @param x the position in the vector OMdir (one of the folders containing the M3 exe)
 #' @param OMdir a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
+#' @export
 #' @examples
 #' #runM3p(1,"C:/ABT-MSE/M3")
 runM3p<-function(x,OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
@@ -419,6 +421,7 @@ runM3mcmcp<-function(x,OMdir='C:/ABT-MSE/M3'){
 #'
 #' @param OMdir a character string representing the location of an M3 folder containing M3.exe, M3.dat and stats.cxx files
 #' @return runs the M3 model to create standardized ADMB reporting in folder \code{OMdir}
+#' @export
 #' @examples
 #' #runM3("C:/ABT-MSE/M3")
 runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
@@ -443,6 +446,7 @@ runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
 #'
 #' @param OMdir a character string representing the location of an M3 folder containing M3.rep, M3.par and M3.cor files
 #' @return runs a list object of M3 outputs from folder \code{OMdir}
+#' @export
 #' @examples
 #' M3read("C:/ABT-MSE/M3")
 M3read<-function(OMDir="C:/M3",quiet=T){
@@ -606,6 +610,7 @@ M3read<-function(OMDir="C:/M3",quiet=T){
 #'
 #' @param file a character string representing the location of ADMB model outputs (.par, .cor, .rep)
 #' @return a list of model parameter estimates and a hessian matrix in folder \code{file}
+#' @export
 #' @author this is code that was originally written by Anders Nielsen
 #' @examples
 #' #read.fit("C:/ABT-MSE/M3")
@@ -697,6 +702,7 @@ pin_from_cor<-function(file="C:/M3/M3",pinfile=NA){
 #'
 #' @param OMdir a character string representing the location of an M3 par file
 #' @return wrotes an M3.pin file in \code{OMdir}
+#' @export
 #' @examples
 #' #pin_from_par("C:/ABT-MSE/M3")
 pin_from_par<-function(OMdir="C:/M3",pinfile=NA){
@@ -728,6 +734,7 @@ pin_from_par<-function(OMdir="C:/M3",pinfile=NA){
 #'
 #' @param .Object an object of class OMI, OM or MSE
 #' @return a map of the areas of \code{classy}
+#' @export
 #' @examples
 #' loadABT()
 #' areaplot(OM_1)
@@ -765,7 +772,12 @@ read.hessian<-function(file="C:/M3"){
 }
 
 
-
+#' Make M3 fitting reports in all directors of a folder
+#'
+#' @param dirs character: an folder containing subfolders that are fitted M3 OMs
+#' @param addlab logical: whether OMI objects should be looked for in the directory to include more detailed OM info
+#' @return a set of pdf reports in each subdirectory
+#' @export
 make_fit_reports<-function(dirs="C:/M3",addlab=FALSE) {
 
   nOMs<-length(dirs)
@@ -799,9 +811,12 @@ make_fit_reports<-function(dirs="C:/M3",addlab=FALSE) {
   }
 }
 
-
-
-
+#' Make M3 summary fitting report for all OMs
+#'
+#' @param dir character: an folder containing subfolders that are fitted M3 OMs
+#' @param OMdirs character vector: specific subfolders representing a subset of OMs you would like to compare in the summary report
+#' @return a pdf report in the directory dir
+#' @export
 make_summary_report<-function(dir,OMdirs=NA){
 
   if(!file.exists(dir)){

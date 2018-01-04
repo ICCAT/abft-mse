@@ -8,6 +8,7 @@
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' ZeroC(1,dset_example_West)
 #' sapply(1:10,ZeroC,dset_example_West)
@@ -21,6 +22,7 @@ class(ZeroC)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' EMP1w(1,dset_example_West)
 #' sapply(1:10,EMP1w,dset_example_West)
@@ -49,6 +51,7 @@ class(EMP1w)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' EMP1e(1,dset_example_West)
 #' sapply(1:10,EMP1e,dset_example_West)
@@ -73,6 +76,7 @@ class(EMP1e)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' EMP2w(1,dset_example_West)
 #' sapply(1:10,EMP2w,dset_example_West)
@@ -112,6 +116,7 @@ class(EMP2w)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' EMP2e(1,dset_example_West)
 #' sapply(1:10,EMP2e,dset_example_West)
@@ -151,6 +156,7 @@ class(EMP2e)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' CurC150(1,dset_example_West)
 #' sapply(1:10,CurC150,dset_example_West)
@@ -163,6 +169,7 @@ class(CurC150)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' CurC100(1,dset_example_West)
 #' sapply(1:10,CurC100,dset_example_West)
@@ -176,6 +183,7 @@ class(CurC100)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' CurC50(1,dset_example_West)
 #' sapply(1:10,CurC50,dset_example_West)
@@ -183,12 +191,12 @@ CurC50 <- function(x,dset)dset$TAC[x,1]*0.5
 class(CurC50)<-"MP"
 
 
-
 #' Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' UMSY(1,dset_example_West)
 #' sapply(1:10,UMSY,dset_example_West)
@@ -200,61 +208,40 @@ class(UMSY)<-"MP"
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' UMSY_PI(1,dset_example_West)
 #' sapply(1:10,UMSY_PI,dset_example_West)
 UMSY_PI<-function(x,dset) dset$UMSY_PI[x]*dset$Bt_PI[x]
 class(UMSY_PI)<-"MP"
 
-#' A rapid 3 parameter observation error only delay difference model FOR INDEX 4 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+#' A rapid 3 parameter observation error only delay difference model FOR INDEX 7 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @param checkfit logical: should fitting diagnostics be plotted
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' DD_i4(1,dset_example_West)
-#' sapply(1:10,DD_i4,dset_example_West)
-DD_i4<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=4,checkfit=checkfit)
-class(DD_i4)<-"MP"
+#' DD_i7(1,dset_example_West)
+#' sapply(1:10,DD_i7,dset_example_West)
+DD_i7<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=7,checkfit=checkfit)
+class(DD_i7)<-"MP"
 
-#' A rapid 3 parameter observation error only delay difference model FOR INDEX 2 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+
+
+#' A rapid 3 parameter observation error only delay difference model linked to 40-10 harvest control rule FOR INDEX 7 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @param checkfit logical: should fitting diagnostics be plotted
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' DD_i2(1,dset_example_West)
-#' sapply(1:10,DD_i2,dset_example_West)
-DD_i2<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=2,checkfit=checkfit)
-class(DD_i2)<-"MP"
-
-
-#' A rapid 3 parameter observation error only delay difference model linked to 40-10 harvest control rule FOR INDEX 4 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @param checkfit logical: should fitting diagnostics be plotted
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @examples
-#' DD_i4_4010(1,dset_example_West)
-#' sapply(1:10,DD_i4_4010,dset_example_East)
-DD_i4_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=4,checkfit=checkfit,fortyten=T)
-class(DD_i4_4010)<-"MP"
-
-
-#' A rapid 3 parameter observation error only delay difference model linked to 40-10 harvest control rule FOR INDEX 2 conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @param checkfit logical: should fitting diagnostics be plotted
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @examples
-#' DD_i2_4010(1,dset_example_East)
-#' sapply(1:10,DD_i2_4010,dset_example_East)
-DD_i2_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=2,checkfit=checkfit,fortyten=T)
-class(DD_i2_4010)<-"MP"
+#' DD_i7_4010(1,dset_example_East)
+#' sapply(1:10,DD_i7_4010,dset_example_East)
+DD_i7_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=7,checkfit=checkfit,fortyten=T)
+class(DD_i7_4010)<-"MP"
 
 
 DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
@@ -274,10 +261,12 @@ DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
 
   ny<-dim(dset$Iobs)[3]
   I_hist<-dset$Iobs[x,ii,]
-  years<-(1:ny)[!is.na(I_hist)]
-  C_hist<-dset$Cobs[x,years]
 
-  E_hist<-C_hist/I_hist[years]
+  ip<-(1:ny)[is.na(I_hist)]
+  I_hist[ip]<-approx(x=(1:ny),y=I_hist,xout=ip)$y
+  C_hist<-dset$Cobs[x,]
+
+  E_hist<-C_hist/I_hist
   E_hist<-E_hist/mean(E_hist)
   ny_DD<-length(C_hist)
   params<-log(c(Mc,mean(C_hist,na.rm=T),Mc/2))
@@ -319,27 +308,18 @@ DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
 }
 
 
-#' A delay difference model fitted to INDEX 2 linked to Justin Cooke's harvest control rule (a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @examples
-#' CDD_i2(1,dset_example_West)
-#' sapply(1:10,CDD_i2,dset_example_West)
-CDD_i2<-function(x,dset)CDD(x,dset,ii=2)
-class(CDD_i2)<-"MP"
 
-#' A delay difference model fitted to INDEX 4 linked to Justin Cooke's harvest control rule (a management procedure of class MP).
+#' A delay difference model fitted to INDEX 7 (GOM_LAR_SUV) linked to Justin Cooke's harvest control rule (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' CDD_i4(1,dset_example_West)
-#' sapply(1:10,CDD_i4,dset_example_West)
-CDD_i4<-function(x,dset)CDD(x,dset,ii=4)
-class(CDD_i4)<-"MP"
+#' CDD_i7(1,dset_example_West)
+#' sapply(1:10,CDD_i7,dset_example_West)
+CDD_i7<-function(x,dset)CDD(x,dset,ii=7)
+class(CDD_i7)<-"MP"
 
 CDD<-function(x,dset,startD=0.2,ii){
 
@@ -357,11 +337,12 @@ CDD<-function(x,dset,startD=0.2,ii){
   a50V<-dset$ageM[x]
 
   ny<-dim(dset$Iobs)[3]
-  I_hist<-dset$Iobs[x,ii,]  # !!!!!!!!!!!!!!!! INDEX
-  years<-(1:ny)[!is.na(I_hist)]
-  C_hist<-dset$Cobs[x,years]
+  I_hist<-dset$Iobs[x,ii,]
+  ip<-(1:ny)[is.na(I_hist)]
+  I_hist[ip]<-approx(x=(1:ny),y=I_hist,xout=ip)$y
+  C_hist<-dset$Cobs[x,]
 
-  E_hist<-C_hist/I_hist[years]
+  E_hist<-C_hist/I_hist
   E_hist<-E_hist/mean(E_hist)
   ny_DD<-length(C_hist)
   params<-log(c(Mc,mean(C_hist,na.rm=T),Mc/2))
@@ -418,7 +399,7 @@ DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,
   q_DD=exp(params[3])
   SS_DD=So_DD*(1-UMSY_DD)    # Initialise for UMSY, MSY and q leading.
   Spr_DD=(SS_DD*Alpha_DD/(1-SS_DD)+wa_DD)/(1-Rho_DD*SS_DD)
-  DsprDu_DD=-So_DD*(Rho_DD/(1-Rho_DD*SS_DD)*Spr_DD+1/(1-Rho_DD*SS_DD)*(Alpha_DD/(1-SS_DD)+SS_DD*Alpha_DD/(1-SS_DD)^2))
+  DsprDu_DD=-So_DD*(Rho_DD/(1-Rho_DD*SS_DD)*(Spr_DD+1)/(1-Rho_DD*SS_DD)*(Alpha_DD/(1-SS_DD)+SS_DD*Alpha_DD/(1-SS_DD)^2))
   Arec_DD=1/(((1-UMSY_DD)^2)*(Spr_DD+UMSY_DD*DsprDu_DD))
   Brec_DD=UMSY_DD*(Arec_DD*Spr_DD-1/(1-UMSY_DD))/MSY_DD
   Spr0_DD=(So_DD*Alpha_DD/(1-So_DD)+wa_DD)/(1-Rho_DD*So_DD)
@@ -677,6 +658,7 @@ getBHmp<-function(parm,SSB,rec,opty=T,namey=""){
 #' @param stepsz the maximum fractional change in TAC between MP updates
 #' @param llim a vector of three ratios that determine whether the TAC should be reduced by 2 steps, 1 steps and increased by 1 step
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
 #' LstepCC4(1,dset_example_East)
 #' sapply(1:10,LstepCC4,dset_example_East)
@@ -702,7 +684,7 @@ LstepCC4<-function(x,dset,yrsmth=5,xx=0.3,stepsz=0.05,llim=c(0.96,0.98,1.05)){
 }
 class(LstepCC4)<-"MP"
 
-#' An index-based (INDEX 2) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
+#' An index-based (INDEX 3 - GOM_LAR_SUV) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -710,14 +692,15 @@ class(LstepCC4)<-"MP"
 #' @param xx alters target catch as a fraction of historical catch TACstar = (1-xx)muC
 #' @param lambda a scalar which determines the responsiveness of the adjustment
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' Islope1_i2(1,dset_example_East)
-#' sapply(1:10,Islope1_i2,dset_example_East)
-Islope1_i2<-function(x,dset)Islope1(x,dset,ii=2)
-class(Islope1_i2)<-"MP"
+#' Islope1_i3(1,dset_example_East)
+#' sapply(1:10,Islope1_i3,dset_example_East)
+Islope1_i3<-function(x,dset)Islope1(x,dset,ii=3)
+class(Islope1_i3)<-"MP"
 
 
-#' An index-based (INDEX 4) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
+#' An index-based (INDEX 7 - GOM_LAR_SUV) management procedure that incrementally changes TAC to achieve a stable index(a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -725,11 +708,12 @@ class(Islope1_i2)<-"MP"
 #' @param xx alters target catch as a fraction of historical catch TACstar = (1-xx)muC
 #' @param lambda a scalar which determines the responsiveness of the adjustment
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' Islope1_i4(1,dset_example_East)
-#' sapply(1:10,Islope1_i4,dset_example_East)
-Islope1_i4<-function(x,dset)Islope1(x,dset,ii=4)
-class(Islope1_i4)<-"MP"
+#' Islope1_i7(1,dset_example_East)
+#' sapply(1:10,Islope1_i7,dset_example_East)
+Islope1_i7<-function(x,dset)Islope1(x,dset,ii=7)
+class(Islope1_i7)<-"MP"
 
 
 Islope1<-function(x,dset,yrsmth=5,lambda=0.4,xx=0.2,ii){
@@ -745,7 +729,7 @@ Islope1<-function(x,dset,yrsmth=5,lambda=0.4,xx=0.2,ii){
   TACstar*(1+lambda*Islp)
 }
 
-#' A surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#' A surplus production management procedure using INDEX 3 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -753,14 +737,15 @@ Islope1<-function(x,dset,yrsmth=5,lambda=0.4,xx=0.2,ii){
 #' @param alp the SP gradient limits that lead to TAC changes
 #' @param bet the degree of responsiveness of the MP
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' SPslope_i2(1,dset_example_East)
-#' sapply(1:10,SPslope_i2,dset_example_East)
-SPslope_i2<-function(x,dset)SPslope(x,dset,ii=2)
-class(SPslope_i2)<-"MP"
+#' SPslope_i3(1,dset_example_East)
+#' sapply(1:10,SPslope_i3,dset_example_East)
+SPslope_i3<-function(x,dset)SPslope(x,dset,ii=3)
+class(SPslope_i3)<-"MP"
 
 
-#' A surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#' A surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -768,11 +753,12 @@ class(SPslope_i2)<-"MP"
 #' @param alp the SP gradient limits that lead to TAC changes
 #' @param bet the degree of responsiveness of the MP
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' SPslope_i4(1,dset_example_East)
-#' sapply(1:10,SPslope_i4,dset_example_East)
-SPslope_i4<-function(x,dset)SPslope(x,dset,ii=4)
-class(SPslope_i4)<-"MP"
+#' SPslope_i7(1,dset_example_East)
+#' sapply(1:10,SPslope_i7,dset_example_East)
+SPslope_i7<-function(x,dset)SPslope(x,dset,ii=7)
+class(SPslope_i7)<-"MP"
 
 
 SPslope<-function(x,dset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9),ii){
@@ -794,7 +780,7 @@ SPslope<-function(x,dset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9),ii){
 }
 
 
-#' An adaptive surplus production management procedure using INDEX 2 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#' An adaptive surplus production management procedure using INDEX 3 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -802,13 +788,14 @@ SPslope<-function(x,dset,yrsmth=4,alp=c(0.9,1.1),bet=c(1.5,0.9),ii){
 #' @param gg the responsiveness of the MP with respect to the slope
 #' @param FMSY_M the assumed ratio of FMSY to M
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' Fadapt_i2(1,dset_example_East)
-#' sapply(1:10,Fadapt_i2,dset_example_East)
-Fadapt_i2<-function(x,dset)Fadapt(x,dset,ii=2)
-class(Fadapt_i2)<-"MP"
+#' Fadapt_i3(1,dset_example_East)
+#' sapply(1:10,Fadapt_i3,dset_example_East)
+Fadapt_i3<-function(x,dset)Fadapt(x,dset,ii=2)
+class(Fadapt_i3)<-"MP"
 
-#' An adaptive surplus production management procedure using INDEX 4 that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+#' An adaptive surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
@@ -816,11 +803,12 @@ class(Fadapt_i2)<-"MP"
 #' @param gg the responsiveness of the MP with respect to the slope
 #' @param FMSY_M the assumed ratio of FMSY to M
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' Fadapt_i4(1,dset_example_East)
-#' sapply(1:10,Fadapt_i4,dset_example_East)
-Fadapt_i4<-function(x,dset)Fadapt(x,dset,ii=4)
-class(Fadapt_i4)<-"MP"
+#' Fadapt_i7(1,dset_example_East)
+#' sapply(1:10,Fadapt_i7,dset_example_East)
+Fadapt_i7<-function(x,dset)Fadapt(x,dset,ii=7)
+class(Fadapt_i7)<-"MP"
 
 
 Fadapt<-function(x,dset,yrsmth=7,gg=1,FMSY_M=0.5,ii){
@@ -870,6 +858,7 @@ Fadapt<-function(x,dset,yrsmth=7,gg=1,FMSY_M=0.5,ii){
 #' @param tauB currently unused
 #' @param gamma currently unused
 #' @return a TAC recommendation arising from \code{x, dset, epsB, epsR, tauR, tauB, gamma}.
+#' @export
 #' @examples
 #' SBT2(1,dset_example_East)
 #' sapply(1:10,SBT2,dset_example_East)
@@ -888,28 +877,17 @@ SBT2<-function(x,dset,epsB=0.25,epsR=0.75,tauR=5,tauB=7,gamma=1){
 class(SBT2)<-"MP"
 
 
-
-#' A 3 parameter surplus production assessmetn using INDEX 2 (observation error only)(a management procedure of class MP).
+#' A 3 parameter surplus production assessmetn using INDEX 7 (GOM_LAR_SUV) (observation error only)(a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' SP_i2(1,dset_example_East)
-#' sapply(1:10,SP_i2,dset_example_East)
-SP_i2<-function(x,dset)SP(x,dset,ii=2)
-class(SP_i2)<-"MP"
-
-#' A 3 parameter surplus production assessmetn using INDEX 4 (observation error only)(a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @examples
-#' SP_i4(1,dset_example_East)
-#' sapply(1:10,SP_i4,dset_example_East)
-SP_i4<-function(x,dset)SP(x,dset,ii=4)
-class(SP_i4)<-"MP"
+#' SP_i7(1,dset_example_East)
+#' sapply(1:10,SP_i7,dset_example_East)
+SP_i7<-function(x,dset)SP(x,dset,ii=7)
+class(SP_i7)<-"MP"
 
 
 SP<-function(x,dset,startD=0.5,checkfit=F,ii){                  # a very simple surplus production model, r, K and q leading
@@ -998,35 +976,27 @@ SP_R<-function(logparams, opty, C_hist, E_hist, rprior,ny,startD){   # simple su
 }
 
 
-#' A simple MP that uses an index (INDEX 2) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
+
+#' A simple MP that uses an index (INDEX 7 - GOM_LAR_SUV) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
 #' @examples
-#' MCD_i2(1,dset_example_East)
-#' sapply(1:10,MCD_i2,dset_example_East)
-MCD_i2<-function(x,dset)MCD(x,dset,ii=2)
-class(MCD_i2)<-"MP"
+#' MCD_i7(1,dset_example_East)
+#' sapply(1:10,MCD_i7,dset_example_East)
+MCD_i7<-function(x,dset)MCD(x,dset,ii=7)
+class(MCD_i7)<-"MP"
 
 
-#' A simple MP that uses an index (INDEX 2) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @examples
-#' MCD_i2(1,dset_example_East)
-#' sapply(1:10,MCD_i2,dset_example_East)
-MCD_i4<-function(x,dset)MCD(x,dset,ii=4)
-class(MCD_i4)<-"MP"
-
-
-MCD<-function(x,dset,startD=0.1,ii){
+MCD<-function(x,dset,startD=1,ii){
 
   nyears<-dim(dset$Iobs)[3]                 # Most recent year
+  Iobs<-dset$Iobs[x,ii,]
+  Iobs<-Iobs/max(Iobs)     # calibrate to be a fraction of maximum index level
   mean(dset$Cobs[x,],na.rm=T)*              # Average historical catches
-    mean(dset$Iobs[,ii,(nyears-2):nyears])* # Mean index over last three years
+    mean(Iobs[(nyears-2):nyears])* # Mean index over last three years
     2*startD                                # Adjusted for starting depletion and MSY production at depletion = 0.5
 
 }

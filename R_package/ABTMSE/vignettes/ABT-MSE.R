@@ -48,3 +48,6 @@ avail('OM')
 avail('Obs')
 Bad_Obs
 
+## ---- code you might want one day ---------------------------------------
+# finding DD-compatible indices
+# aggregate(Bad_Obs@MPind$Year,by=list(Bad_Obs@MPind$Name),FUN=min)

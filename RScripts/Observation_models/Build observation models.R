@@ -23,9 +23,9 @@ names(Iobs)<-c("Year","Quarter","Area","Stock","Ino","Type","Index","CV","Name",
 
 MPind<-rbind(Iobs[,c(1,9,7,8,6,10,3)],CPUEdat[,c(1,9,6,8,10,11,3)])
 
-#ToKeep<-c("JPN_LL_NEAtl2","FR_AER_SUV","MED_LAR_SUV","MED_AER_SUV","JPN_LL2","US_RR_115_144","GOM_LAR_SUV")
-#MPind<-subset(MPind,MPind$Name%in%ToKeep)
-ToKeep<-unique(MPind$Name)
+ToKeep<-c("JPN_LL_NEAtl2","FR_AER_SUV","MED_LAR_SUV","MED_AER_SUV","JPN_LL2","US_RR_115_144","GOM_LAR_SUV")
+MPind<-subset(MPind,MPind$Name%in%ToKeep)
+#ToKeep<-unique(MPind$Name)
 No<-match(MPind$Name,ToKeep)
 MPind<-MPind[order(No),]
 Stock<-c(2,2,2,2,1,1,1,1,1,1)[MPind$Area]

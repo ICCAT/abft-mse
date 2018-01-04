@@ -15,7 +15,6 @@ OMdirs<-list.dirs(OMdir)
 OMdirs<-OMdirs[2:length(OMdirs)]# get rid of the root directory
 
 
-
 for(o in 1:length(OMdirs)){
 
   OMcode<-strsplit(OMdirs[o],split="//")[[1]][2]
@@ -101,7 +100,7 @@ OM_example<-new('OM',OMdirs[10],nsim=48,proyears=30,seed=1)
 #load(paste0(getwd(),"/Objects/OMs/1/OM"))
 sfInit(parallel=T,cpus=detectCores())
 myMPs<-list(c('UMSY','UMSY'),
-            c('DD_i2','DD_i4'),
+            c('MeanC','DD_i7'),
             c('MeanC','MeanC'))
 MSE_example<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=myMPs,interval=5,IE="Umax_90")
 save(MSE_example,file=paste0(datadir,"MSE_example"))
@@ -109,10 +108,10 @@ save(MSE_example,file=paste0(datadir,"MSE_example"))
 # myMSE -----------------
 MPs<-list(
   c("MeanC",      "MeanC"),
-  c("SP_i2",      "SP_i4"),
-  c("DD_i2",      "DD_i4"),
-  c("DD_i2_4010", "DD_i4_4010"),
-  c("Islope1_i2", "Islope1_i4"))
+  c("MeanC",      "SP_i7"),
+  c("MeanC",      "DD_i7"),
+  c("MeanC", "DD_i7_4010"),
+  c("Islope1_i7", "Islope1_i3"))
 
 myMSE<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=MPs)
 save(myMSE,file=paste0(datadir,"myMSE"))
