@@ -96,12 +96,23 @@ save(Recruitment_example,file=paste0(datadir,"Recruitment_example"))
 # Example MSE (these should match the vignette documentation) -----------------------------------------
 
 # MSE_example ----------
-OM_example<-new('OM',OMdirs[10],nsim=48,proyears=30,seed=1)
 #load(paste0(getwd(),"/Objects/OMs/1/OM"))
 sfInit(parallel=T,cpus=detectCores())
+
 myMPs<-list(c('UMSY','UMSY'),
             c('MeanC','DD_i7'),
             c('MeanC','MeanC'))
+
+#OM<-OM_example
+#Obs<-Bad_Obs
+#MPs<-myMPs
+#interval=5
+#IE="Umax_90"
+#curTAC=c(13500000,2000000)
+#Allocation=NA
+#MPareas=NA
+#Fdistyrs=3
+
 MSE_example<-new('MSE',OM=OM_example,Obs=Bad_Obs,MPs=myMPs,interval=5,IE="Umax_90")
 save(MSE_example,file=paste0(datadir,"MSE_example"))
 
@@ -138,8 +149,8 @@ save(MSE_alt_Allocation,file=paste0(datadir,"MSE_alt_Allocation"))
 
 
 
-# Example pset (requires MSE run) --------------------------------------------------------------------
-setup()
+# Example dset (requires MSE run) --------------------------------------------------------------------
+
 MSE<-new('MSE',interval=10,IE="Umax_90")
 
 dset_example_East<-dset[[1]]

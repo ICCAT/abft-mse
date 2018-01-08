@@ -225,7 +225,7 @@ class(UMSY_PI)<-"MP"
 #' @examples
 #' DD_i7(1,dset_example_West)
 #' sapply(1:10,DD_i7,dset_example_West)
-DD_i7<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=7,checkfit=checkfit)
+DD_i7<-function(x,dset,checkfit=F) DD(x,dset,startD=1,ii=7,checkfit=checkfit)
 class(DD_i7)<-"MP"
 
 
@@ -240,7 +240,7 @@ class(DD_i7)<-"MP"
 #' @examples
 #' DD_i7_4010(1,dset_example_East)
 #' sapply(1:10,DD_i7_4010,dset_example_East)
-DD_i7_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=0.2,ii=7,checkfit=checkfit,fortyten=T)
+DD_i7_4010<-function(x,dset,checkfit=F) DD(x,dset,startD=1,ii=7,checkfit=checkfit,fortyten=T)
 class(DD_i7_4010)<-"MP"
 
 
@@ -269,7 +269,7 @@ DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
   E_hist<-C_hist/I_hist
   E_hist<-E_hist/mean(E_hist)
   ny_DD<-length(C_hist)
-  params<-log(c(Mc,mean(C_hist,na.rm=T),Mc/2))
+  params<-log(c(Mc/2,mean(C_hist,na.rm=T)/2,Mc/2))
   k_DD<-ceiling(a50V)   # get age nearest to 50% vulnerability (ascending limb)  -------------
   k_DD[k_DD>nages/2]<-ceiling(nages/2)  # to stop stupidly high estimates of age at 50% vulnerability
   Rho_DD<-(wa[k_DD+2]-Winf)/(wa[k_DD+1]-Winf)
@@ -289,35 +289,29 @@ DD<-function(x,dset,startD,ii,checkfit,fortyten=F){
   if(checkfit){                            # Plot fit to catches for model testing
     fit<-DD_R(opt$par,opty=99,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
 
-    plot(fit[,1],xlab='Model year',ylab="Catches",col='blue')
+    plot(fit[,1],ylim=range(fit[,]),xlab='Model year',ylab="Catches",col='blue')
     lines(fit[,2],col='red')
     legend('topright',legend=c("Observed","Predicted"),text.col=c("blue","red"),bty='n')
     legend('topleft',legend=paste0("Converged: ",posdef),bty='n')
   }
 
   if(posdef){   # if model converged return new TAC
-    if(fortyten){
-      DD_R(opt$par,opty=2,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
+    if(!fortyten){
+      TACy<-DD_R(opt$par,opty=2,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
     }else{
-      DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
+      TACy<-DD_R(opt$par,opty=4,So_DD=So_DD,Alpha_DD=Alpha_DD,Rho_DD=Rho_DD,ny_DD=ny_DD,k_DD=k_DD,wa_DD=wa_DD,E_hist=E_hist,C_hist=C_hist,UMSYprior=UMSYprior,startD=startD)
     }
   }else{         # otherwise return previous TAC subject to a 5 percent downward adjustment
-    dset$MPrec[x]*0.95
+    TACy<-dset$MPrec[x]*0.95
   }
+
+  TACy
 
 }
 
 
 
-#' A delay difference model fitted to INDEX 7 (GOM_LAR_SUV) linked to Justin Cooke's harvest control rule (a management procedure of class MP).
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @export
-#' @examples
-#' CDD_i7(1,dset_example_West)
-#' sapply(1:10,CDD_i7,dset_example_West)
+x<-2
 CDD_i7<-function(x,dset)CDD(x,dset,ii=7)
 class(CDD_i7)<-"MP"
 
@@ -399,7 +393,7 @@ DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,
   q_DD=exp(params[3])
   SS_DD=So_DD*(1-UMSY_DD)    # Initialise for UMSY, MSY and q leading.
   Spr_DD=(SS_DD*Alpha_DD/(1-SS_DD)+wa_DD)/(1-Rho_DD*SS_DD)
-  DsprDu_DD=-So_DD*(Rho_DD/(1-Rho_DD*SS_DD)*(Spr_DD+1)/(1-Rho_DD*SS_DD)*(Alpha_DD/(1-SS_DD)+SS_DD*Alpha_DD/(1-SS_DD)^2))
+  DsprDu_DD=-So_DD*(Rho_DD/(1-Rho_DD*SS_DD)*Spr_DD+1/(1-Rho_DD*SS_DD)*(Alpha_DD/(1-SS_DD)+SS_DD*Alpha_DD/(1-SS_DD)^2))
   Arec_DD=1/(((1-UMSY_DD)^2)*(Spr_DD+UMSY_DD*DsprDu_DD))
   Brec_DD=UMSY_DD*(Arec_DD*Spr_DD-1/(1-UMSY_DD))/MSY_DD
   Spr0_DD=(So_DD*Alpha_DD/(1-So_DD)+wa_DD)/(1-Rho_DD*So_DD)

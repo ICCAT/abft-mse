@@ -1,5 +1,5 @@
 ---
-title: "ABT-MSE: Atlantic Bluefin Tuna Management Strategy Evaluation (v2.1)"
+title: "ABT-MSE: Atlantic Bluefin Tuna Management Strategy Evaluation (v2.3)"
 subtitle: "ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP)"
 author: "Tom Carruthers (<t.carruthers@fisheries.ubc.ca>)"
 date: "`r Sys.Date()`"
@@ -55,7 +55,7 @@ options(width = 650)
 
 # Foreword
 
-The Atlantic Bluefin Tuna Management Strategy Evaluation is funded by the ICCAT GBYP (coordinated by Antonio DiNatale <antonio.dinatale@iccat.int>). The technical aspects of this modelling work are overseen by the GBYP Core Modelling Group: David Die, Clay Porch, Laurie Kell, Antonio Di Natale, Doug Butterworth, Harritz Arrizabalaga, Yukio Takeuchi, Sylvain Bonhommeau, Toshi Kitakado, Miguel Santos, Paul de Bruyn, Polina Levontin and Richard Hillary. Previous collaborators include Joe Powers and Campbell Davies. 
+The Atlantic Bluefin Tuna Management Strategy Evaluation is funded by the ICCAT GBYP (coordinated by Paul de Bruyn <paul.debruyn@iccat.int>). The technical aspects of this modelling work are overseen by the GBYP Core Modelling Group: David Die, Clay Porch, Laurie Kell, Antonio Di Natale, Doug Butterworth, Harritz Arrizabalaga, Yukio Takeuchi, Sylvain Bonhommeau, Toshi Kitakado, Miguel Santos, Paul de Bruyn and Polina Levontin. Previous collaborators include Joe Powers and Campbell Davies. 
 
 This research benefits from the contributions of a large number of scientists from ICCAT contracting parties and public institutions.  
 
@@ -80,13 +80,15 @@ This guide also provides a reproducible account of how the reference set of oper
 
 The package is subject to ongoing testing. If you find a bug or a problem please send a report to <t.carruthers@oceans.ubc.ca> so that it can be fixed!  
 
-## New Additions to this Version (v2.1)
+## New Additions to this Version (v2.3)
 
 * Operating models are conditioned using stock reduction analysis before 1960 after which the model follows a statistical catch-at-length formulation.
 
 * Operating models are now fitted to CPUE indices that are used in Eastern and Western bluefin tuna stock assessments.
 
-* All 18 operating models of the reference set are available in the package.
+* All 36 operating models of the reference set are available in the package (OM_1, OM_2, etc)
+
+* The four primary robustness operating models are also now available (OM_R1, OM_R2, etc)
 
 * New performance summary table (getperf) and plotting functions (plot, Tplot) that match the Trial Specifications document. 
 
@@ -163,15 +165,23 @@ The model is disaggregated into subyear time blocks that follow quarters (ie Jan
 
 ## MSE design
 
-The Atlantic bluefin tuna MSE follows an overarching design document coordinated by Doug Butterworth [Trial Specifications](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents/Trial_Specifications.docx) which details the reference and robustness scenarios for the MSE, the equations of the operating model and a set of preliminary performance metrics. 
+The Atlantic bluefin tuna MSE follows an overarching design document coordinated by Doug Butterworth [Trial Specifications](https://drive.google.com/open?id=1VzOvGEgQ0URtepk8TyhpE2jt9z9PAJ4f) which details the reference and robustness scenarios for the MSE, the equations of the operating model and a set of preliminary performance metrics. 
+
+A very brief introduction to the ABT-MSE R package is provided in [SCRS/2017/225](https://drive.google.com/open?id=1IBcZhxNJXwSKkmEoAFoGrj7BhzilNt81)
+
+The MSE design (range of OMs) is described in [SCRS/2017/223](https://drive.google.com/open?id=1oJmXDD6tRKbEI4DwZnsLbFIAcq1EfiPt)
+
+Examples of MPs coded and in action can be found in [SCRS/2017/224](https://drive.google.com/open?id=1gauaI74rowuzY3pAE-qFFlWQuY9wElPI)
+
+
 
 ## Data 
 
-All of the data that are used in the operational modelling are available [here](https://github.com/ICCAT/abft-mse/tree/master/data/) or [here](https://drive.google.com/open?id=13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U)
+All of the data that are used in the operational modelling are available [here](https://drive.google.com/open?id=1mLVS_fqjNZMqP5sn3bdiFmWqrW9Sd1yX)
 
-A meta-data summary of all data available to the ABT-MSE project is available online [here](https://docs.google.com/spreadsheets/d/ 13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U/edit)
+A meta-data summary of all data available to the ABT-MSE project is available online [here](https://drive.google.com/open?id=13pFaM3BTnzQ1BNQGoYn4O2n1IeD18V3VTbN9Hv7139U)
 
-A description of the various types of data and their role in operational modelling can be found [here](http://www.iccat.int/Documents/CVSP/CV072_2016/n_7/CV07201796.pdf)
+A description of the various types of data and their role in operational modelling can be found [here](https://drive.google.com/open?id=1TIkG5od71tlPMJuC7ejf5iTyYuTceEUv)
 
 ## The ABT-MSE process
 
@@ -274,7 +284,7 @@ The ABT-MSE software was designed to be: (1) open-source with straightforward di
 
 ### Open Source
 
-ABT-MSE freely available online from a dedicated GitHub code repository (www.github.com/iccat/abft-mse) which contains all data, code and documentation. The GitHub repository allows users to request software features, report bugs, and track software updates. GitHub also supports continuous integration of code from multiple developers and feature ‘branching’ a form of version control where additions can be coded in parallel and merged with the master branch. The principal challenge of developing MSE for bluefin was  adopting a language and a programming paradigm that was sufficiently flexible to allow for increasingly complex additions. 
+The ABT-MSE framework (data, development scripts, all code and the R Package) is freely available online from a dedicated GitHub code repository (www.github.com/iccat/abft-mse) and is also hosted on a [Google Drive folder](https://drive.google.com/open?id=0B0TXcs-MLRl3c0w4VF9QbkJYOU0). The GitHub repository allows users to request software features, report bugs, and track software updates. GitHub also supports continuous integration of code from multiple developers and feature ‘branching’ a form of version control where additions can be coded in parallel and merged with the master branch. The principal challenge of developing MSE for bluefin was  adopting a language and a programming paradigm that was sufficiently flexible to allow for increasingly complex additions. 
 
 ### Environment, Programming Language and Software Dependencies
 
@@ -288,17 +298,16 @@ A principal limitation of computing in R is that calculations can be slow compar
 
 An important feature of R is that it supports Object-Oriented Programming (OOP) (Jacobsen et al. 1992) in which data, models and results are organized in standardized objects (classes) on which standardized functions (methods) may be applied. In general OOP is desirable because it allows for the reuse of code, can impose stricter requirements of object attributes (e.g. annual catches must be a vector of non-negative real numbers), it demands careful software planning from the outset and is generally more extensible and easy to maintain that non-OOP code. ABT-MSE adopts the OOP paradigm to standardize the formatting of data and support rapid building of operating models. For example, evaluating the robustness of management procedures across a range of operating models (OM). 
 
-
 <br>
 
 # Installation
 
 1. Install [R for Windows](https://cran.r-project.org/bin/windows/)
 2. Install [RStudio](https://www.rstudio.com/products/rstudio/download/)
-3. Download the ABT-MSE file structure from [here](https://github.com/ICCAT/abft-mse)
+3. Download the ABT-MSE file structure from [here](https://drive.google.com/open?id=0B0TXcs-MLRl3c0w4VF9QbkJYOU0) 
 4. Install the ABTMSE R package by opening RStudio and entering the following code at the R console (making sure to change the file path to reflect where you put the ABT-MSE folder on your computer):
 ```{r install_package,eval=F}
-install.packages("C:/ABT-MSE/R_package/ABTMSE_2.1.0.tar.gz") 
+install.packages("C:/ABT-MSE/R_package/ABTMSE_2.3.0.tar.gz") 
 ```
 5. Check that the installation is successful by finding this help file (the ABTMSE vignette):
 ```{r load_library, eval=F}
@@ -340,7 +349,7 @@ avail('Obs')
 ```
 
 ## A guide to the MSE design
-An MSE design object *Design* was also loaded with loadABT(). *Design* is a list of the factors and their levels used in defining the reference set of operating models. This replicates the MSE design outlined in the [Trial Specifications document](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents/Trial_Specifications.docx) .
+An MSE design object *Design* was also loaded with loadABT(). *Design* is a list of the factors and their levels used in defining the reference set of operating models, e.g. [SCRS/2017/223](https://drive.google.com/open?id=1oJmXDD6tRKbEI4DwZnsLbFIAcq1EfiPt). This replicates the MSE design outlined in the [Trial Specifications document](https://drive.google.com/open?id=14j33JBhoep0TtvRj4pBkA8cIwM7XhGz3) .
 
 The list item *all_levs* shows all levels that were used in defining the factorial design of the MSE reference operating models:
 
@@ -366,7 +375,7 @@ This design grid explains the nomenclature of the various operating models (clas
 avail('OM')
 ```
 
-You'll notice that some objects in the ABTMSE package have the extension *\_example*. These are stream-lined objects that are suitable for tutorials and demonstrations which involve less computational overhead (e.g. they require fewer simulations).
+You'll notice that some objects in the ABTMSE package have the extension *\_example*. These are stream-lined objects that are suitable for tutorials and demonstrations which involve less computational overhead (e.g. they require fewer simulations and require less system memory).
 
 
 ## Running an MSE using pre-specified objects
@@ -384,9 +393,9 @@ Bad_Obs
 
 As you can see the observation error model is quite lengthy, and in particular the slot *MPind*.
 
-These are real abundance indices proposed for use by management procedures (the raw data are available [here](https://github.com/ICCAT/abft-mse/tree/master/Data/Processed/MP%20Indices)). These real indices are compared with operating model predictions to characterize their statistical properties so that realistic data can be generated in future projections. 
+These are real abundance indices proposed for use by management procedures (the raw data are available [here](https://drive.google.com/open?id=1bgC-dKtETACGJxx4fQRwvhC2xBTnKsua)). These real indices are compared with operating model predictions to characterize their statistical properties so that realistic data can be generated in future projections. 
 
-In the *Bad\_Obs* model there are currently `r max(Bad_Obs@MPind$No,na.rm=T)` indices. Note that many MPs that use indices to set TACs, will operate on one of these specific indices. For example you could have a delay difference model using index 1, (*DD\_1*) and another using index 2 (*DD\_2*).
+In the *Bad\_Obs* model there are currently `r max(Bad_Obs@MPind$No,na.rm=T)` indices. Note that many MPs that use indices to set TACs, will operate on one of these specific indices. For example you could have a delay difference model using index 3, (*DD\_i3*) and another using index 7 (*DD\_i7*).
 
 If you require further information, all of the objects loaded by ABTMSE package are documented. These help files can be accessed with the question mark operator. Some of the loaded objects are dedicated classes that have additional, more detailed documentation: 
 
@@ -411,9 +420,9 @@ Implementation error models determine how well TAC recommendations will be follo
 
 Specifying management procedures is somewhat more complex in a multistock MSE as they can be specific to data from certain areas. For example *DD_MED* may be a delay-difference assessment fitted to a relative abundance index for spawning biomass in the Mediterranean (e.g. a larval survey). 
 
-To specify management procedures in this MSE framework you must select a MP for each spatially distinct area to which an MP is to be applied. For example, a VPA stock assessment in the West and a Surplus production stock assessment in the East. Traditionally the spatial division for Atlantic bluefin has been at 45 degrees W. In this quick start section we're going to ignore MP areas and the package will assume the default setup which is 2 data - 2 MP processes divided by the 45deg W.  
+To specify management procedures in this MSE framework you must select a MP for each spatially distinct area to which an MP is to be applied. For example, a VPA stock assessment in the West and a Surplus production stock assessment in the East. Traditionally the spatial division for Atlantic bluefin has been at 45 degrees W. In this quick start section we're going to ignore MP areas and the package will assume the default setup which is 2 data areas - 2 MPs one per area, divided by 45deg W.  
 
-A related issue is fleet allocation of the TACs that are calculated by region. Again we're going to leave allocation for a later section of this document as it is quite complex. The default will be used here which allocates regional TAC (e.g. West/East) in proportion to the fraction of catch by each fleet in that region over the last three years (2012-2014). 
+A related issue is fleet allocation of regional TACs that are calculated by MPs. Again we're going to leave allocation for a later section of this document as it is a bit complicated. The default will be used here which allocates regional TAC (e.g. West/East) in proportion to the fraction of catch by each fleet in that region over the last three years (2012-2014). 
 
 As with the observation and implementation error models you can search for management procedures and find help documentation on these:
 
@@ -429,7 +438,7 @@ As mentioned above, MPs must be chosen in groups, one corresponding to each area
 
 ```{r qs_spec_MPs}
 myMPs<-list(c('UMSY','UMSY'),
-          c('DD_i4','DD_i2'),
+          c('MeanC','DD_i7'),
           c('MeanC','MeanC'))
 
 ```
@@ -451,7 +460,7 @@ Operating models are generated from a three step process:
 2. Run M3 ADMB operating model to fit to data
 3. Read in M3 model outputs into an operating model class object (class OM) 
 
-When OM class objects are made, a number of expensive and lengthy calculations are carried out up front. For example MSY reference points and historical effort scenarios are calculated so that these don't have to be run each and every time an MSE is run, and also to ensure that MSE results are reproducible.
+When OM class objects are made, a number of expensive and lengthy calculations are carried out up front. For example MSY reference points and historical effort scenarios are calculated, so that these don't have to be run each and every time an MSE is run, and also to ensure that MSE results are reproducible.
 
 Later in this document we'll cover exactly how data are formatted for operating models and how these are fitted to data. For now we're going to use one of the prebuilt OMs *OM\_example* that only requires the computation of `r OM_example@nsim` simulations.
 
@@ -492,7 +501,7 @@ The purpose of the *ZeroC* MP is to generate performance metrics that evaluate f
 
 ### MSE outputs
 
-A very large amount of information has been stored in the MSE object *MSE_example*. There are many ways to analyse these simulation data. 
+A very large amount of information has been stored in the MSE object *MSE_example*. There are many ways to analyse these simulated data. 
 
 In a later section we will return to this issue and specify custom performance metrics that interrogate MSE objects ([MSE Step2](#step2). For now lets take a look at the standard reporting options available in the current ABTMSE package.
 
@@ -573,13 +582,13 @@ Here we use this framework to demonstrate the functionality of the current ABTMS
 
 Although it may be desirable to quantify management objectives in the intial phase of MSE (Punt et al. 2015). In the context of Atlantic bluefin tuna this is less appropriate since MSE is relatively new in this setting and requires iterative engagement from managers and stakeholders to shape the analysis and interpret outputs (ie. Nakatsuka 2016). 
 
-While prioritization of management objectives has not yet been established in this early phase of the ABT MSE, a number of tentative performance metrics have been outlined in the [Trial Specifications document](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents/Trial_Specifications.docx)
+While prioritization of management objectives has not yet been established in this early phase of the ABT MSE, a number of tentative performance metrics have been outlined in the [Trial Specifications document](https://drive.google.com/open?id=14j33JBhoep0TtvRj4pBkA8cIwM7XhGz3)
 
 <a id="step2"></a>
 
 ## Step 2: Quantification of management objectives
 
-Following the [Trial Specifications document](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents/Trial_Specifications.docx) there are currently `r length(avail('PM'))-1` performance metrics that are used to evaluate management procedures. These are functions of class 'PM' (performance metric) and can be listed using the *avail()* function. 
+Following the [Trial Specifications document](https://drive.google.com/open?id=14j33JBhoep0TtvRj4pBkA8cIwM7XhGz3) there are currently `r length(avail('PM'))-1` performance metrics that are used to evaluate management procedures. These are functions of class 'PM' (performance metric) and can be listed using the *avail()* function. 
 
 ```{r Step_2_list_MPs}
 avail('PM')
@@ -687,11 +696,11 @@ The top row of panels in *tradeoff* are mean values, the bottom row shows indivi
 
 ### The OMI class object
 
-The estimation 'engine' behind the ABTMSE R framework is M3, a multi-stock population dynamics model written in ADMB. Your ABT-MSE folder contains a subfolder "Manuals\_and\_design_documents" that contains further information about M3 including model equations and software design documents (they can be found online [here](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents)). 
+The estimation 'engine' behind the ABTMSE R framework is M3, a multi-stock population dynamics model written in ADMB. Your ABT-MSE folder contains a subfolder "Manuals\_and\_design_documents" that contains further information about M3 including model equations and software design documents (they can be found online [here](https://drive.google.com/open?id=1FnOXvaM9V71G3rO_jiQVVg3ljjNkmQcM)). 
 
 The M3 model is essentially a multistock assessment model fitted to data to generate credible operating model scenarios for ABT population and fishery dynamics. The M3 model requires fishery, tagging and biological data formatted in specific way (for example catches in a table where each row is a catch record and the columns represent years, subyears, areas and fleets).
 
-To make it easier for other users to modify the operating model data and assumptions, a new class of data object was designed. Named *OMI* (for Operating Model Input), this object class contains all the data in the correct format for input to the M3 model. This organisation of data allows for simple and rapid changes to OMI class objects and m3 model fitting, with the minimum of code. 
+To make it easier for other users to modify the operating model data and assumptions, a new class of data object was designed. Named *OMI* (short for 'Operating Model Input'), this object class contains all the data in the correct format for input to the M3 model. This organisation of data allows for simple and rapid changes to OMI class objects and m3 model fitting, with the minimum of code. 
 
 Package documentation covers the various slots of the *OMI* class:
 
@@ -788,7 +797,7 @@ pin_from_par(M3dir)               # Record the MLE parameter estimates as initia
 
 Since running M3 models is fairly computationally intensive, it is often beneficial to fit multiple M3 models in parallel. To do this you need multiple folders (this is an MS Windows restriction unfortunately) each with an M3.exe and a stats.cxx file. You can copy these files from the ABT-MSE/M3/ directory.
 
-For each of your operating model folders (that now have an M3.exe and stats.cxx file in them) you can use the M3write() function above to write an M3 data file based on unique OMI objects. Once each folder has an M3.exe, stats.cxx and M3.dat file you can run the M3 model.  
+For each of your operating model folders (that now have an M3.exe and stats.cxx file in them) you can use the M3write() function above to write an M3 data file from unique OMI objects. Once each folder has an M3.exe, stats.cxx and M3.dat file you can run the M3 model.  
 
 
 *Note: this can be done manually by navigating to the folder and running the executable which while clunky, means you don't have to wait for the runM3() function to finish before you can keep working in R*
@@ -799,7 +808,7 @@ There is a parallel version of *runM3()* called *runM3p()* that will operate on 
  M3dirs<-paste0("C:/myOMfolders/",1:8)          # An example, these folders don't really exist
  M3dirs
  sfInit(parallel=TRUE, cpus=detectCores()) 
- #sapply(1:length(M3dirs),runM3p,OMdir=M3dirs)  # Lets not actually do this!
+ #sapply(1:length(M3dirs),runM3p,OMdir=M3dirs)  # Lets not actually do this because it will take ages!
  #make_fit_reports(M3dirs)                      # Or this!
 
 ```
@@ -814,7 +823,7 @@ Once you have run M3 it is straightforward to make the fitted model compatible w
 
 ```
 
-This has produced an operating model with the default settings, namely 32 simulations, future projection of 30 years, recruitment based on Beverton-Holt dynamics and default naming of stocks ("East" is stock 1, "West" is stock 2). 
+This has produced an operating model with the default settings, namely 48 simulations, future projection of 50 years, recruitment based on Beverton-Holt dynamics and default naming of stocks ("East" is stock 1, "West" is stock 2). 
 
 The operating model object has read the M3 outputs and sampled model parameters from the estimated variance-covariance matrix (assuming a multivariate normal distribution). For each sample of parameters the historical fishery has been reconstructed and MSY reference points have been calculated. 
 
@@ -831,7 +840,7 @@ Once again there is package documentation for this class of object and examples 
 
 The purpose of the OM object is to interpret M3 outputs and provide a reproducible starting point for MSE analysis. 
 
-For example, I could create an OM object with 500 simulations and email this to another analyst and they would obtain precisely the same MSE results. This level of reproducibility is important because it removes chance from cross-comparison of MP performance (for a given OM an MP always performs the same). 
+For example, I could create an OM object with 100 simulations and email this to another analyst and they would obtain precisely the same MSE results. This level of reproducibility is important because it removes chance from cross-comparison of MP performance (for a given OM an MP always performs the same). 
 
 It is easy to specify an operating model with a greater number of simulations for a different projected time period if necessary by modifying the *nsim* and *proyears* arguments. Similarly the stocks can be renamed also using the *Snames* argument:
 
@@ -842,7 +851,7 @@ It is easy to specify an operating model with a greater number of simulations fo
 
 ### Modifying future recruitment scenarios
 
-An important axis of uncertainty in this MSE is future recruitment. This is described in the [Trial Specifications document](https://github.com/ICCAT/abft-mse/tree/master/Manuals_and_design_documents/Trial_Specifications.docx) and the MSE *Design* object:
+An important axis of uncertainty in this MSE is future recruitment. This is described in the [Trial Specifications document](https://drive.google.com/open?id=14j33JBhoep0TtvRj4pBkA8cIwM7XhGz3) and the MSE *Design* object:
 
 ```{r Step_3_custom_recruitment_design}
 Design$all_lnams[[1]]
@@ -869,9 +878,9 @@ Recruitment_example
 names(Recruitment_example)
 ```
 
-We're going to go through each list object one-by-one. 
+We're going to go through each list element one-by-one. 
 
-The first list item is called *$proyears*. This defines when recruitment changes in the future. *proyears* is an array with n time period rows (in this case there are two proejcted time periods: projection years 1:11 and 12 onwards) and 2 columns showing when these projection time periods start and end. 
+The first list item is called *$proyears*. This defines when recruitment changes in the future. *proyears* is an array with n time period rows (in this case there are two projected time periods: projection years 1:11 and 12 onwards) and 2 columns showing when these projection time periods start and end. 
 
 In this case we can see time period 1 (row 1) running from projection year 1 to projection year 11 and time period 2 (row 2) running from projection year 12 to infinity. 
 
@@ -950,7 +959,7 @@ Two examples were loaded at the start of this session by the loadABT() function.
 
 These example data sets are helpful for designing and testing your own MPs. 
 
-Additionally every time an MSE is run, the most current simulated dataset is passed to the global environment (called *dset*). It follows that if the MSE function crashes due to an error in an MP, it is straightforward to test the MP again using the offending simulated data and debug the issue. 
+Additionally every time an MSE is run, the most current simulated dataset is passed to the global environment (called *dset*). It follows that if the MSE function crashes due to an error in an MP, it is easier to test the MP again using the offending simulated data and debug the issue. 
 
 ### Anatomy of an MP
 
@@ -1015,14 +1024,14 @@ Lastly you could make sure that the MP works in parallel (there are no functions
  sfSapply(1:nsim,MeanC,dset_example_East)
 ```
 
-Note that for simple MPs like this, parallel processing isn't necessary and might even be a bit slower due to the overhead of sending data to the cluster. However for more complex MPs that involve estimation phases, parallel processing can speed up the analysis by a large margin (typically running in 1/(0.8*cpus) the time). 
+Note that for simple MPs like this, parallel processing isn't necessary and might even be a bit slower due to the overhead of sending data to the cluster. However for more complex MPs that involve estimation phases, parallel processing can speed up the analysis by a large margin (typically running in 1/(0.8*nthreads) the time). 
 
 *For large MSE analyses with lots of simulations and MPs, very large clusters can be used with as many as 1000 threads*
 
 
 ### Designing a somewhat more complex surplus production MP
 
-Many MPs use numerical optimization to fit models to data. A good example are stock assessments such as surplus production models. While surplus production assessments are still used to provide management advice for Atlantic tunas and billfish, for example BSP (McAllister et al. ) and ASPIC. 
+Many MPs use numerical optimization to fit models to data. A good example are stock assessments such as surplus production models that are still used to provide management advice for Atlantic tunas and billfish, for example BSP (McAllister et al. ) and ASPIC. 
 
 Here we design relatively simple three parameter, observation error only, surplus production model. The new SP MP requires two functions: 
 
@@ -1043,14 +1052,14 @@ Here is an MP function that processes the data and has a couple of extra bells a
 
 ```{r Step_4_SP_def}
 
-SP_i2<-function(x,dset,startD=0.5,checkfit=F){                  # a very simple surplus production model, r, K and q leading
+SP_i7<-function(x,dset,startD=0.5,checkfit=F){                  # a very simple surplus production model, r, K and q leading
   
   nyears<-dim(dset$Iobs)[3]               # get the number of years of data (the 3rd dimension of Iobs)
-  Ind<-dset$Iobs[x,2,1:nyears]            # get the index
+  Ind<-dset$Iobs[x,7,1:nyears]            # get the index
   yind<-(1:nyears)[!is.na(Ind)]           # find the years where the index is available (ie not NA)
   
   C_hist <- dset$Cobs[x,yind]             # store catches for this time period
-  E_hist <- C_hist/dset$Iobs[x,2,yind]    # store standardized effort (partial F)
+  E_hist <- C_hist/Ind[yind]    # store standardized effort (partial F)
   E_hist <- E_hist/mean(E_hist)           # normalize the effort to mean 1
  
   surv<-exp(-cumsum(dset$M[x,]))          # survival at age
@@ -1073,7 +1082,7 @@ SP_i2<-function(x,dset,startD=0.5,checkfit=F){                  # a very simple 
   
   if(checkfit){                            # Plot fit to catches for model testing
     fit<-SP_R(opt$par,opty=4,C_hist=C_hist,E_hist=E_hist,rprior=rprior,ny=ny,startD=startD); 
-    plot(fit[,1],xlab='Model year',ylab="Catches",col='blue')
+    plot(fit[,1],xlab='Model year',ylab="Catches",col='blue',ylim=c(0,max(fit)))
     lines(fit[,2],col='red') 
     legend('topright',legend=c("Observed","Predicted"),text.col=c("blue","red"),bty='n')
     legend('topleft',legend=paste0("Converged: ",posdef),bty='n')
@@ -1086,7 +1095,7 @@ SP_i2<-function(x,dset,startD=0.5,checkfit=F){                  # a very simple 
   }  
 }
   
-class(SP_i2)<-'MP'
+class(SP_i7)<-'MP'
 
 ```
 
@@ -1140,29 +1149,29 @@ SP_R<-function(logparams, opty, C_hist, E_hist, rprior,ny,startD){   # simple su
 As before we can now test this on an example dataset:
 
 ```{r Step_4_SP_test1a}
- SP_i2(x=1,dset=dset_example_West)
- SP_i2(x=1,dset=dset_example_West,startD=0.2)
+ SP_i7(x=1,dset=dset_example_West)
+ SP_i7(x=1,dset=dset_example_West,startD=0.2)
  
 ```
 
 Checking the fit to observed catches:
 
 ```{r Step_4_SP_test1b,fig.width=4,fig.height=4}
- SP_i2(x=1,dset=dset_example_West,checkfit=T)
+ SP_i7(x=1,dset=dset_example_West,checkfit=T)
 ```
 
 Lets make sure this works for all simulations using the regular *sapply()* function:
 
 ```{r Step_4_SP_test2}
  nsim<-nrow(dset_example_West$Cobs)
- sapply(1:nsim,SP_i2,dset_example_West)
+ sapply(1:nsim,SP_i7,dset_example_West)
 ```
 
 Will the MP work in parallel?:
 
 ```{r Step_4_SP_test3a,error = TRUE}
  sfInit(parallel=T,cpus=detectCores())
- sfSapply(1:nsim,SP_i2,dset_example_West)
+ sfSapply(1:nsim,SP_i7,dset_example_West)
 ```
 
 You can see that there is an error. 
@@ -1174,18 +1183,136 @@ This however is easily solved with the *sfExport()* function. The correct order 
 ```{r Step_4_SP_test3b}
  sfInit(parallel=T,cpus=detectCores())
  sfExport("SP_R")
- sfSapply(1:nsim,SP_i2,dset_example_West)
+ sfSapply(1:nsim,SP_i7,dset_example_West)
 ```
 
 You may have noticed this is faster than the non parallel version by some margin:
 
 ```{r Step_4_SP_test3c}
- system.time(sapply(1:nsim,SP_i2,dset_example_West))
- system.time(sfSapply(1:nsim,SP_i2,dset_example_West))
+ system.time(sapply(1:nsim,SP_i7,dset_example_West))
+ system.time(sfSapply(1:nsim,SP_i7,dset_example_West))
 
 ```
 
 The more computationally intensive the MP, the wider the performance margin between parallel and regular linear processing. It is for this reason it is worth going the extra step to make your MP compatible with cluster computing by exporting any internal functions to the cluster. 
+
+### Example of designing an index-based MP for Atlantic Bluefin tuna 
+
+You may be reading this document because you wish to design and test a management procedure that sets annual TACs for the Eastern or Western management areas using just indices of abundance. This is a critical step in the MSE process for ABFT - do not hesitate to contact Tom Carruthers (t.carruthers@oceans.ubc.ca) for help with MP development.  
+
+In this example we are going to specify a very simple target index MP, an MP that will seek a target level by modifying TACs. 
+
+There are a number of possible ways to do this but we will use a very basic incremental TAC stepping method.
+
+We need to know a few things including 1) the target level of the relevant index, 2) the maximum rate of TAC change we are willing to tolerate.
+
+We can see the names of the various indices available for MP development by looking at the table object *Indices* that was loaded when your ran the line loadABT(). 
+
+```{r MPdev1}
+Indices
+
+```
+You will notice that each index is collected in an area associated with a current stock assessment where Stock = 1 is the Eastern Stock and Stock = 2 is the Western stock. 
+
+Lets say we wished to use the Mediterranean Larval Survey (Index No. 3) to set TACs in the East and the Gulf of Mexico Larval Survey (Index No. 7) to set TACs in the West. 
+
+[Current multispecies operating model fits](https://drive.google.com/open?id=1oJmXDD6tRKbEI4DwZnsLbFIAcq1EfiPt)  indicate that current stock levels (over the last three years) are around 1.5 times MSY levels in the East ([Figure 4 for base reference operating model 1AI of this document](https://drive.google.com/open?id=1oJmXDD6tRKbEI4DwZnsLbFIAcq1EfiPt)) and around 1.3 times MSY levels in the West. 
+
+We can extract the current index levels (years 2013 to 2015 are years 31 to 33) for each index from the observation model slot MPind that includes all the index data:
+
+```{r MPdev2}
+MPind<-Bad_Obs@MPind
+IndE<-MPind[MPind$No==3 & MPind$Year%in%(31:33),] # get the Med Larval Survey
+IndW<-MPind[MPind$No==7 & MPind$Year%in%(31:33),] # get the GOM Larval Survey
+
+```
+
+It is now straightforward to determine a possible target level for each index:
+```{r MPdev3}
+
+TargE=mean(IndE$Index)/1.5
+TargW=mean(IndW$Index)/1.3
+paste("TargE =",TargE)
+paste("TargW =",TargW)
+
+```
+
+In this simple example, the two index based MPs will alter the current TAC according to the ratio of current index levels (the observed index over the last *yrs4mean* number of years (default is 4 years) to target levels. We will set the maximum rate of TAC change (Delta) to 15% for both MPs.
+
+```{r MPdevE}
+MP_E = function(x,dset,Targ=22.56,Delta=0.15,IndexNo=3,yrs4mean=4){
+
+ lastyr = dim(dset$Iobs)[3]                # Most recent year
+ datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
+ curI = mean(dset$Iobs[x,IndexNo,datayrs]) # mean of last four years
+ Irat = curI/Targ                          # Index ratio
+ oldTAC = dset$MPrec[x]                    # The last TAC recommendation
+ 
+ if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
+   TAC = oldTAC*(1-Delta)
+ 
+ }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
+   TAC = oldTAC*(1+Delta)
+ 
+ }else{
+   TAC = oldTAC*Irat
+ }
+ 
+ TAC                                       # Last thing returned is the TAC recommendation
+ 
+}
+
+class(MP_E) = "MP"                         # Finally make sure it is of class MP
+
+```
+
+
+The Western MP is only different in the first line of function where we have to set an appropriate target level and index number:
+
+
+```{r MPdevW}
+MP_W = function(x,dset,Targ=o.42,Delta=0.15,IndexNo=7,yrs4mean=4){
+
+ lastyr = dim(dset$Iobs)[3]                # Most recent year
+ datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
+ curI = mean(dset$Iobs[x,IndexNo,datayrs]) # mean of last four years
+ Irat = curI/Targ                          # Index ratio
+ oldTAC = dset$MPrec[x]                    # The last TAC recommendation
+ 
+ if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
+   TAC = oldTAC*(1-Delta)
+ 
+ }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
+   TAC = oldTAC*(1+Delta)
+ 
+ }else{
+   TAC = oldTAC*Irat
+ }
+ 
+ TAC                                       # Last thing returned is the TAC recommendation
+ 
+}
+
+class(MP_W) = "MP"                         # Finally make sure it is of class MP
+
+```
+
+We can now test out our new MPs against simple mean catches and UMSY fishing:
+
+```{r MPtester,eval=F}
+
+myMPs<-list(c('UMSY','UMSY'),
+            c('MeanC','MeanC'),
+            c('MP_E','MP_W'))
+
+myMSE2<-new('MSE',OM=OM_1,Obs=Bad_Obs,MPs=myMPs,interval=5,IE="Umax_90")
+plot(myMSE2)
+getperf(myMSE2)
+
+```
+
+
+
 
 ### One last example of an MP specification, from start to finish
 
@@ -1195,11 +1322,11 @@ Assuming surplus production dynamics, this means that FMSY x current biomass is 
 
 ```{r Step_4_MCD_i5}
 
-MCD_i5<-function(x,dset,startD=0.2){
+MCD_i5<-function(x,dset,startD=0.5){
   
   nyears<-dim(dset$Iobs)[3]                  # Most recent year
   mean(dset$Cobs[x,],na.rm=T)*               # Average historical catches
-    mean(dset$Iobs[,5,(nyears-2):nyears])*   # Mean index over last three years
+    mean(dset$Iobs[x,5,(nyears-2):nyears]/max(dset$Iobs[x,5,],na.rm=T))*   # Mean index over last three years
     2*startD                                 # Adjusted for starting depletion and MSY production at depletion = 0.5
   
 }
@@ -1239,9 +1366,9 @@ Here we test our new MPs along with some more established management procedures:
 
 MPs<-list(
      c("MeanC",      "MeanC"),
-     c("SP_i4",      "SP_i2"),
-     c("DD_i4",      "DD_i2"),
-     c("DD_i4_4010", "DD_i2_4010"),
+     c("MeanC",      "SP_i7"),
+     c("MeanC",      "DD_i7"),
+     c("MeanC", "DD_i7_4010"),
      c("Islope1_i4", "Islope1_i2"))
 )
 
@@ -1332,13 +1459,14 @@ MSE_alt_Allocation<-new('MSE',OM_example,Bad_Obs,MPs,Allocation=alt_Allocation)
 Using the *C30* PM we can compare these runs for the MPs tested:
 
 ```{r Allocation_yield_comp}
+c("ZeroC","UMSY","MeanC")
 apply(C30(MSE_default,pp=1),1,mean)
 apply(C30(MSE_alt_MPareas,pp=1),1,mean)
 apply(C30(MSE_alt_Allocation,pp=1),1,mean)
 
 ```
 
-We can see that while the alternative *MPareas* made little difference to expected long term yield for the Eastern stock, the alternative fleet allocation tended to reduce expected long-term yield. 
+We can see that both the alternative *MPareas* and the alternative fleet allocation tended to reduce expected long-term yield for the Eastern Stock for the UMSY and mean catch MPs. 
 
 <a id="step6"></a>
 
@@ -1371,9 +1499,6 @@ Currently the focus of the package is to provide users with the tools to develop
 Tplot(MSE_example)
 ```
 
-```{r step7_tradeoff,fig.width=7,fig.height=6}
-tradeoff(MSE_example,PMs=list(Y_DR_20=Y_DR_20,U1=U1))
-```
 
 ### Satisficing
 

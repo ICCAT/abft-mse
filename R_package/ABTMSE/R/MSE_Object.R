@@ -517,14 +517,14 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   # Run projections ------------------------------------------------
   cat("Running projections")
   cat("\n")
-  if(sfIsRunning())sfExport(list=c("XSA","DD_i3","DD_i7","DD_i3_4010","Islope1",
-                  "DD_i7_4010","CDD_i3","CDD_i7","SPslope","DD",
+  if(sfIsRunning())sfExport(list=c("XSA","DD_i7","Islope1",
+                  "DD_i7_4010","CDD_i7","SPslope","DD",
                   "DD_R","UMSY","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
   upyrs<-nyears+(0:(floor(OM@proyears/interval)-1))*interval  # the years in which there are updates (every three years)
 
   testC<-array(NA,c(nsim,npop,nfleets,nareas))
   CAdist<-array(NA,c(nsim,npop,nareas,nfleets,nages))
-  CAA<-sampCatch(apply(C[,,,1:(nyears-1),,,],c(1,3,4),sum,na.rm=T),.Object@nCAAobs)
+  CAA<-sampCatch(apply(C[,,,1:(nyears-1),,0,],c(1,3,4),sum,na.rm=T),.Object@nCAAobs)
   inc<-OM@mulen[2]-OM@mulen[1]
   CAL<-makeCAL2(CAA,OM@iALK)
   CAL_bins<-c(OM@mulen,OM@mulen[OM@nlen]+inc)-0.5*inc
@@ -623,6 +623,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   Itemp<-array(NA,c(nsim,nind,allyears,nareas))
   .Object@TAC[,,,1]<-rep(curTAC,each=nsim*nMPs)
 
+
   for(MP in 1:nMPs){
 
     cat(paste0(paste0(MP,"/",nMPs," Running MSE for: "),paste0(MPs[[MP]]," (",.Object@Snames,")",collapse="  ")))  # print a progress report
@@ -634,6 +635,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
     #TAC<-array(NA,c(nsim,nAss)
     TAC<-array(rep(curTAC,each=nsim),c(nsim,nAss))
+    #for(i in 1:2)dset[[i]]$MPrec<-rep(curTAC[i],nsim)
 
     for(y in nyears:(nyears+proyears)){
 
@@ -694,6 +696,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            "CAA"=CAA,
                            "CAL"=CAL,
                            "CAL_bins"=CAL_bins,
+                           "MPrec"=TAC[,AS],
                            "TAC"=matrix(.Object@TAC[,MP,AS,1:(y-nyears+1)],ncol=(y-nyears+1),nrow=nsim)
                            )
 
@@ -702,6 +705,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           if(MPs[[MP]][AS]=="XSA"|!sfIsRunning()) TAC[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
           if(MPs[[MP]][AS]!="XSA") TAC[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
           if(y<allyears).Object@TAC[,MP,AS,y-nyears+2]<-TAC[,AS]
+
         }
 
         testC[testCind]<-TAC[testCind[,c(1,5)]]*Fdist[testCind[,c(1:4)]]*Allocation[testCind[,c(5,4)]] # predicted catch by TAC
