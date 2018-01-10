@@ -29,8 +29,6 @@ NULL
 #' @keywords data
 NULL
 
-
-
 # Observation models ---------------
 
 #' Generic bad quality observation error model
