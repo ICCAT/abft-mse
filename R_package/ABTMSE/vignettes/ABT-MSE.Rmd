@@ -304,12 +304,18 @@ An important feature of R is that it supports Object-Oriented Programming (OOP) 
 
 1. Install [R for Windows](https://cran.r-project.org/bin/windows/)
 2. Install [RStudio](https://www.rstudio.com/products/rstudio/download/)
-3. Download the ABT-MSE file structure from [here](https://drive.google.com/open?id=0B0TXcs-MLRl3c0w4VF9QbkJYOU0) 
-4. Install the ABTMSE R package by opening RStudio and entering the following code at the R console (making sure to change the file path to reflect where you put the ABT-MSE folder on your computer):
-```{r install_package,eval=F}
-install.packages("C:/ABT-MSE/R_package/ABTMSE_2.3.0.tar.gz") 
+3. Download the ABT-MSE file structure from [here](https://drive.google.com/open?id=0B0TXcs-MLRl3c0w4VF9QbkJYOU0)
+4. Install Package dependencies
+
+```{r install_package_depends,eval=F}
+source("C:/ABT-MSE/Depends.r") 
 ```
-5. Check that the installation is successful by finding this help file (the ABTMSE vignette):
+
+5. Install the ABTMSE R package by opening RStudio and entering the following code at the R console (making sure to change the file path to reflect where you put the ABT-MSE folder on your computer):
+```{r install_package,eval=F}
+install.packages("C:/ABT-MSE/ABTMSE_2.3.0.tar.gz") 
+```
+6. Check that the installation is successful by finding this help file (the ABTMSE vignette):
 ```{r load_library, eval=F}
 library(ABTMSE)
 ??ABTMSE
@@ -1240,26 +1246,26 @@ paste("TargW =",TargW)
 In this simple example, the two index based MPs will alter the current TAC according to the ratio of current index levels (the observed index over the last *yrs4mean* number of years (default is 4 years) to target levels. We will set the maximum rate of TAC change (Delta) to 15% for both MPs.
 
 ```{r MPdevE}
-MP_E = function(x,dset,Targ=22.56,Delta=0.15,IndexNo=3,yrs4mean=4){
+MP_E = function(x,dset,Targ=22.56,Deltaup=0.05,Deltadown=0.20,IndexNo=3,yrs4mean=3){
 
- lastyr = dim(dset$Iobs)[3]                # Most recent year
- datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
- curI = mean(dset$Iobs[x,IndexNo,datayrs]) # mean of last four years
- Irat = curI/Targ                          # Index ratio
- oldTAC = dset$MPrec[x]                    # The last TAC recommendation
- 
- if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
-   TAC = oldTAC*(1-Delta)
- 
- }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
-   TAC = oldTAC*(1+Delta)
- 
- }else{
-   TAC = oldTAC*Irat
- }
- 
- TAC                                       # Last thing returned is the TAC recommendation
- 
+  lastyr = dim(dset$Iobs)[3]                # Most recent year
+  datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
+  curI = mean(dset$Iobs[x,IndexNo,datayrs],na.rm=T) # mean of last yrs4mean years
+  Irat = curI/Targ                          # Index ratio
+  oldTAC = dset$MPrec[x]                    # The last TAC recommendation
+
+  if(Irat<(1-Deltadown)){                       # If index ratio is less than minimum adjustment
+    TAC = oldTAC*(1-Deltadown)
+
+  }else if(Irat>(1+Deltaup)){                 # If index ratio is greater than maximum adjustment
+    TAC = oldTAC*(1+Deltaup)
+
+  }else{
+    TAC = oldTAC*Irat
+  }
+
+  TAC                                       # Last thing returned is the TAC recommendation
+
 }
 
 class(MP_E) = "MP"                         # Finally make sure it is of class MP
@@ -1271,26 +1277,26 @@ The Western MP is only different in the first line of function where we have to 
 
 
 ```{r MPdevW}
-MP_W = function(x,dset,Targ=o.42,Delta=0.15,IndexNo=7,yrs4mean=4){
+MP_W = function(x,dset,Targ=0.42,Deltaup=0.05,Deltadown=0.20,IndexNo=7,yrs4mean=3){
 
- lastyr = dim(dset$Iobs)[3]                # Most recent year
- datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
- curI = mean(dset$Iobs[x,IndexNo,datayrs]) # mean of last four years
- Irat = curI/Targ                          # Index ratio
- oldTAC = dset$MPrec[x]                    # The last TAC recommendation
- 
- if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
-   TAC = oldTAC*(1-Delta)
- 
- }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
-   TAC = oldTAC*(1+Delta)
- 
- }else{
-   TAC = oldTAC*Irat
- }
- 
- TAC                                       # Last thing returned is the TAC recommendation
- 
+  lastyr = dim(dset$Iobs)[3]                # Most recent year
+  datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
+  curI = mean(dset$Iobs[x,IndexNo,datayrs],na.rm=T) # mean of last four years
+  Irat = curI/Targ                          # Index ratio
+  oldTAC = dset$MPrec[x]                    # The last TAC recommendation
+
+  if(Irat<(1-Deltadown)){                       # If index ratio is less than minimum adjustment
+    TAC = oldTAC*(1-Deltadown)
+
+  }else if(Irat>(1+Deltaup)){                 # If index ratio is greater than maximum adjustment
+    TAC = oldTAC*(1+Deltaup)
+
+  }else{
+    TAC = oldTAC*Irat
+  }
+
+  TAC                                       # Last thing returned is the TAC recommendation
+
 }
 
 class(MP_W) = "MP"                         # Finally make sure it is of class MP
@@ -1311,6 +1317,18 @@ getperf(myMSE2)
 
 ```
 
+A standard MSE performance trade-off plot PPlot() is also available that defaults to the 7 performance metrics (class PM) of the trial specifications document. 
+
+You can find out more about these PMs using the avail() function and also use PPlot() to produce a performance plot for a smaller number of PMs (or your own custom PMs) if you would prefer:
+
+```{r PPlot,fig.width=8, fig.height=10}
+
+PPlot(MSE_example)
+avail('PM')
+?C10
+?PPlot
+
+```
 
 
 

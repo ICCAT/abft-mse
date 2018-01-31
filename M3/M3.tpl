@@ -2,7 +2,7 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	        v1.7                                   
+//                                	           	        v1.9                                  
 //
 //                                   		          5th December 2017                           
 //                                                                     

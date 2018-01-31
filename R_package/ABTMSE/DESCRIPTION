@@ -5,8 +5,7 @@ Description: Simulation testing of management strategies and data-collection
     protocols for the multi-stock Atlantic bluefin tuna fishery.
 Authors@R: person("Tom", "Carruthers",, "t.carruthers@oceans.ubc.ca", role=c("aut", "cre"))
 License: GPL-2
-Depends: R (>= 3.2.0),
-    roxygen2,
+Depends: roxygen2,
     snowfall,
     maps,
     mapdata,

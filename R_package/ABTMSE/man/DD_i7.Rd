@@ -2,7 +2,7 @@
 % Please edit documentation in R/MPs.R
 \name{DD_i7}
 \alias{DD_i7}
-\title{A rapid 3 parameter observation error only delay difference model FOR INDEX 7 (JPN_LL_EAtl_Med) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).}
+\title{A rapid 3 parameter observation error only delay difference model FOR INDEX 7 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).}
 \usage{
 DD_i7(x, dset, checkfit = F)
 }
@@ -17,7 +17,7 @@ DD_i7(x, dset, checkfit = F)
 a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-A rapid 3 parameter observation error only delay difference model FOR INDEX 7 (JPN_LL_EAtl_Med) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
+A rapid 3 parameter observation error only delay difference model FOR INDEX 7 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 }
 \examples{
 DD_i7(1,dset_example_West)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/MPs.R
 \name{Fadapt_i7}
 \alias{Fadapt_i7}
-\title{An adaptive surplus production management procedure using INDEX 7 (JPN_LL_Eatl_Med) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).}
+\title{An adaptive surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).}
 \usage{
 Fadapt_i7(x, dset)
 }
@@ -21,7 +21,7 @@ Fadapt_i7(x, dset)
 a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-An adaptive surplus production management procedure using INDEX 7 (JPN_LL_Eatl_Med) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+An adaptive surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 }
 \examples{
 Fadapt_i7(1,dset_example_East)

@@ -540,6 +540,7 @@ setMethod("initialize", "OM", function(.Object,OMd="C:/M3",nsim=32,proyears=30,s
 
   .Object@Recdevs<-array(NA,dim=c(nsim,npop,nyears))
   .Object@Recdevs[ind]<-Rdsamps[indest]
+
   .Object@Reccv<-apply(Rdsamps,c(1,3),sd)*sqrt(nyears/nrest) # convert from std err to st dev
   .Object@Recsubyr<-as.integer(out$spawns)
 

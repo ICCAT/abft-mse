@@ -180,8 +180,7 @@ setwd("C:/GitHub/abft-mse")
 datadir<-paste0(getwd(),"/R_package/ABTMSE/data/")
 
 
-
-MP_E = function(x,dset,Targ=22.56,Delta=0.15,IndexNo=3,yrs4mean=4){
+MP_E = function(x,dset,Targ=22.56,Deltaup=0.05,Deltadown=0.20,IndexNo=3,yrs4mean=3){
 
   lastyr = dim(dset$Iobs)[3]                # Most recent year
   datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
@@ -189,11 +188,11 @@ MP_E = function(x,dset,Targ=22.56,Delta=0.15,IndexNo=3,yrs4mean=4){
   Irat = curI/Targ                          # Index ratio
   oldTAC = dset$MPrec[x]                    # The last TAC recommendation
 
-  if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
-    TAC = oldTAC*(1-Delta)
+  if(Irat<(1-Deltadown)){                       # If index ratio is less than minimum adjustment
+    TAC = oldTAC*(1-Deltadown)
 
-  }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
-    TAC = oldTAC*(1+Delta)
+  }else if(Irat>(1+Deltaup)){                 # If index ratio is greater than maximum adjustment
+    TAC = oldTAC*(1+Deltaup)
 
   }else{
     TAC = oldTAC*Irat
@@ -205,7 +204,7 @@ MP_E = function(x,dset,Targ=22.56,Delta=0.15,IndexNo=3,yrs4mean=4){
 
 class(MP_E) = "MP"                         # Finally make sure it is of class MP
 
-MP_W = function(x,dset,Targ=0.42,Delta=0.15,IndexNo=7,yrs4mean=4){
+MP_W = function(x,dset,Targ=0.42,Deltaup=0.05,Deltadown=0.20,IndexNo=7,yrs4mean=3){
 
   lastyr = dim(dset$Iobs)[3]                # Most recent year
   datayrs = lastyr-(yrs4mean-1):0           # Position of data for calculating current index
@@ -213,11 +212,11 @@ MP_W = function(x,dset,Targ=0.42,Delta=0.15,IndexNo=7,yrs4mean=4){
   Irat = curI/Targ                          # Index ratio
   oldTAC = dset$MPrec[x]                    # The last TAC recommendation
 
-  if(Irat<(1-Delta)){                       # If index ratio is less than minimum adjustment
-    TAC = oldTAC*(1-Delta)
+  if(Irat<(1-Deltadown)){                       # If index ratio is less than minimum adjustment
+    TAC = oldTAC*(1-Deltadown)
 
-  }else if(Irat>(1+Delta)){                 # If index ratio is greater than maximum adjustment
-    TAC = oldTAC*(1+Delta)
+  }else if(Irat>(1+Deltaup)){                 # If index ratio is greater than maximum adjustment
+    TAC = oldTAC*(1+Deltaup)
 
   }else{
     TAC = oldTAC*Irat
@@ -229,10 +228,26 @@ MP_W = function(x,dset,Targ=0.42,Delta=0.15,IndexNo=7,yrs4mean=4){
 
 class(MP_W) = "MP"                         # Finally make sure it is of class MP
 
-myMPs<-list( c('MP_E','MP_W'),
-             c('UMSY','UMSY'),
-             c('MeanC','MeanC'))
 
+#setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=list(c("UMSY","UMSY")),interval=3,IE="Umax_90",
+                                        curTAC=c(13500000,2000000),Allocation=NA,MPareas=NA,Fdistyrs=3){
+#.Object})
+#.Object<-new('MSE')
+
+OM=OM_1
+Obs=Good_Obs
+interval=3
+IE="Umax_90"
+curTAC=c(13500000,2000000)
+Allocation=NA
+MPareas=NA
+Fdistyrs=3
+
+myMPs<-list(c('UMSY','UMSY'),
+            c('MeanC','MeanC'),
+            c('MP_E','MP_W'))
+#c('UMSY','UMSY'),
+#c('MeanC','MeanC'))
 sfInit(detectCores())
 myMSE2<-new('MSE',OM=OM_1,Obs=Perfect_Obs,MPs=myMPs,interval=5,IE="Umax_90")
 save(myMSE2,file=paste0(datadir,"myMSE2"))

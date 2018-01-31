@@ -164,7 +164,6 @@ import(
     "abind",
     "SDMTools",
     "PBSmapping",
-    "MASS",
     "shiny",
     "parallel",
     "lubridate",

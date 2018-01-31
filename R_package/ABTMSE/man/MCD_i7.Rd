@@ -2,7 +2,7 @@
 % Please edit documentation in R/MPs.R
 \name{MCD_i7}
 \alias{MCD_i7}
-\title{A simple MP that uses an index (INDEX 7 - JPN_LL_EAtl_Med) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).}
+\title{A simple MP that uses an index (INDEX 7 - GOM_LAR_SUV) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).}
 \usage{
 MCD_i7(x, dset)
 }
@@ -15,7 +15,7 @@ MCD_i7(x, dset)
 a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-A simple MP that uses an index (INDEX 7 - JPN_LL_EAtl_Med) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
+A simple MP that uses an index (INDEX 7 - GOM_LAR_SUV) to derive depletion then fishing at average catch x depletion x 2(a management procedure of class MP).
 }
 \examples{
 MCD_i7(1,dset_example_East)

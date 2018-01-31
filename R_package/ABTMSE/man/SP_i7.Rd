@@ -2,7 +2,7 @@
 % Please edit documentation in R/MPs.R
 \name{SP_i7}
 \alias{SP_i7}
-\title{A 3 parameter surplus production assessmetn using INDEX 7 (JPN_LL_EAtl_Med) (observation error only)(a management procedure of class MP).}
+\title{A 3 parameter surplus production assessmetn using INDEX 7 (GOM_LAR_SUV) (observation error only)(a management procedure of class MP).}
 \usage{
 SP_i7(x, dset)
 }
@@ -15,7 +15,7 @@ SP_i7(x, dset)
 a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-A 3 parameter surplus production assessmetn using INDEX 7 (JPN_LL_EAtl_Med) (observation error only)(a management procedure of class MP).
+A 3 parameter surplus production assessmetn using INDEX 7 (GOM_LAR_SUV) (observation error only)(a management procedure of class MP).
 }
 \examples{
 SP_i7(1,dset_example_East)

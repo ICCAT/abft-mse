@@ -223,7 +223,6 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   rm(aselind)
 
-
   FM<-array(NA,c(nsim,npop,nages,allyears,nsubyears,nareas,nfleets))
   Find<-as.matrix(expand.grid(1:nsim,1:npop,1:nages,1:nyears,1:nsubyears,1:nareas,1:nfleets))
   FM[Find]<-OM@qE[Find[,c(1,7)]]*asel[Find[,c(1,2,7,3)]]*OM@E[Find[,c(1,7,4,5,6)]]
@@ -261,7 +260,12 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   SPAM<-SPAYMR[,c(1:3,5)]
 
   # New model initialization -----------------------
-
+  LTyrs<-4 # Lower triangle (recent recruitment years)
+  proccv<-rep(OM@Reccv,allyears)
+  proccv[proccv>0.8]<-0.8 # max proc error ### for testing purposes
+  procmu <- -0.5*(proccv)^2
+  Pe<-array(exp(rnorm(nsim*npop*LTyrs,procmu,proccv)),c(nsim,npop,LTyrs))
+  OM@Recdevs[,,nyears+(-(LTyrs-1):0)]<-Pe # lower triangle are predicted as mean historical recruitment
   Rec<-array(array(OM@muR,c(nsim,npop,nyears))*OM@Recdevs,c(nsim,npop,nyears))
   Rec1<-Rec[,,1]
 
@@ -297,7 +301,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   #apply(SSB[1,    ,   ,1,,],c(1,3),sum)
   sdur<-1/nsubyears
-  canspawn<-array(rep(c(0,1,0,0,0,0,1,0),each=nsim),c(nsim,npop,nareas))
+  canspawn<-array(rep(c(0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0),each=nsim),c(nsim,npop,nareas))
   hM<-array(M,c(nsim,npop,nages,nareas))
 
   for(y in 2:nHyears){
@@ -590,6 +594,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     }
 
   }
+
   .Object@Istats<-Istats
 
   #Itemp<-Isim[,,1:nyears,1]#^array(Istats[,,1],c(nsim,nind,nyears))                 # add hyperstability / hyper depletion
@@ -647,6 +652,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
         # Simulate indices ----------------------------------------------
         # if new data are required
+
         if(y!=nyears){
 
           Ilev[,(y-interval+1):y,,1]<-apply(Biomass[,,,(y-interval+1):y,,],c(1,4,6),sum)
@@ -666,6 +672,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           CAA<-abind(CAA,nCAA,along=3)
           CAL<-abind(CAL,makeCAL3(nCAA,OM@iALK[,,nyears,,]),along=3)
         }
+
         for(AS in 1:nAss){
           #SPAYMRF
           AA<-Assess_data[AS,]
@@ -712,6 +719,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
         #nsim, nsubyears, nareas, nfleets
         aggC<-apply(testC,1:4,sum)
+        # apply(aggC,1,sum)==apply(TAC,1,sum) # simulation totals match?
 
       }else{
         .Object@TAC[,MP,,y-nyears+2]<-.Object@TAC[,MP,,y-nyears+1]
@@ -726,7 +734,6 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
       # need to aggregate and allocate TACs here.
       # Fdist [sim, subyear, area, fleet]
-
       # testC [nsim,nsubyears,nareas,nfleets,nAss]
 
       for(m in 1:nsubyears){
@@ -734,6 +741,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
         SPAYMR[,5]<-m
         SPAM<-SPAYMR[,c(1:3,5)]
         SPAYMRF2[,5]<-m
+        #SPARF2<-SPAYMRF2[,c(1,2,3,6,7)]
         SFYMR2<-SPAYMRF2[,c(1,7,4:6)]
         SPAYMR2<-SPAYMRF2[,1:6]
 
@@ -758,20 +766,24 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
         #testC2<-(1-exp(-Fp))*array(Btemp,dim(aggC[,m,,]))
         testC2<-do.call(IE,list(testU))*array(Btemp,dim(aggC[,m,,]))
 
+        # apply(testC2,1,sum)==apply(aggC[,m,,],1,sum) # simulation totals match?
+
         CAdist[SPRFA2]<-N[SPAYMR2]*Wt_age[SPAL]*sel[SPARF2] # predicted magnitude of catch in each strata
         CAdistsum<-apply(CAdist,c(1,3,4),sum)                # total in each sim, region and fleet
         CAdist[SPRFA2]<-CAdist[SPRFA2]/CAdistsum[SPRFA2[,c(1,3,4)]] # fraction in each stock and age class per sim region and fleet
         CAdist[is.na(CAdist)]<-0
 
         C[SPAYMRF2]<-testC2[SRF2]*CAdist[SPRFA2]
+
         C[SPAYMRF2][is.na(C[SPAYMRF2])]<-0
+        # apply(C[,,,y,m,,],1,sum,na.rm=T)==apply(testC2,1,sum)
         C[SPAYMRF2]<-C[SPAYMRF2]/Wt_age[SPAL] # divide by weight to get numbers
         Up<-array(C[SPAYMRF2]/N[SPAYMR2],c(nsim,npop,nages,nareas,nfleets)) # additional check on maximum / minimum U
-        Up[is.na(Up)|Up<0.000001]<-0.000001   # otherwise you can't generate some of the automatic fishery data
+        Up[is.na(Up)|Up<0.0001]<-0.0001   # otherwise you can't generate some of the automatic fishery data
         Up[Up>0.9]<-0.9
-        FM[SPAYMRF2]<--log(1-Up[SPARF2])
+        FM[SPAYMRF2]<-(-log(1-Up[SPARF2]))
 
-        Ftot<-apply(FM[,,,y,m,,],1:4,sum)
+        Ftot<-apply(FM[,,,y,m,,],1:4,sum,na.rm=T)
         Z[SPAYMR]<-Ftot[SPAR]+M[SPAY]/nsubyears
 
         for(pp in 1:npop){
@@ -800,12 +812,12 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
               R0<-OM@Recpars[cbind(1:nsim,rep(pp,nsim),Regime,rep(2,nsim))]
               SSBpR<-apply(surv[,pp,]*OM@mat[,pp,,nyears]*OM@Wt_age[,pp,,nyears],1,sum) # This R0 dependent so needs updating for varying future R0s
               SSB0<-R0*SSBpR
+              #SSBt/SSB0
 
-              if(Rectype[1]=="BH"){ # currently rectypes change together
+              if(Rectype[1]=="BH"|Rectype[1]=="BH_R0"){ # currently rectypes change together
 
                 h<-OM@Recpars[cbind(1:nsim,rep(pp,nsim),Regime,rep(1,nsim))]
-                N[,pp,1,y,m,]<-Pe[,pp,y]*spawnr*(    (0.8*R0*h*SSBt) /
-                                                       (0.2*SSBpR*R0*(1-h) + (h-0.2)*SSBt))
+                N[,pp,1,y,m,]<-Pe[,pp,y]*spawnr*(    (0.8*R0*h*SSBt) / (0.2*SSBpR*R0*(1-h) + (h-0.2)*SSBt))
 
               }else if(Rectype[1]=="HS"){
 
