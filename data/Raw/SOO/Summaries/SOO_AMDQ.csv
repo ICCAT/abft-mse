@@ -1,0 +1,58 @@
+"","Method","Area","Decade","Quarter","n"
+"1","Genetics","GOM",1970,1,214
+"2","Otolith Chemistry","GOM",1980,1,9
+"3","Otolith Chemistry","WATL",2000,1,10
+"4","Otolith Chemistry","GOM",2010,1,12
+"5","Otolith Chemistry","GOM",2020,1,9
+"6","Genetics","SATL",2020,1,105
+"7","Otolith Chemistry","SATL",2020,1,39
+"8","Otolith Chemistry","WATL",2020,1,359
+"9","Otolith Chemistry","GOM",1980,2,93
+"10","Otolith Chemistry","WATL",1980,2,34
+"11","Otolith Chemistry","WATL",2000,2,5
+"12","Otolith Chemistry","EATL",2010,2,8
+"13","Otolith Chemistry","GOM",2010,2,102
+"14","Otolith Chemistry","MED",2010,2,12
+"15","Otolith Chemistry","SATL",2010,2,19
+"16","Otolith Chemistry","WATL",2010,2,8
+"17","Genetics","EATL",2020,2,8
+"18","Otolith Chemistry","EATL",2020,2,6
+"19","Otolith Chemistry","GOM",2020,2,65
+"20","Otolith Chemistry","MED",2020,2,142
+"21","Genetics","NATL",2020,2,1
+"22","Genetics","SATL",2020,2,268
+"23","Otolith Chemistry","SATL",2020,2,136
+"24","Otolith Chemistry","WATL",2020,2,263
+"25","Otolith Chemistry","GSL",1980,3,10
+"26","Otolith Chemistry","WATL",1980,3,238
+"27","Otolith Chemistry","WATL",2000,3,129
+"28","Otolith Chemistry","EATL",2010,3,166
+"29","Otolith Chemistry","GSL",2010,3,9
+"30","Otolith Chemistry","NATL",2010,3,1
+"31","Otolith Chemistry","WATL",2010,3,249
+"32","Genetics","EATL",2020,3,118
+"33","Otolith Chemistry","EATL",2020,3,50
+"34","Genetics","GSL",2020,3,43
+"35","Otolith Chemistry","GSL",2020,3,585
+"36","Otolith Chemistry","MED",2020,3,91
+"37","Genetics","NATL",2020,3,193
+"38","Otolith Chemistry","NATL",2020,3,3
+"39","Genetics","SATL",2020,3,53
+"40","Otolith Chemistry","SATL",2020,3,33
+"41","Genetics","WATL",2020,3,109
+"42","Otolith Chemistry","WATL",2020,3,918
+"43","Otolith Chemistry","WATL",1980,4,1
+"44","Otolith Chemistry","WATL",2000,4,29
+"45","Otolith Chemistry","EATL",2010,4,15
+"46","Otolith Chemistry","NATL",2010,4,115
+"47","Otolith Chemistry","WATL",2010,4,119
+"48","Genetics","EATL",2020,4,1
+"49","Otolith Chemistry","EATL",2020,4,6
+"50","Genetics","GSL",2020,4,21
+"51","Otolith Chemistry","GSL",2020,4,260
+"52","Genetics","NATL",2020,4,235
+"53","Otolith Chemistry","NATL",2020,4,196
+"54","Genetics","SATL",2020,4,65
+"55","Otolith Chemistry","SATL",2020,4,30
+"56","Genetics","WATL",2020,4,56
+"57","Otolith Chemistry","WATL",2020,4,156
