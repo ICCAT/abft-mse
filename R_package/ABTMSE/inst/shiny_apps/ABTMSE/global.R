@@ -1,0 +1,6 @@
+MET<<-readRDS("./data/MET.rds")
+pnames<<-readRDS("./data/pnames.rds")
+MPnames<<-readRDS("./data/MPnames.rds")
+OMnames<<-readRDS("./data/OMnames.rds")
+OMgrid<<-readRDS("./data/OMgrid.rds")
+Design<<-readRDS("./data/Design.rds")

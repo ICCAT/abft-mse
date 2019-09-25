@@ -1,0 +1,482 @@
+
+---
+title: "Summary of the fitted operating models"
+subtitle: "ABT-MSE"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 16px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+# Introduction / notes
+
+```{r intro, results='asis',echo=FALSE,size="small"}
+cat(introtext)
+```
+
+
+# OM design 
+
+## Factor 1: Future Recruitment 
+
+```{r OMdesign1, results='asis',echo=FALSE,size="small"}
+T1<-data.frame(Design$all_lnams[[1]])
+names(T1)<-""
+kable(T1,format='markdown')
+#("normalsize", "tiny", "scriptsize", "footnotesize", "small", "large", "Large", "LARGE", "huge", "Huge
+```
+
+## Factor 2: Natural Mortality / Maturity
+
+```{r OMdesign2, results='asis',echo=FALSE}
+T1<-data.frame(Design$all_lnams[[2]])
+names(T1)<-""
+kable(T1,format='markdown')
+
+```
+
+## Factor 3: Stock mixing
+
+```{r OMdesign3, results='asis',echo=FALSE}
+T1<-data.frame(Design$all_lnams[[3]])
+names(T1)<-""
+kable(T1,format='markdown')
+
+```
+
+
+# OMs presented in this report 
+Table 1. The subset of wider operating models included in this comparison report. 
+
+```{r OMdesigngrid, results='asis',echo=FALSE,fig.width=5}
+
+DM<-cbind(OMnames,Design$Design_Ref[OMnos,])
+names(DM)<-c("Code.","Future Recruitment","Maturity / M","Stock mixing")
+DM%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+```
+
+# Residuals in indices
+
+```{r refpoints_E, fig.width=8, fig.height=11,echo=FALSE}
+
+OMnames<-rep("",nOMs)
+Sres1<-Sres2<-NULL#array(NA,c(nOMs,8))
+out<-M3read(OMdirs[1])
+load(paste0(OMdirs[1],"/OMI"))
+SSBstore<-array(0,c(nOMs,out$np,out$ny))
+SSB0store<-array(0,c(nOMs,out$np))
+SSBastore<-array(0,c(nOMs,out$np,out$ny))
+ny<-out$ny
+nHy<-out$nHy
+np<-out$np
+na<-out$na
+dynB0<-array(NA,c(nOMs,out$np,nHy+ny))
+B_BMSY_st<-array(NA,c(nOMs,out$np))
+
+OMlab<-unlist(lapply(strsplit(OMdirs,"/"),FUN=function(x)x[length(x)]))
+CPUEres<-new('list')
+
+# FI stuff
+
+firstrow<-match(1:OMI@nI,OMI@Iobs[,5])
+Fleetnos<-as.vector(OMI@Iobs[firstrow,5])
+Seasons<-as.vector(OMI@Iobs[firstrow,2])
+Areas<-OMI@areanams[as.vector(OMI@Iobs[firstrow,3])]
+Types<-as.vector(OMI@Iobs[firstrow,6])
+outs<-OMIs<-new('list')    
+
+lcs<-function(x){
+    x1<-x/mean(x) # rescale to mean 1
+    x2<-log(x1)     # log it
+    x3<-x2-mean(x2) # mean 0
+    x3
+}
+
+
+for(i in 1:nOMs){
+  
+  out<-M3read(OMdirs[i])
+  outs[[i]]<-out
+  
+  muSSB<-apply(out$SSB,1:2,mean) # by stock (below is by east-west area)
+  Nind<-TEG(dim(out$N))
+  SSB<-array(NA,dim(out$N))
+  SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
+  SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
+  SSBmu<-apply(SSBsum,c(1,3),mean)
+  #sum(SSBmu[55,])==sum(SSBsum[55,,])/4 # Debug test
+  SSBastore[i,1,]<-apply(SSBmu*rep(c(0,0,0,1,1,1,1),each=out$ny),1,sum)
+  SSBastore[i,2,]<-apply(SSBmu*rep(c(1,1,1,0,0,0,0),each=out$ny),1,sum)
+
+  j<-strsplit(OMdirs[i],"/")
+  j<-as.numeric(j[[1]][length(j[[1]])])
+  #load(paste0(OMdirs[i],"/OM"))
+  load(paste0(OMdirs[i],"/OMI"))
+  OMIs[[i]]<-OMI
+  
+  OMnames[i]<-paste(as.character(Design$Design_Ref[j,1]),
+                    paste(as.character(Design$Design_Ref[j,2])),
+                    paste(as.character(Design$Design_Ref[j,3])))
+  
+  VBi<-out$VB/rep(apply(out$VB,4,mean),each=out$ny*out$ns*out$nr)
+
+  chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE)) 
+
+  groups<-chunk2(1:OMI@nCPUEq,5)
+
+  for(k in 1:OMI@nCPUEq){
+      
+    ind<-OMI@CPUEobs[,4]==k
+    tempdat<-subset(OMI@CPUEobs,ind)  
+    obs<-as.numeric(tempdat[,6])
+    pred<-out$CPUEpred_vec[ind]
+    
+    if(i==1){
+      CPUEres[[k]]<-lcs(obs)-lcs(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],lcs(obs)-lcs(pred))
+    }
+
+  }
+  
+  for(k in OMI@nCPUEq+1:OMI@nI){
+  
+    j<-k-OMI@nCPUEq
+    ind<-OMI@Iobs[,5]==j
+    tempdat<-subset(OMI@Iobs,ind)  
+    obs<-as.numeric(tempdat[,7])
+    pred<-out$Ipred_vec[ind]
+    #if(Types[i]==1){
+     
+    if(i==1){
+      CPUEres[[k]]<-lcs(obs)-lcs(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],lcs(obs)-lcs(pred))
+    }
+ 
+  }  
+  
+  
+  opt<-SRplot(out,years=OMI@years,type=OMI@SRtype,plot=F,OMI@SRminyr,OMI@SRmaxyr)
+
+  R0s<-opt$R0s_now
+  res<-MSYMLE(out,OMI)
+
+  res[,c(2,3,6,7,8)]<-round(res[,c(2,3,6,7,8)],3)
+  res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000000,2)
+  SSBs<-round(out$SSB[,out$ny,out$ns]/1000,0)
+  B_BMSY_st[i,]<-res[,6]
+ 
+  SSBstore[i,,]<-apply(out$SSB,1:2,mean)/1000
+  SSB0store[i,]<-out$SSB0/1000
+  
+  
+  yrs<-OMI@years[1]:OMI@years[2]
+  surv<-exp(-t(apply(cbind(c(0,0),OMI@Ma[,1:(OMI@na-1)]),1,cumsum)))
+  surv[,OMI@na]<-surv[,OMI@na]+surv[,OMI@na]*exp(-OMI@Ma[,OMI@na])/(1-exp(-OMI@Ma[,OMI@na]))
+  matwt<-t(out$wt_age[out$ny,,])*out$mat_age*surv
+  SSBpR<-apply(matwt,1,sum)
+  
+ 
+  for(pp in 1:np){
+    
+    SSB=out$R0[pp,1]*SSBpR[pp]#OMI@SSBpR[pp]
+    dynB0[i,pp,1:nHy]<-rep(SSB,nHy)
+    N<-out$R0[pp,1]*surv[pp,]
+    for(yy in 1:ny){
+      Nplus<-N[na]*exp(-OMI@Ma[pp,na])
+      for(aa in na:2)N[aa]<-N[aa-1]*exp(-OMI@Ma[pp,aa-1])
+      N[1]<-out$R0[pp,yy]
+      N[na]<-N[na]+Nplus
+      dynB0[i,pp,nHy+yy]<-sum(out$wt_age[out$ny,,pp]*out$mat_age[pp,]*N)
+    }
+  }
+
+  
+  refyr<-2016-OMI@years[1]+1
+
+  res<-MSYMLE(out,OMI)
+  res2<-doMSY(out,OMI,dynB0[i,,],refyr,res)
+  
+  #Fap<-meanFs(FML=out$FL[refyr,,,,], iALK=out$iALK[,refyr,,], N=out$N[,refyr,,,],
+   #      wt_age=t(out$wt_age[refyr,,]))
+
+  #F_FMSY<-apply(Fap,1,max)/res[,2]
+  #SSB_SSB0<-apply(out$SSB[,refyr,],1,mean)/out$SSB0#res$SSBMSY
+  #res<-MSYMLE(out,OMI)
+  #res<-cbind(res,F_FMSY,SSB_SSB0)
+  #res[,c(2,3,6,7,8,9,10)]<-round(res[,c(2,3,6,7,8,9,10)],3)
+  #res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)
+  #res[res[,2]==5,2]<-"5 (hit max bound)"
+  #BMSY<-round(res[,7]*dynB0[i,,nHy+ny]/1000,0)
+  #B_BMSY<-round(apply(out$SSB,1:2,mean)[,out$ny]/(BMSY*1000),3)
+
+  #Dep_dyn<-round(apply(out$SSB,1:2,mean)[,out$ny]/dynB0[i,,nHy+ny],3)
+  #res<-cbind(res[,c(1,2)],BMSY,res[,c(7,9)],B_BMSY,Dep_dyn)
+  #names(res)<-c("MSY","FMSY","BMSY","BMSY_B0","F_FMSY","B_BMSY","Dep")
+  
+  
+  Sres1<-rbind(Sres1,c(OM=OMlab[i],Code=OMnames[i],res2[1,]))
+  Sres2<-rbind(Sres2,c(OM=OMlab[i],Code=OMnames[i],res2[2,]))
+
+}
+
+Sres1<-as.data.frame(Sres1)
+Sres2<-as.data.frame(Sres2)
+
+#names(Sres1)[c(4,6,7,8,9)]<-names(Sres2)[c(4,6,7,8,9)]<-c("FMSY","BMSY","BMSY_B0","Depletion","B2015")
+
+retseq<-function(res){
+
+  nres<-length(res)
+  str<-rep(1,nres)
+  i<-1
+  going<-TRUE
+  while(going){
+
+    same=TRUE
+    j<-0
+    while(same){
+
+      if(res[i]!=res[i+j+1]|(j+i+1)==(nres+1)){
+
+        same=FALSE
+        str[i:(i+j)]<-j+1
+
+      }else{
+        j<-j+1
+      }
+    }
+
+    if(i+j+1>nres)going=FALSE
+    i<-i+j+1
+
+  }
+
+  str
+}
+
+resplot2<-function(yrs,res,horiz=T){
+
+  resind<-length(res):1
+  col<-rep('blue',length(res))
+  col[res<0]<-'dark grey'
+  ACcol<-c("white","white","#ff000010","#ff000030","#ff000080",rep('red',200))
+  ACval<-retseq(res<0)
+  bcol=ACcol[ACval]
+  par(lwd = 2)
+  nspace<-ceiling(length(res)*0.2)
+  barplot(c(res[resind],rep(NA,nspace)),names.arg=c(yrs[resind],rep(NA,nspace)),border="white",col="white",horiz=horiz)
+  abline(v=c(-0.25,0.25),lty=2,col="grey",lwd=1)
+  abline(v=c(-0.5,0.5),col="grey",lwd=1)
+  barplot(res[resind],names.arg=yrs[resind],border=bcol[resind],col=col[resind],add=T,horiz=horiz)
+  ac<-acf(res,plot=F)$acf[2,1,1]
+  leg<-c(paste("SD =",round(sd(res),2)),paste("AC =", round(ac,2)))
+  legend('topleft',legend=leg,box.col="#ffffff99",bg="#ffffff99",cex=0.8)
+  #legend('topleft',legend=leg, box.col="#ffffff99",bg="#ffffff99")
+
+}
+
+chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
+groups<-chunk2(1:(OMI@nCPUEq+OMI@nI),6)
+
+
+for(j in 1:length(groups)){
+  
+  par(mfrow=c(length(groups[[j]]),length(OMnos)),mai=c(0.3,0.08,0.1,0.01),omi=c(0.3,0.3,0.2,0.05))
+  
+  for(k in groups[[j]]){
+    
+    for(i in 1:length(OMnos)){
+      resplot2(yrs=rep(NA,length(CPUEres[[k]][,i])),res=CPUEres[[k]][,i])
+      if(i==1)mtext(c(OMI@CPUEnames,OMI@Inames)[k],2,line=1.5)
+      if(k == groups[[j]][1])mtext(OMnames[i],3,line=0.8)
+    }
+    
+  }
+  
+  #cat("\n\n\\pagebreak\n")
+  
+}
+
+mtext("Residual error. log(Obs.)-log(Pred.)",1,outer=T,line=0.5)
+
+
+```
+
+
+
+# Spawning stock biomass trends by stock and area
+
+```{r SSBa_overlap, results='asis',echo=FALSE,fig.width=9,fig.height=6}
+
+  cols=rep(c('black','red'),4)
+  ltys=rep(rep(1:2,each=2),2)
+  lwds=rep(1:2,each=4)
+
+  par(mai=c(0.2,0.2,0.5,0.2),omi=c(0.5,0.5,0.1,0.1))
+
+  layout(matrix(c(1:2,3:4,5:8),ncol=4),width=c(1,0.2,1,0.4))
+
+  yrs<-OMI@years[1]:OMI@years[2]
+
+  anams<-c("East","West")
+  
+  ny<-dim(SSBstore)[3]
+  set.seed(2)
+  
+  for(aa in 2:1){
+
+    matplot(yrs,t(SSBstore[,aa,]/1000),col=cols,lty=ltys,lwd=lwds,type='l',ylab="",ylim=c(0,quantile(SSBstore[,aa,]/1000,0.99)),yaxs="i")
+    mtext(paste(anams[aa],"Stock"),3,line=0.5)
+   
+    matplot(yrs,t(SSBastore[,aa,]/1000000),col=cols,lty=ltys,lwd=lwds,type='l',ylab="",ylim=c(0,quantile(SSBastore[,aa,]/1000000,0.99)),yaxs="i")
+    mtext(paste(anams[aa],"Area"),3,line=0.5)
+
+    plot(rep(1,nOMs),SSBstore[,aa,ny]/1000,xlim=c(0.6,1.4),ylim=range(SSBstore[,aa,]/1000),col="white",axes=F)
+    #text(rep(1,nOMs)+runif(length(OMnos),-0.3,0.3),SSBstore[,aa,ny],OMnos,col=cols,font=2,cex=1.3)
+    if(aa==1) legend('bottom',legend=c("Rec 1","Rec 2","Mat/M A","Mat/M B","Mix I","Mix II"),lty=c(1,1,1,2,1,1),lwd=c(1,1,1,1,1,2),col=c("black","red",rep('black',4)),bty='n')
+
+    plot(rep(1,nOMs),SSBastore[,aa,ny]/1000,xlim=c(0.6,1.4),ylim=range(SSBastore[,aa,]/1000),col="white",axes=F)
+    #text(rep(1,nOMs)+runif(nOMs,-0.3,0.3),SSBastore[,aa,ny],OMnos,col=cols,font=2,cex=1.3)
+    
+  }
+   mtext("Year",1,line=1.6,outer=T)
+  mtext("Spawning biommass (kt)",2,line=1.6,outer=T)
+
+```
+
+# Model estimates / reference points 
+
+## Eastern stock
+
+Table 1. Reference points for the Eastern stock using 2015 stock-recruitment (R0 and steepness). FMSY refers to apical F (the instantaneous fishing mortality rate on the most selected length class). UMSY is current yield divided by vulnerable biomass. Tabulated biomass numbers (BMSY, BMSY_B0 and B2015) refer to spawning biomass. These biomass numbers and MSY numbers are expressed in thousands of tonnes. Depletion is spawning biomass in 2015 relative to the 'dynamic B0' (the spawning biomass under zero fishing accounting for shifts in recruitment). 
+
+```{r refpoints_Et, results='asis',echo=FALSE,fig.width=5}
+Sres1%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T) 
+#kable(Sres1)
+
+```
+
+
+## Western stock
+
+Table 2. As Table 1 but for the Western stock. 
+
+```{r refpoints_W, results='asis',echo=FALSE,fig.width=5}
+
+Sres2%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+  
+```
+
+
+# SSB trends by stock
+
+```{r SSBtrends, fig.width=7, fig.height=9,echo=FALSE}
+
+SSBEmax<-max(SSBstore[,1,],na.rm=T)/1000
+SSBWmax<-SSBEmax#max(SSBstore[,2,],na.rm=T)/1000
+SSBadj<-1
+
+zpos<-pretty(seq(0,SSBWmax,length.out=5))
+zlabs<-zpos
+zpos<-zpos*SSBadj
+
+nr<-ceiling(nOMs/3)
+par(mfrow=c(nr,ceiling(nOMs/nr)),mai=c(0.3,0.4,0.01,0.3),omi=c(0,0.3,0,0.3))
+yrs<-OMI@years[1]:OMI@years[2]
+
+for(i in 1:nOMs){
+  
+  plot(yrs,SSBstore[i,1,]/1000,col="#ff000098",type="l",ylim=c(0,SSBEmax),ylab="",xlab="",yaxs="i")
+  #axis(1)
+  #axis(2,col="red")
+  #axis(4,at=zpos,labels=zlabs,col="blue")
+  
+  lines(yrs,SSBstore[i,2,]/1000,col="#0000ff98")
+  
+  legend('topleft',legend=OMnames[i],bty='n')
+  
+  lines(yrs,dynB0[i,1,nHy+(1:ny)]/1000000,col='red',lty=2)
+  lines(yrs,dynB0[i,1,nHy+(1:ny)]*B_BMSY_st[i,1]/1000000,col='red',lty=3)
+  lines(yrs,dynB0[i,2,nHy+(1:ny)]/1000000,col='blue',lty=2)
+  lines(yrs,dynB0[i,2,nHy+(1:ny)]*B_BMSY_st[i,2]/1000000,col='blue',lty=3)
+  
+  #abline(h=as.numeric(Sres1[i,6])/1000,col="#ff000080",lty=2)
+  #abline(h=as.numeric(SSBadj*as.numeric(Sres2[i,6]))/1000,col="#0000ff80",lty=2)
+  
+}  
+
+plot(1,1,axes=F,main="",xlab="",ylab="",col="white")
+
+legend('topright',legend=c("East","West"),text.col=c("red","blue"),bty='n')
+legend('bottomright',legend=c("Dyn. B0","Dyn. BMSY"),lty=c(2,3),bty='n',lwd=2)
+ 
+
+#mtext("SSB (000,t)",2,outer=T,line=0.5,col="red")
+mtext("SSB (000,t)",4,outer=T,line=0.5)
+
+```
+
+
+# Negative log-likelihood components
+
+Table 3. Contribution of negative log-likelihood components (lower values are better fit) to global objective function. Each likelihood component has a specific weighting that is documented in the trial specifications. 
+
+```{r Likelihoods, fig.width=7, fig.height=9,echo=FALSE}
+
+tabs<-LHtabs(outs,OMIs,OMnos=OMnos,OMnams=OMnames)  
+LHs<-tabs$LHs
+LHsU<-tabs$LHsU
+  
+LHs%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+```
+
+Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), TOT_nP = total global objective function without priors, TOT = total global objective function. 
+
+

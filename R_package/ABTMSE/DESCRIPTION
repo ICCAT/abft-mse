@@ -1,0 +1,34 @@
+Package: ABTMSE
+Version: 6.2.1
+Title: Atlantic Bluefin Tuna Management Strategy Evaluation
+Description: Simulation testing of management strategies and data-collection
+    protocols for the multi-stock Atlantic bluefin tuna fishery.
+Authors@R: person("Tom", "Carruthers",, "bluemattersci@gmail.com", role=c("aut", "cre"))
+License: GPL-2
+Depends: roxygen2,
+    snowfall,
+    maps,
+    mapdata,
+    wordcloud,
+    abind,
+    SDMTools,
+    PBSmapping,
+    MASS,
+    shiny,
+    parallel,
+    lubridate,
+    rmarkdown,
+    knitr,
+    mvtnorm,
+    ggplot2,
+    dplyr,
+    kableExtra,
+    DT
+Suggests:
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
+BugReports: https://github.com/ICCAT/abft-mse/R_package/ABTMSE/issues
+LazyData: yes
+LazyLoad: yes

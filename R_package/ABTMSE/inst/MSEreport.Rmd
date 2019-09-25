@@ -1,0 +1,157 @@
+
+---
+title: "MSE report"
+subtitle: "ABT-MSE preliminary standardized report"
+author: "`r params$Author`"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+    
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 16px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+
+
+```{r intro,echo=F,results='asis'}
+
+if(!is.na(params$introtext)){
+  
+  cat('\n')
+  cat("# Introduction")
+  cat('\n')
+  cat(params$introtext)
+  cat('\n')
+  
+}
+
+
+```    
+
+
+# Overview of performance metrics
+
+```{r metric_key,echo=F,results='asis',fig.width=9, fig.height=5}
+
+
+Metric<-c("AvC30","C10","C20","C30","D10","D20","D30","LD","DNC","LDNC","POF","POS","PGK","AAVC") 
+Reported_by<-c(rep("Area",4),rep("Stock",9),"Area")
+Description<-c("Mean  catches over first 30 projected years",
+               "Mean catches over the first 10 projected years",
+               "Mean catches over projected years 11-20",
+               "Mean catches over projected years 21-30",
+               "SSB relative to dynamic B0 after 10 projected yrs",
+               "SSB relative to dynamic B0 after 20 projected yrs",
+               "SSB relative to dynamic B0 after 30 projected yrs",
+               "Lowest SSB depletion over the 30 years for which the MP is applied",
+               "SSB depletion after 30 years, relative to zero catch scenario",
+               "Lowest SSB depletion over the 30 years for which the MP is applied, relative to zero catch scenario",
+               "Probability of overfishing (F>FMSY) over the first 30 projected years",
+               "Probability of overfished state (B<BMSY) over the first 30 projected years",
+               "Probability of green Kobe (F>FMSY and B<BMSY) over the first 30 projected years",
+               "Percentage average annual variability in catches over the first 30 projected years")
+
+key<-data.frame(Metric,Reported_by,Description)
+
+key %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+```
+
+
+# Performance metrics tables
+
+Note that catch related performance metrics are reported by East West area (delimited by 45 deg W) and biomass / depletion metrics are reported by stock (ie originating from the Med and Gulf of Mexico)
+
+
+
+```{r metric_tabs,echo=F,results='asis',fig.width=9, fig.height=5}
+
+
+perf<-getperf(params$MSE,rnd=2)
+
+cat('\n')
+cat("## East ")
+cat('\n')
+
+perf[[1]] %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+cat('\n')
+cat("## West ")
+cat('\n')
+
+perf[[2]] %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+
+
+
+```
+
+# Performance metrics figures
+
+
+```{r metric_fig,echo=F,results='asis',fig.width=9, fig.height=11}
+
+
+PPlot(params$MSE)
+
+
+```
+
+
+# Projections
+
+
+```{r Proj,echo=F,results='asis',fig.width=9, fig.height=11}
+
+
+plot(params$MSE)
+
+
+```
+
+
+# Notes
+
+Please submit requests / bug reports etc to <t.carruthers@oceans.ubc.ca>
+
