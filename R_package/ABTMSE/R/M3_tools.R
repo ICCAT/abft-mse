@@ -187,7 +187,7 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# nPSAT, PSATs data of known stock of origin p a s t fr tr N",datfile,1,append=T)
   write(OMI@nPSAT,datfile,1,append=T)
 
-  write("# PSAT data of known stock of origin p a s t fr tr N",datfile,1,append=T)
+  write("# PSAT data of known stock of origin p a s t fr tr N Nfr",datfile,1,append=T)
   write(t(OMI@PSAT),datfile,8,append=T)
 
   write("# nPSAT2, PSATs data of unknown stock of origin a s t fr tr SOO(npop)",datfile,1,append=T)
@@ -237,9 +237,6 @@ M3write<-function(OMI,OMdir="C:/M3"){
 
   # -- Movement estimation
 
-  write("# nMP, number of estimated movement parameters",datfile,1,append=T)
-  write(OMI@nMP,datfile,1,append=T)
-
   write("# nma, max number of age classes",datfile,1,append=T)
   write(OMI@nma,datfile,1,append=T)
 
@@ -248,18 +245,6 @@ M3write<-function(OMI,OMdir="C:/M3"){
 
   write("# ,macat, age class age bounds ",datfile,1,append=T)
   write(OMI@macat,datfile,2,append=T)
-
-  write("# nmovind, number of estimated movement parameters minus viscosity",datfile,1,append=T)
-  write(OMI@nmovind,datfile,1,append=T)
-
-  write("# movind, the location of estimated movement parameters p s r r",datfile,1,append=T)
-  write(t(OMI@movind),datfile,5,append=T)
-
-  write("# nmov1, number of initial non-estimated movement parameters",datfile,1,append=T)
-  write(OMI@nmov1,datfile,1,append=T)
-
-  write("# mov1, the location of initial non-estimated movement parameters p s r r",datfile,1,append=T)
-  write(t(OMI@mov1),datfile,5,append=T)
 
   write("# movtype, the type of movement parameterization 1: gravity 2:markov matrix",datfile,1,append=T)
   write(OMI@movtype,datfile,1,append=T)
@@ -353,42 +338,8 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# LHw,  likelihood components",datfile,1,append=T)
   write(OMI@LHw,datfile,OMI@nLHw,append=T) # Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov,  10 sel,  11 SRA, 12 SSB, 13 SSBinc, 14 Fmod, 15 R0diff, 16 BSfrac, 17 MICV)"
 
-  # -- Initial values
-
-  write("# muR_ini, initial values for mean historical recruitment",datfile,1,append=T)
-  write(OMI@muR_ini,datfile,OMI@np,append=T) # Simulated R0 for each population
-
-  write("# sel_ini, initial values for selectivity",datfile,1,append=T)
-  write(t(OMI@sel_ini),datfile,OMI@nl,append=T) # Actual selectivity
-
-  write("# selpar_ini, initial values for selectivity parameters",datfile,1,append=T)
-  write(t(OMI@selpar_ini),datfile,3,append=T) # Actual selectivity
-
-  write("# lnF_ini, initial values for log F",datfile,1,append=T)
-  write(OMI@lnF_ini,datfile,OMI@nCobs,append=T) # log apical F
-
-  write("# lnRD_ini, recruitment deviations y=1:nyears",datfile,1,append=T)
-  write(t(OMI@lnRD_ini),datfile,OMI@ny,append=T) # Recruitment deviations
-
-  write("# mov_ini, simulated movement p s r r",datfile,1,append=T)
-  write(OMI@mov_ini,datfile,OMI@nr,append=T) # Movement probabilities
-
-  write("# qCPUE_ini, initial values for CPUE catchability nCPUE",datfile,1,append=T)
-  write(log(OMI@qCPUE_ini),datfile,OMI@nCPUEq,append=T)
-
-  write("# lnqI_ini, initial values for fishery independent catchability nI",datfile,1,append=T)
-  write(log(OMI@qI_ini),datfile,OMI@nI,append=T) # Catchabilities I=qSSB or I=qB
-
-  write("# D_ini, reference (simulated) depletion",datfile,1,append=T)
-  write(OMI@D_ini,datfile,OMI@np,append=T) # Catchabilities I=qSSB or I=qB
 
   # -- Misc
-
-  write("# complexRD 1= run with full estimation of all recruitment deviations by year",datfile,1,append=T)
-  write(OMI@complexRD,datfile,1,append=T) # debug switch
-
-  write("# complexF 1= run with full estimation of all F's by year, subyear, fleet, region",datfile,1,append=T)
-  write(OMI@complexF,datfile,1,append=T) # debug switch
 
   write("# nF either nCobs or 1 if complexF=0",datfile,1,append=T)
   write(OMI@nF,datfile,1,append=T) # debug switch
@@ -407,6 +358,12 @@ M3write<-function(OMI,OMdir="C:/M3"){
 
   write("# Phase4 the phase for estimation of things",datfile,1,append=T)
   write(OMI@Phases[4],datfile,1,append=T)
+
+  write("# ET_LHF 1= multinomial 2=approx multinomial",datfile,1,append=T)
+  write(OMI@ET_LHF,datfile,1,append=T) # debug switch
+
+  write("# LC_LHF 1= lognormal 2=lognormal no constant",datfile,1,append=T)
+  write(OMI@LC_LHF,datfile,1,append=T) # debug switch
 
   write("# debug 1= run with initial values",datfile,1,append=T)
   write(OMI@debug,datfile,1,append=T) # debug switch
@@ -580,16 +537,6 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   st<-st+1+ny*na
   out$wt_age<-ADMBrep(repfile,st,c(ny,na,np),quiet=quiet)
   st<-st+1+ny*na
-  out$nMP<-scan(repfile,skip=st,nlines=1,quiet=quiet)
-  st<-st+2
-  out$nmovind<-scan(repfile,skip=st,nlines=1,quiet=quiet)
-  st<-st+2
-  out$movind<-ADMBrep(repfile,st,c(out$nmovind,5),quiet=quiet)
-  st<-st+1+out$nmovind
-  out$nmov1<-scan(repfile,skip=st,nlines=1,quiet=quiet)
-  st<-st+2
-  out$mov1<-ADMBrep(repfile,st,c(out$nmov1,5),quiet=quiet)
-  st<-st+1+out$nmov1
   out$movtype<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$M_age<-ADMBrep(repfile,st,c(np,na),quiet=quiet)
@@ -635,15 +582,15 @@ M3read<-function(OMDir="C:/M3",quiet=T){
   st<-st+2
   out$lnRD<-ADMBrep(repfile,st,c(np,out$nRD))
   st<-st+1+np
-  out$D_ini<-scan(repfile,skip=st,nlines=1,quiet=quiet)
-  st<-st+2
   out$D<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$Dt<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$SSBnow<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
-  out$objnam<-c("Catch","CPUE","Ind.","Length","SOO","PSAT","P Rec.","P mov","P sel","SRA pen","P SSB","P Dep","P Fmod","R0 diff","TOT","SOOm","SOOg")
+  out$LHw<-scan(repfile,skip=st,nlines=1,quiet=quiet)
+  st<-st+2
+  out$objnam<-c("Catch","CPUE","Ind.","Length","SOO","PSAT","P Rec.","P mov","P sel","SRA pen","P SSB","P Dep","P Fmod","R0 diff","TOT","SOOm","SOOg","SpPr")
   out$obj<-scan(repfile,skip=st,nlines=1,quiet=quiet)
   st<-st+2
   out$SOOpred<-scan(repfile,skip=st,nlines=1,quiet=quiet)
@@ -936,32 +883,36 @@ make_comp_report<-function(OMdirs,dir){
 LHtabs<-function(outs,OMIs,OMnos, OMnams,rnd=0){
 
   nOMs<-length(outs)
-  LHs<-LHsU<-data.frame(array(NA,c(nOMs,17)))
-  LHw_ind<-c(                               1,    2,     3,      4,    5,       5,       6,    8,     9,     10,   11,      15,      17)
-  Obj_ind<-c(                               1,    2,     3,      4,    16,      17,      6,    7,     8,     9,    10,      14,      13)
-  Tab_ind<-c(                               3,    4,     5,      6,     7,      8,       9,    10,    11,    12,   13,      14,      15)
-  names(LHs)<-names(LHsU)<- c("OM","Code","Cat", "CR", "Surv", "Comp", "SOOm", "SOOg", "Tag", "Rec", "Mov", "Sel", "SRA",  "R0diff", "MI","TOT_nP","TOT")
-
-  LHs[,1]<-LHsU[,1]<-OMnos
-  LHs[,2]<-LHsU[,2]<-OMnames
+  LHs<-LHsU<-data.frame(array(NA,c(nOMs,18)))
+  wts_tab<-data.frame(array(NA,c(nOMs,16)))
+  LHw_ind<-c(                               1,    2,     3,      4,    5,       5,       6,    8,     9,     10,   11,      15,      17,   18)
+  Obj_ind<-c(                               1,    2,     3,      4,    16,      17,      6,    7,     8,     9,    10,      14,      13,   18)
+  Tab_ind<-c(                               3,    4,     5,      6,     7,      8,       9,    10,    11,    12,   13,      14,      15,   16)
+  names(LHs)<-names(LHsU)<- c("OM","Code","Cat", "CR", "Surv", "Comp", "SOOm", "SOOg", "Tag", "Rec", "Mov", "Sel", "SRA",  "R0diff", "MI","SPr","TOT_nP","TOT")
+  names(wts_tab)<-c("OM","Code",names(LHs)[3:16])
+  LHs[,1]<-LHsU[,1]<-wts_tab[,1]<-OMnos
+  LHs[,2]<-LHsU[,2]<-wts_tab[,2]<-OMnams
 
   for(i in 1:nOMs){
+
     wts<-OMIs[[i]]@LHw[LHw_ind]
+    wts_tab[i,3:16]<-wts
     LHs[i,Tab_ind]<-outs[[i]]$obj[Obj_ind]
     LHsU[i,Tab_ind]<-outs[[i]]$obj[Obj_ind]/wts
-    LHs[i,17]<-sum(LHs[i,Tab_ind])
-    LHsU[i,17]<-sum(LHsU[i,Tab_ind])
-    LHs[i,16]<-LHs[i,17]-sum(LHs[i,10:15])
-    LHsU[i,16]<-LHsU[i,17]-sum(LHsU[i,10:15])
+    LHs[i,18]<-sum(LHs[i,Tab_ind])
+    LHsU[i,18]<-sum(LHsU[i,Tab_ind])
+    LHs[i,17]<-LHs[i,18]-sum(LHs[i,10:15])
+    LHsU[i,17]<-LHsU[i,18]-sum(LHsU[i,10:15])
 
     #LHs[i,is.na(LHs[i,])|LHs[i,]=='Inf']<-0
-    LHs[i,3:17]<-round(LHs[i,3:17],rnd)
+    LHs[i,3:18]<-round(LHs[i,3:18],rnd)
 
     #LHsU[i,is.na(LHsU[i,])|LHsU[i,]=='Inf']<-0
-    LHsU[i,3:17]<-round(LHsU[i,3:17],rnd)
+    LHsU[i,3:18]<-round(LHsU[i,3:18],rnd)
+
   }
 
-  list(LHs=LHs,LHsU=LHsU)
+  list(LHs=LHs,LHsU=LHsU,wts_tab=wts_tab)
 
 }
 

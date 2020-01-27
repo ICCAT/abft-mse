@@ -50,6 +50,8 @@
 #' \item{lwb}{length-weight parameter b W=aL^b(currently unused)}
 #' \item{len_age}{an array of length-at-age [stock, age, year]}
 #' \item{wt_age}{an array of weight-at-age [stock, age, year]}
+#' \item{wt_len}{a matrix of weight-at-length [stock, len]}
+#' \item{Fec_len}{a matrix of Fecundity-at-length [stock, len]}
 #' \item{Fec}{an array of spawning biomass-at-age [stock, age, year]}
 #' \item{SRtype}{a character vector denoting the form of the stock-recruitment relationship: BH Beverton Holt, HS Hockey Stick [stock]}
 #' \item{steep}{a vector of steepness by stock [stock]}
@@ -73,7 +75,7 @@
 #' \item{nIobs}{the number of fishery independent indices}
 #' \item{Iobs}{a data frame of fishery independent relative abundance observations [year, subyear, area, stock, index number, type (biomass/ssb), index]}
 #' \item{nPSAT}{the number of electronic tags of known stock of origin}
-#' \item{PSAT}{a data frame of electronic tag movements [stock, age, subyear, duration til recapture (subyears), from area, to area, number of tags]}
+#' \item{PSAT}{a data frame of electronic tag movements [stock, age, subyear, duration til recapture (subyears), from area, to area, number of tags, total from area]}
 #' \item{nPSAT2}{the number of electronic tags of unknown stock of origin}
 #' \item{PSAT2}{a data frame of electronic tag movements [age, subyear, duration til recapture (subyear), from area, to area, prob(stock1), prob(stock2)]}
 #' \item{nTag}{the number of conventional tagging movement observations}
@@ -138,6 +140,8 @@
 #' \item{nMovExc}{integer the number of rows in the movement exclusion data frame}
 #' \item{MovExc}{a data frame of movement exceptions}
 #' \item{Phases}{the phases of the various parameter estimates (1,2,3)}
+#' \item{ET_LHF}{the type of likelihood function used for electronic tagging data (1,2: zero intercept)}
+#' \item{LC_LHF}{the type of likelihood function used for length composition data (1,2: zero intercept)}
 #' }
 setClass("OMI",representation(
   # Description
@@ -156,6 +160,7 @@ setClass("OMI",representation(
   iALK='array',#p y a l (trans)
   lwa='numeric', lwb='numeric',
   len_age='array', wt_age='array', # p a y (trans)
+  wt_len="matrix",Fec_len="matrix",
   Fec='array', SSBpR='numeric',# p a (wt*mat) (trans)
   nSR='numeric',SRminyr='numeric',SRmaxyr='numeric',SRp="numeric",SRpar="numeric",SRtype="character",
   nRDs='numeric', RDno ="matrix", RDts="matrix",
@@ -214,7 +219,9 @@ setClass("OMI",representation(
   Inames='character',
   nMovExc='integer',
   MovExc="data.frame",
-  Phases="numeric"
+  Phases="numeric",
+  ET_LHF="numeric",
+  LC_LHF="numeric"
 
 ))
 

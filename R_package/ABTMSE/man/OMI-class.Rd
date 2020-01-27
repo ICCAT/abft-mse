@@ -63,7 +63,6 @@
 \item{nCPUEq}{the number of CPUE indices used in the model fitting}
 \item{nCPUEobs}{the number of CPUE index observations used in model fitting}
 \item{CPUEobs}{a data frame of CPUE catch rate observations [year, stock, area, subyear, fleet, index] fitted against vulnerable biomass}
-\item{CPUEwt}{a vector of CPUE index weights [nCPUEq]}
 \item{nE}{the number of partial F series (typically nfleets)}
 \item{nEobs}{the number effort observations (partial F's) one for each catch observations}
 \item{Eobs}{a data frame of effort observations one line per observation [year, subyear, area, fleet, effort]}
@@ -74,7 +73,6 @@
 \item{nI}{the number of fishery independent indices (e.g. 2: a spawning biomass survey in the GOM and MED)}
 \item{nIobs}{the number of fishery independent indices}
 \item{Iobs}{a data frame of fishery independent relative abundance observations [year, subyear, area, stock, index number, type (biomass/ssb), index]}
-\item{Iwt}{a vector of fishery independent relative abundance index weights [nI]}
 \item{nPSAT}{the number of electronic tags of known stock of origin}
 \item{PSAT}{a data frame of electronic tag movements [stock, age, subyear, duration til recapture (subyears), from area, to area, number of tags]}
 \item{nPSAT2}{the number of electronic tags of unknown stock of origin}
@@ -98,8 +96,6 @@
 \item{movtype}{the type of movement model (1: Gravity model, 2: Markov model)}
 \item{Ilencat}{the categories of length specific vulnerable biomass}
 \item{CobsCV}{a vector nf long, the catch observation error (lognormal sd)}
-\item{CPUEobsCV}{a vector nCPUEq long, the index observation error (lognormal sd)}
-\item{IobsCV}{a vector nI long, the fishery independent index observation error (lognormal sd)}
 \item{CLCV_num}{the numerator of the normal observation error on lengths}
 \item{RDCV}{the recruitment deviation penalty (sigma R)(lognormal sd)}
 \item{SSBfit}{the type of SSBfit 1:SSB0 2:SSBnow}
@@ -134,6 +130,7 @@
 \item{MPind}{a data frame of fishery indices used for informing management procedures in subsequent MSE analysis (currently unused)}
 \item{MIinv}{a 1 or 0 determining whether the fit should attempt to be MI invariant}
 \item{MICV}{numerical value of the CV in additional to regional FMod deviations}
+\item{SpatPr}{matrix of Spatial priors}
 \item{debug}{a logical (0 or 1) value determing whether the model should be run for a single iteration to check for errors}
 \item{verbose}{a logical (0 or 1) value determing whether more complete information should be provided in each iteration of the model estimation}
 \item{datacheck}{a unique number for checking that data were read into the model correctly}

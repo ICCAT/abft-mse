@@ -63,6 +63,40 @@ areaplot(OMI)
 Figure 1. Area definitions for operating model 
 
 
+# Objective function values and weightings
+
+Table 1. Objective function values (weighted negative log likelihood values)
+```{r LHs,echo=F,message=F,warning=F,error=F,fig.width=3, fig.height=2.5}
+
+LHtab<-LHtabs(outs=list(out=out),OMIs=list(OMI=OMI),OMnos=NA, OMnams=NA,rnd=0)
+LHs<-LHtab$LHs[,3:ncol(LHtab$LHs)]
+wts_tab<-LHtab$wts_tab[,3:ncol(LHtab$wts_tab)]
+
+LHs%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+
+```
+
+Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), SPr = seasonal distribution prior, TOT_nP = total global objective function without priors, TOT = total global objective function. 
+
+
+Table 2. Weightings of  likelihood components
+
+```{r wts_tab,echo=F,message=F,warning=F,error=F,fig.width=3, fig.height=2.5}
+
+
+wts_tab%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+```
+
+
+
+
+
 \newpage
 
 #  Fits to CPUE indices
@@ -524,7 +558,7 @@ Figure 6. Recruitment deviations (log) for each stock-recruitment curve. Recruit
 
 # MSY reference points 
 
-Table 1a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
+Table 3a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
 
 ```{r refpoints_2016, results='asis',echo=FALSE,fig.width=5}
 
@@ -598,7 +632,7 @@ kable(format = "html", escape = F) %>%
 
 ```
 
-Table 1b. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
+Table 3b. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
 
 ```{r refpoints_2016_area, results='asis',echo=FALSE,fig.width=5}
 res2 %>%
@@ -881,16 +915,16 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
   CLpa10<-apply(CLp[ind,,],2:3,sum,na.rm=T)/apply(CLp[ind,,],2,sum,na.rm=T)
  
   # calculate unfished composition ==============
-  Nrel<-t(exp(-apply(out$M_age,1,cumsum)))
-  UFfreq<-array(NA,c(np,nf,nl))
-  for(pp in 1:np){
-    Lf<-apply(Nrel[pp,]*out$iALK[pp,1,,],2,sum)
-    for(f in 1:nf){
-      temp<-out$sel[f,]*Lf
-      UFfreq[pp,f,]<-temp/sum(temp)
-    }
+  #Nrel<-t(exp(-apply(out$M_age,1,cumsum)))
+  #UFfreq<-array(NA,c(np,nf,nl))
+  #for(pp in 1:np){
+    #Lf<-apply(Nrel[pp,]*out$iALK[pp,1,,],2,sum)
+    #for(f in 1:nf){
+    #  temp<-out$sel[f,]*Lf
+     # UFfreq[pp,f,]<-temp/sum(temp)
+    #}
     
-  }
+  #}
   
   #par(mfcol=c(7,2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
   par(mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
@@ -912,13 +946,13 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
     axis(2,1:OMI@nl,OMI@mulen)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
     
-    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,]))
     barplotT(out$ml,CLoa[ff,],ylim=ylim)
     #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
        
     lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
-    lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-    lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+    #lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
+    #lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
     
     if(ff==1)legend('topright',legend="All years",bty='n')
    
@@ -926,13 +960,13 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
     if(all(is.na(CLoa10[ff,]))){
       plot(1,col='white',axes=F,main="",xlab="",ylab="")
     }else{
-      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,],UFfreq[,ff,]))
+      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,]))
       barplotT(out$ml,CLoa10[ff,],ylim=ylim)
       #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
     
       lines(out$ml,CLpa10[ff,],col="#0000ff90",lwd=2)
-      lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-      lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+      #lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
+      #lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
     
       if(ff==1)legend('topright',legend=paste(OMI@years[2]-9,"-",OMI@years[2]),bty='n')
     }
@@ -969,25 +1003,25 @@ Figure 11.Length composition residuals. The left-hand panels show residuals over
     axis(2,1:OMI@nl,OMI@mulen)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
     
-    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,]))
     barplotT(out$ml,CLoa[ff,],ylim=ylim)
       
     lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
-    lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-    lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+    #lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
+    #lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
     #legend('topright',legend=paste("n=",round(sum(CLobsA[,,,ff,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
       if(ff==9)legend('topright',legend="All years",bty='n') 
     
     if(all(is.na(CLoa10[ff,]))){
       plot(1,col='white',axes=F,main="",xlab="",ylab="")
     }else{
-      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,],UFfreq[,ff,]))
+      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,]))
       barplotT(out$ml,CLoa10[ff,],ylim=ylim)
       #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
          
       lines(out$ml,CLpa10[ff,],col="#0000ff90",lwd=2)
-      lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-      lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+      #lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
+      #lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
       
       if(ff==9)legend('topright',legend=paste(OMI@years[2]-9,"-",OMI@years[2]),bty='n')
     }
@@ -1555,6 +1589,7 @@ mtext("Fraction of biomass",2,outer=T,line=3.5,font=2)
 
 Figure 17c. Predicted spatial distribution of Western stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area.  
 
+# Seasonal / spatial priors
 
 
 ```{r seasonaltrend, fig.width=7, fig.height=3,echo=FALSE}

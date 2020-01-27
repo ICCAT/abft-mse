@@ -181,9 +181,10 @@ Sres2<-as.data.frame(Sres2)
 #outs<-lapply(1:nOMs,outread,OMdirs=OMdirs)
 #OMIs<-lapply(1:nOMs,OMIread,OMdirs=OMdirs)
 
-tabs<-LHtabs(outs,OMIs,OMnos,OMnams)
+tabs<-LHtabs(outs,OMIs,OMnos,OMnams=OMnames)
 LHs<-tabs$LHs
 LHsU<-tabs$LHsU
+wts_tab<-tabs$wts_tab
 
 colr<-function(x,ncol=1000,cond=NA){
   if(sd(x)==0){
@@ -204,6 +205,7 @@ library(kableExtra)
 
 
 ```
+
 
 
 ## Eastern stock
@@ -254,17 +256,18 @@ LHs%>%
     SRA=cell_spec(SRA,"html",color=colr(LHs$SRA),bold=T),
     R0diff=cell_spec(R0diff,"html",color=colr(LHs$R0diff),bold=T),
     MI=cell_spec(MI,"html",color=colr(LHs$MI),bold=T),
+    SPr=cell_spec(SPr,"html",color=colr(LHs$SPr),bold=T),
     TOT_nP=cell_spec(TOT_nP,"html",color=colr(LHs$TOT_nP),bold=T),
     TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
     
   )%>%
-  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,TOT_nP,TOT) %>%
+  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
   kable(format = "html", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
 
 
 ```
-Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), TOT_nP = total global objective function without priors, TOT = total global objective function. 
+Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), SPr = seasonal distribution prior, TOT_nP = total global objective function without priors, TOT = total global objective function. 
 
 Table 4. These are weighted negative log-likelihoods expressed as differences from the base-case weighting. Color coding is by column. Rows with all black values depict models that did not converge. 
 
@@ -291,16 +294,34 @@ LHs%>%
     SRA=cell_spec(SRA,"html",color=colr(LHs$SRA),bold=T),
     R0diff=cell_spec(R0diff,"html",color=colr(LHs$R0diff),bold=T),
     MI=cell_spec(MI,"html",color=colr(LHs$MI),bold=T),
+    SPr=cell_spec(SPr,"html",color=colr(LHs$SPr),bold=T),
     TOT_nP=cell_spec(TOT_nP,"html",color=colr(LHs$TOT_nP),bold=T),
     TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
     
   )%>%
-  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,TOT_nP,TOT) %>%
+  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
   kable(format = "html", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
 
 
 ```
+
+
+
+Table 5. Weightings of likelihood components. 
+
+
+```{r LHwt, fig.width=9, fig.height=9,echo=FALSE}
+
+
+
+wts_tab%>%
+kable(format = "html", escape = F) %>%
+  kable_styling("striped")#, full_width = T)
+
+
+```
+
 
 
 

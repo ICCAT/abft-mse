@@ -63,6 +63,40 @@ areaplot(OMI)
 Figure 1. Area definitions for operating model 
 
 
+# Objective function values and weightings
+
+Table 1. Objective function values (weighted negative log likelihood values)
+```{r LHs,echo=F,message=F,warning=F,error=F,fig.width=3, fig.height=2.5}
+
+LHtab<-LHtabs(outs=list(out=out),OMIs=list(OMI=OMI),OMnos=NA, OMnams=NA,rnd=0)
+LHs<-LHtab$LHs[,3:ncol(LHtab$LHs)]
+wts_tab<-LHtab$wts_tab[,3:ncol(LHtab$wts_tab)]
+
+LHs%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+
+```
+
+Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), SPr = seasonal distribution prior, TOT_nP = total global objective function without priors, TOT = total global objective function. 
+
+
+Table 2. Weightings of  likelihood components
+
+```{r wts_tab,echo=F,message=F,warning=F,error=F,fig.width=3, fig.height=2.5}
+
+
+wts_tab%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+```
+
+
+
+
+
 \newpage
 
 #  Fits to CPUE indices
@@ -198,14 +232,6 @@ for(i in 1:OMI@nI){
   tempdat<-subset(OMI@Iobs,ind)  
   obs<-as.numeric(tempdat[,7])
   pred<-out$Ipred_vec[ind]
-  #if(Types[i]==1){
-  #  pred = out$B[tempdat[,c(1,2,3)]]
-  #}else{
-  #  pred = out$SSB[tempdat[,c(4,1,2)]]
-  #}
-  
-  #pred<-pred/mean(pred)
-  
   yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
   plot(yrs,obs,pch=19,ylim=c(0,max(obs,pred)),ylab="",xlab="",yaxs='i')
   lines(yrs,pred,lwd=1.5,col="#0000ff95")
@@ -215,7 +241,6 @@ for(i in 1:OMI@nI){
   mtext(plab[i],3,adj=0.02,line=0.09,cex=0.7)
   
   res<-log(obs)-log(pred)
-  
   resplot(yrs,res)
 }
 
@@ -262,19 +287,13 @@ for(pp in 1:np){
   }
 }
 
-#opt<-SRopt2(out,plot=F,quiet=F,years=c(-Inf,Inf),type=OMI@SRtype,R0p=out$R0)
 opt<-SRplot(out,years=OMI@years,type=OMI@SRtype,plot=F,SRminyr=OMI@SRminyr,SRmaxyr=OMI@SRmaxyr)
-#SSBpR<-apply(out$mat_age*surv*t(out$wt_age[1,,]),1,sum)
-
 R0s<-opt$R0s_now
 res<-MSYMLE(out,OMI)
-#res<-MSY_FAST(FML=out$FL[out$ny,,,,], iALK=out$iALK[,out$ny,,], N=out$N[,out$ny,,,],
-#         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-#         R0s=opt$R0s_now, fixpars=opt$par_now,SRtypes=opt$SRtype_now)
 
 
-allSSB<-cbind(apply(out$hSSB[,2:nHy,],1:2,mean),apply(out$SSB,1:2,mean))# some some reason past understanding the model sends the wrong numbers for the first year in SSB
-ayv<-(OMI@Hyears[1]+1):OMI@years[2] # some some reason past understanding the model sends the wrong numbers for the first year in SSB
+allSSB<-cbind(apply(out$hSSB[,2:nHy,],1:2,mean),apply(out$SSB,1:2,mean))# some reason past understanding the model sends the wrong numbers for the first year in SSB
+ayv<-(OMI@Hyears[1]+1):OMI@years[2] # some reason past understanding the model sends the wrong numbers for the first year in SSB
 matplot(ayv,t(allSSB)/1E6,ylim=c(0,max(dynB0)/1E6),type='l',yaxs='i',col="white",xlab="Year",ylab="SSB (1000 t)")
 abline(v=(180:230)*10,col="#99999920")
 abline(h=(0:1000)*200,col="#99999920")
@@ -286,8 +305,6 @@ for(pp in 1:np){
   lines(OMI@Hyears[1]:OMI@years[2],dynB0[pp,]/1E6,col=cols[pp],lty=2,lwd=2)
 }
 
-#abline(h=(res$SSBMSY_SSB0*out$SSB0)/1E6,col=c("#ff000080","#0000ff80"),lty=c(2,2))
-#abline(h=out$SSB0/1E6,col=c("#ff000080","#0000ff80"),lty=c(1,1))
 abline(v=mean(OMI@Hyears[2],OMI@years[1]),col="#99999950",lwd=2)
 legend('topleft',legend=c("West stock","East stock"),text.col=c("blue","red"),bty='n')
 legend('top',legend=c("Dyn. B0","Dyn. BMSY"),lty=c(2,3),bty='n',lwd=2)
@@ -307,9 +324,6 @@ abline(v=(180:230)*10,col="#99999920")
 abline(h=(0:1000)*200,col="#99999920")
 matplot(OMI@years[1]:OMI@years[2],t(allSSB)/1E6,ylim=c(0,max(allSSB)/1E6),type='l',col=c("red","blue"),lty=c(1,1),add=T)
 
-#abline(h=(res$SSBMSY_SSB0*out$SSB0)/1E6,col=c("#ff000080","#0000ff80"),lty=c(2,2))
-#abline(h=out$SSB0/1E6,col=c("#ff000080","#0000ff80"),lty=c(1,1))
-#abline(v=mean(OMI@Hyears[2],OMI@years[1]),col="#99999950",lwd=2)
 cols=c("#ff000080","#0000ff80")
 for(pp in 1:np){
   lines(OMI@years[1]:OMI@years[2],(dynB0[pp,nHy+(1:ny)]*res$SSBMSY_SSB0[pp])/1E6,col=cols[pp],lty=3,lwd=2)
@@ -327,7 +341,6 @@ Figure 4b. Recent spawning biomass. Dynamic unfished spawning biomass (Dyn. B0) 
 
 ```{r 2017comp, fig.width=7.5, fig.height=5,echo=FALSE}
 # M3 SSB calculation
-#muSSB<-apply(out$SSB,1:2,mean) # by stock (below is by east-west area)
 Nind<-TEG(dim(out$N))
 SSB<-array(NA,dim(out$N))
 SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
@@ -346,11 +359,6 @@ EWareas[2,,]<-rep(c(1,1,1,0,0,0,0),each=out$ny)
 
 snams<-c("East","West")
 stocknames<-c("East area","West area","All Atlantic")
-
-#find<-c("F25","Fapc")
-#F25<-timeF25(FML=out$FL, iALK=out$iALK, N=out$N,
-#         wt_age=t(out$wt_age[out$ny,,]), M_age=out$M_age, mat_age=out$mat_age,
-#         R0s=out$R0, hs=out$h)
 endind<-(-4:0)+ny
 Rec<-apply(out$N[,,out$spawns[1],1,],1:2,sum)*exp(out$M_age[,1])# got to add back in mortality from end of time step
 Reclast<-Rec[,endind]
@@ -368,26 +376,25 @@ for(pp in out$np:1){
   tdat<-subset(dat,dat$area==snams[pp])[,c(2:4)]
   names(tdat)<-c("Assessment","Year","Val")
   
-  ylim<-c(0,max(muSSB[pp,]/1000,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)])),na.rm=T))
-  plot(yrs,muSSB[pp,]/1000,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
+  ylim<-c(0,max(muSSB[pp,]/1E6,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)]))/1000,na.rm=T))
+  plot(yrs,muSSB[pp,]/1E6,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
   cond<-tdat$Assessment=="SS"
-  lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond])),col="#ff000090",lwd=2)
-  lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond])),col="#00ff0090",lwd=2)
+  lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1000,col="#ff000090",lwd=2)
+  lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1000,col="#00ff0090",lwd=2)
   mtext(stocknames[pp],3,line=1,font=2)
-  if(pp==out$np)mtext("SSB(t)",2,line=2.8,font=2)
+  if(pp==out$np)mtext("SSB(kt)",2,line=2.8,font=2)
   
   # Rec
-  
   tdat<-subset(dat,dat$area==snams[pp])[,c(2,3,5)]
   names(tdat)<-c("Assessment","Year","Val")
   tdat$Val[tdat$Year>(OMI@years[2]-3)]<-NA
-  ylim<-c(0,max(Rec[pp,],as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)])),na.rm=T))
-  plot(yrs,Rec[pp,],lwd=2,ylab="SSB(t)",type="l",ylim=ylim,yaxs='i')
+  ylim<-c(0,max(Rec[pp,]/1E6,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)]))/1E6,na.rm=T))
+  plot(yrs,Rec[pp,]/1E6,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
   lines(yrs[endind],Reclast[pp,],col='grey',lwd=2,lty=1)
   cond<-tdat$Assessment=="SS"
-  lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond])),col="#ff000090",lwd=2)
-  lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond])),col="#00ff0090",lwd=2)
-  if(pp==out$np)mtext("Recruitment",2,line=2.8,font=2)
+  lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1E6,col="#ff000090",lwd=2)
+  lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1E6,col="#00ff0090",lwd=2)
+  if(pp==out$np)mtext("Recruitment (m)",2,line=2.8,font=2)
   
 }
 
@@ -397,30 +404,28 @@ tdat<-dat[,c(2:4)]
 names(tdat)<-c("Assessment","Year","Val")
 tdat<-aggregate(tdat$Val,by=list(tdat$Year,tdat$Assessment),sum)
 names(tdat)<-c("Year","Assessment","Val")
-ylim<-c(0,max(muSSB[pp,]/1000,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)])),na.rm=T))
+ylim<-c(0,max(muSSB[pp,]/1E6,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)]))/1000,na.rm=T))
  
 #ylim<-c(0,max(muSSBc/1000,as.numeric(as.character(tdat$Val))))
-plot(yrs,muSSBc/1000,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
+plot(yrs,muSSBc/1E6,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
 cond<-tdat$Assessment=="SS"
-lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond])),col="#ff000090",lwd=2)
-lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond])),col="#00ff0090",lwd=2)
+lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1000,col="#ff000090",lwd=2)
+lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1000,col="#00ff0090",lwd=2)
 
 mtext(stocknames[3],3,line=1,font=2)
-
 legend('topleft',legend=c("M3","SS","VPA"),cex=1.2,text.col=c('black','red','green'),text.font=2,bty='n')
 
 
 # Recruitment combined
-
 tdat<-subset(dat,dat$area==snams[pp])[,c(2,3,5)]
 names(tdat)<-c("Assessment","Year","Val")
 tdat$Val[tdat$Year>(OMI@years[2]-3)]<-NA
 
-ylim<-c(0,max(Recc,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)])),na.rm=T))
-plot(yrs,Recc,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
+ylim<-c(0,max(Recc/1E6,as.numeric(as.character(tdat$Val[tdat$Year>(OMI@years[1]-1)]))/1E6,na.rm=T))
+plot(yrs,Recc/1E6,lwd=2,ylab="",type="l",ylim=ylim,yaxs='i')
 cond<-tdat$Assessment=="SS"
-lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond])),col="#ff000090",lwd=2)
-lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond])),col="#00ff0090",lwd=2)
+lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1E6,col="#ff000090",lwd=2)
+lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1E6,col="#00ff0090",lwd=2)
 if(pp==out$np)mtext("Recruitment",2,line=2.8,font=2)
 
 
@@ -432,15 +437,26 @@ Figure 5. Regional comparisons (45deg W) with 2017 stock assessment. Note that a
 
 ```{r Stock-recruitment, fig.width=7.5, fig.height=7.5,echo=FALSE}
 
- #opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR)
- #opt<-SRopt(out,plot=T,quiet=F,years=c(-Inf,Inf),type="BH",R0p=out$muR*exp(out$lnHR1))
  opt<-SRplot(out=out,years=OMI@years,type=OMI@SRtype,plot=T,SRminyr=OMI@SRminyr, SRmaxyr=OMI@SRmaxyr)
-# out,years=NULL,type=c("BH","BH","BH","HS"),plot=T,SRminyr,SRmaxyr){
- #opt$h<-out$h 
 
 ```
 
-Figure 6. Model predicted spawning stock biomass and recruitment. h is the assumed value of steepness, lnR0 is the log unfished recruitment. The red point is the most recent SSB-Recruitment estimate. 
+Figure 6a. Model predicted spawning stock biomass and recruitment. h is the assumed value of steepness, lnR0 is the log unfished recruitment. The red point is the most recent SSB-Recruitment estimate. 
+
+
+```{r SRyr, fig.width=12.5, fig.height=12.5,echo=FALSE}
+
+
+ opt<-SRplotYR(out=out,years=OMI@years,type=OMI@SRtype,plot=T,SRminyr=OMI@SRminyr, SRmaxyr=OMI@SRmaxyr)
+
+ 
+
+```
+
+
+
+Figure 6b. Model predicted spawning stock biomass and recruitment. h is the assumed value of steepness, lnR0 is the log unfished recruitment. The red point is the most recent SSB-Recruitment estimate. 
+
 
 ```{r recdevs, fig.width=7.5, fig.height=7.5,echo=FALSE}
 
@@ -479,9 +495,6 @@ layout(cbind(row2,row1))
 resid<-opt$resid
 nplot<-length(resid)
 
-#if(nplot==2)par(mfcol=c(1,2),mai=c(0.4,0.4,0.01,0.01),omi=c(0.7,0.7,0.7,0.01))
-#if(nplot>2)par(mfcol=c(2,2),mai=c(0.4,0.4,0.01,0.01),omi=c(0.7,0.7,0.7,0.01))
-
 for(i in 1:nplot){
   sausage<-T
   if(sausage){
@@ -491,9 +504,7 @@ for(i in 1:nplot){
   dev<-resid[[i]]$devs[ind]
   modrec<-estrec-dev
   SSB<-resid[[i]]$SSB[ind]
-  #plot(SSB,modrec)
-  #res<-log(((resid[[i]]$rec-resid[[i]]$devs)/resid[[i]]$rec))
-
+ 
   res0<-log(estrec/modrec)
   yrs<-resid[[i]]$yrs[ind]
 
@@ -511,7 +522,6 @@ for(i in 1:nplot){
  }
 }
 
-#cbind(SSB,estrec,modrec,res)
 if(nplot>2)mtext(c("West stock","East stock"),3,at=c(0.25,0.75),line=0.8,outer=T,font=2)
 mtext("Year",1,line=0.8,outer=T,font=2)
 mtext("Log recruitment deviations",2,line=0.8,outer=T,font=2)
@@ -519,12 +529,12 @@ mtext("Log recruitment deviations",2,line=0.8,outer=T,font=2)
 
 ```
 
-Figure 6. Recruitment deviations (log) for each stock-recruitment curve. Recruitment deviations are modelled for two-year time blocks. Blue bars represent positive deviations where the estimated recruitment is higher than the mean value predicted from the stock-recruitment curve. Red bars represent negative deviations. 'St.Dev'. and 'A.C'. refer to the Standard Deviation and lag-1 (assuming each block is a time period) autocorrelation in recruitment deviations. 
+Figure 6c. Recruitment deviations (log) for each stock-recruitment curve. Recruitment deviations are modelled for two-year time blocks. Blue bars represent positive deviations where the estimated recruitment is higher than the mean value predicted from the stock-recruitment curve. Red bars represent negative deviations. 'St.Dev'. and 'A.C'. refer to the Standard Deviation and lag-1 (assuming each block is a time period) autocorrelation in recruitment deviations. 
 
 
 # MSY reference points 
 
-Table 1a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
+Table 3a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
 
 ```{r refpoints_2016, results='asis',echo=FALSE,fig.width=5}
 
@@ -598,7 +608,7 @@ kable(format = "html", escape = F) %>%
 
 ```
 
-Table 1b. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
+Table 3b. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
 
 ```{r refpoints_2016_area, results='asis',echo=FALSE,fig.width=5}
 res2 %>%
@@ -617,8 +627,6 @@ V=Fprof/apply(Fprof,1,max)
 nams<-c('East','West')
 
 aggCL<-aggregate(OMI@CLobs[,6],by=list(OMI@CLobs[,5]),sum)
-#aggCL[,1]<-OMI@mulen[aggCL[,1]]
-
 
 agearray<-array(rep(1:OMI@na,each=OMI@np),c(OMI@np,OMI@na,OMI@ny))
 len_age<-len_age2<-wt_age<-array(NA,dim(agearray))
@@ -640,7 +648,6 @@ len_age[cond,,]<-len_age2[cond,,]
 nlen<-length(OMI@lenbins)-1
 
 ind<-TEG(dim(wt_age))
-#Len_age[ind]<-Linf[ind[,1]]*(1-exp(-K[ind[,1]]*(agearray[ind]-t0[ind[,1]])))
 wt_age[ind]<-OMI@lwa[ind[,1]]*len_age[ind]^OMI@lwb[ind[,1]]
 
 ALK<-array(NA,c(OMI@np,OMI@ny,OMI@na,OMI@nl))
@@ -650,8 +657,6 @@ ALK[ind]<-dlnorm(OMI@mulen[ind[,4]],log(len_age[Lind]),(OMI@Lvar_a[ind[,1]]*len_
 sums<-apply(ALK,c(1,2,4),sum)
 sind<-ind[,c(1,2,4)]
 ALK<-ALK/sums[sind]
-
-#contour(x=1:Base@na,y=Base@mulen,ALK[1,1,,],nlevels=50)
 
 for(pp in 2:1){
   
@@ -710,7 +715,8 @@ Figure 8. The current profile of F at age summed over all fleets, average weighe
   nr<-out$nr
   nf<-out$nf
   nl<-out$nl
-  fcols<-rep(c("black","orange","#99999980","#ff000080","#00ff0080","#0000ff80","#80802080","#ff00ff80","#00ffff80"),2)
+  fcols<-rep(c("black","orange","#99999980","#ff000080","#00ff0080",
+               "#0000ff80","#80802080","#ff00ff80","#00ffff80"),2)
   ltys<-rep(c(1,2),each=9)
  
   par(mai=c(0.05,0.15,0.01,0.01),omi=c(0.66,0.5,0.1,0.05))
@@ -729,8 +735,25 @@ Figure 8. The current profile of F at age summed over all fleets, average weighe
 
 ```
 
-Figure 9. The size selectivity of the various fishing fleets included in the operating model. 
+Figure 9a. The size selectivity of the various fishing fleets included in the operating model. 
 
+```{r estimatedselsbyfleet, fig.width=7.5, fig.height=7.5,echo=FALSE}
+
+  par(mfrow=c(ceiling(nf/3), 3),mai=c(0.15,0.25,0.01,0.01),omi=c(0.66,0.5,0.1,0.05))
+
+  for(f in 1:nf){
+     plot(out$ml,out$sel[f,],type='l',lty=ltys[1],yaxs='i',col='blue',ylim=c(0,1.05),axes=F)
+     axis(1,at=(0:20)*50,labels=f>(nf-4))
+     axis(2)
+     legend('topright',legend=fleetnams[f],text.col="blue",text.font=2,bty='n')
+  }
+  
+  mtext("Length (cm)",1,outer=T,line=2)
+  mtext("Selectivity",2,outer=T,line=1.5)
+
+```
+
+Figure 9b. The size selectivity of the various fishing fleets included in the operating model. 
 
 # Fit to aggregate catches ###
 
@@ -796,10 +819,8 @@ Figure 9. The size selectivity of the various fishing fleets included in the ope
   barplot(tempobs,ylim=c(0,max(tempobs,temppred)),names.arg=OMI@Fleets$name,col="dark grey",las=2,border=NA)#sum,na.rm=T),pch=19)
   mtext("Catch by fleet (all years, stocks, seasons)",3,line=0.6)
   barplot(temppred,col=NA,border="red",add=T,lwd=2)#sum,na.rm=T),pch=19)
- 
   
   mtext("Catch (t)",2,line=0.4,outer=T)
-  
   
 ```
 
@@ -827,31 +848,20 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
   CLpredA[out$CLobs[,1:5]]<-out$CLprop
   
   CLo<-apply(CLobsA,c(1,4,5),sum,na.rm=T)
-  CLo[CLo==0]<-NA
   CLotot<-array(apply(CLo,1:2,sum,na.rm=T),dim(CLo))
   CLo<-CLo/CLotot
   
   CLp<-apply(CLpredA,c(1,4,5),sum,na.rm=T)
-  CLp[CLp==0]<-NA
   CLptot<-array(apply(CLp,1:2,sum,na.rm=T),dim(CLp))
   CLp<-CLp/CLptot
   
-  #CLp<-apply(out$VL,c(1,4,5),sum,na.rm=T)#*CLotot
-  #CLp<-CLp/array(apply(CLp,1:2,sum,na.rm=T),dim(CLp))
-  
   PR<-(CLo-CLp)
-  #PR[(CLo-CLp)<0]=-PR[(CLo-CLp)<0]
- # PR<-(CLo-CLp)/(CLp*(CLotot-CLp)/CLotot)^0.5
-  #PR<-(CLo-CLp)/CLp^0.5
-  #PR<-(CLo-CLp)/CLp
-  
+ 
   cexy<-abs(PR*cexmult)^0.5
   pchy<-array(19,dim=dim(cexy))
-  #pchy[PR<0]<-1
   coly<-array('#0000ff95',dim=dim(cexy))
   coly[PR>0]<-'orange'
-  #coly[PR<0]<-'blue'
-  
+ 
   CLoa<-apply(CLo,2:3,sum,na.rm=T)/apply(CLo,2,sum,na.rm=T)
   CLpa<-apply(CLp,2:3,sum,na.rm=T)/apply(CLp,2,sum,na.rm=T)
   
@@ -859,24 +869,40 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
   CLoa10<-apply(CLo[ind,,],2:3,sum,na.rm=T)/apply(CLo[ind,,],2,sum,na.rm=T)
   CLpa10<-apply(CLp[ind,,],2:3,sum,na.rm=T)/apply(CLp[ind,,],2,sum,na.rm=T)
  
-  # calculate unfished composition ==============
-  Nrel<-t(exp(-apply(out$M_age,1,cumsum)))
-  UFfreq<-array(NA,c(np,nf,nl))
-  for(pp in 1:np){
-    Lf<-apply(Nrel[pp,]*out$iALK[pp,1,,],2,sum)
-    for(f in 1:nf){
-      temp<-out$sel[f,]*Lf
-      UFfreq[pp,f,]<-temp/sum(temp)
-    }
-    
-  }
+  # All spatio temporal strata
+  #tiny <- 0.0000000001
+  #dim(out$CLtotpred) # 52  4  7 18 15
+  #CF_CLpred <- aperm( apply(out$CLtotpred, 1:4, function(x){x/ (sum(x)+tiny) }), perm = c(2:5,1) )
+  #CF_CLpred_aggreg <- apply(CF_CLpred, c(1,4,5), sum )
+  #CFauxtot<-array(pmax(apply(CF_CLpred_aggreg,1:2,sum),0.00001),dim(CF_CLpred_aggreg))
+  #CF_CLpred_aggreg <- CF_CLpred_aggreg/CFauxtot
+  #CF_CLpred_aggrega <-apply(CF_CLpred_aggreg,2:3,sum,na.rm=T)/apply(CF_CLpred_aggreg,2,sum,na.rm=T)
+  #CF_CLpred_aggrega10 <-apply(CF_CLpred_aggreg[ind,,],2:3,sum,na.rm=T)/apply(CF_CLpred_aggreg[ind,,],2,sum,na.rm=T)
+ 
+  # Those spatio-temporal strata with at least one length observation
+  CLpredFill<-array(FALSE,c(ny,ns,nr,nf,nl)) # logical array - should predictions be filled?
+  CLpredAZ<-array(NA,c(ny,ns,nr,nf,nl))      # new prediction arrary where there is at least one observation
+  CLind<-aggregate(rep(1,nrow(out$CLobs)),by=list(out$CLobs[,1],out$CLobs[,2],out$CLobs[,3],out$CLobs[,4]),sum)
   
-  #par(mfcol=c(7,2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+  fill<-cbind(rep(CLind[,1],each=out$nl), rep(CLind[,2],each=out$nl),
+        rep(CLind[,3],each=out$nl), rep(CLind[,4],each=out$nl),
+        rep(1:out$nl,nrow(CLind))) # For each time x area strata of CLind, create all length class indices
+  
+  CLpredFill[fill] <- TRUE   # The matrix locations that need filling
+  CLpredAZ[CLpredFill]<-out$CLtotpred[CLpredFill]
+  CLpZ<-apply(CLpredAZ,c(1,4,5),sum,na.rm=T)
+  CLptotZ<-array(apply(CLpZ,1:2,sum,na.rm=T),dim(CLpZ))
+  CLpZ<-CLpZ/CLptotZ
+  CLpaZ<-apply(CLpZ,2:3,sum,na.rm=T)/apply(CLpZ,2,sum,na.rm=T)
+  ind<-(OMI@ny-9):OMI@ny
+  CLpaZ10<-apply(CLpZ[ind,,],2:3,sum,na.rm=T)/apply(CLpZ[ind,,],2,sum,na.rm=T)
+
   par(mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
   dmat<-array(c((1:8)*3-2,(1:8)*3-2,(1:8)*3-1,(1:8)*3),c(8,4))
   layout(dmat)
+  
   for(ff in 1:8){
-    #if(ff==9)par(mfcol=c(ceiling((nf-8)/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+    
     yrng<-range(out$CLobs[out$CLobs[,4]==ff,1],na.rm=T)
     yind<-yrng[1]:yrng[2]
     yrs<-yind+OMI@years[1]-1
@@ -891,49 +917,44 @@ Figure 10. Fit to a observed total catches (tons) aggregated over various axes (
     axis(2,1:OMI@nl,OMI@mulen)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
     
-    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,]))
     barplotT(out$ml,CLoa[ff,],ylim=ylim)
-    #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
-       
+
     lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
-    lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-    lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
-    
+    lines(out$ml,CLpaZ[ff,],col="green",lwd=2)
+ 
     if(ff==1)legend('topright',legend="All years",bty='n')
-   
-    
+
     if(all(is.na(CLoa10[ff,]))){
+      
       plot(1,col='white',axes=F,main="",xlab="",ylab="")
+      
     }else{
-      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,],UFfreq[,ff,]))
+      
+      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,]))
       barplotT(out$ml,CLoa10[ff,],ylim=ylim)
-      #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
-    
+ 
       lines(out$ml,CLpa10[ff,],col="#0000ff90",lwd=2)
-      lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-      lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
-    
+      lines(out$ml,CLpaZ10[ff,],col="green",lwd=2)
+      
       if(ff==1)legend('topright',legend=paste(OMI@years[2]-9,"-",OMI@years[2]),bty='n')
+      
     }
 
-       #legend('topright',legend=paste("n=",round(sum(CLobsA[,,,ff,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.)
-    #abline(v=xs,col="#99999980")
-    #legend('topright',legend=paste("n=",round(sum(exp(apply(CLobsA[,,,ff,],1,sum)),na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
-  
   }
  
 ``` 
 
-Figure 11.Length composition residuals. The left-hand panels show residuals over time. Orange circles are positive residuals (observed proportion is higher than expected), blue circles are negative residuals. The area of the circle is proportional to the absolute residuals error (i.e. if the observed proportion of a length class is 0.5 and the model predicted fraction is 0.4, this is represented by a circle ten time larger than if the observed proportion was 0.05 and the predicted fraction is 0.04). This keeps the scaling of the left-hand plots the same as the right-hand plots that show the aggregate residual error over all years and (right mosts panels) the period since 2007. Given the estimated selectivity of each fleet, the grey lines show the predicted composition of catches for a hypothetical unfished Eastern stock (solid grey line) and a hypothetical unfished western stock (dashed grey line).
+Figure 11. Length composition residuals. The left-hand panels show residuals over time. Orange circles are positive residuals (observed proportion is higher than expected), blue circles are negative residuals. The area of the circle is proportional to the absolute residuals error (i.e. if the observed proportion of a length class is 0.5 and the model predicted fraction is 0.4, this is represented by a circle ten time larger than if the observed proportion was 0.05 and the predicted fraction is 0.04). This keeps the scaling of the left-hand plots the same as the right-hand plots that show the aggregate residual error over all years and (right mosts panels) the period since 2007. The blue line should match the orange bars when model predictions fit observations. The green line is the predicted length composition across all length classes for all time-area strata where there is at least one length observation (even though observations of zero proportions do not enter the likelihood function). The green lines may not match the observations (orange bars) or the predicted positive length proportions (blue lines) if length observations (zero proportions) are not missing at random.  
 
 ```{r fit to agg length observations2, fig.width=7.5, fig.height=9,echo=FALSE}
 
- 
   par(mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
   dmat<-array(c((1:8)*3-2,(1:8)*3-2,(1:8)*3-1,(1:8)*3),c(8,4))
   layout(dmat)
+  
   for(ff in 9:nf){
-    #if(ff==9)par(mfcol=c(ceiling((nf-8)/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.3,0.3,0.1,0.05))
+
     yrng<-range(out$CLobs[out$CLobs[,4]==ff,1],na.rm=T)
     yind<-yrng[1]:yrng[2]
     yrs<-yind+OMI@years[1]-1
@@ -948,25 +969,24 @@ Figure 11.Length composition residuals. The left-hand panels show residuals over
     axis(2,1:OMI@nl,OMI@mulen)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
     
-    ylim=c(0,max(CLoa[ff,],CLpa[ff,],UFfreq[,ff,]))
+    ylim=c(0,max(CLoa[ff,],CLpa[ff,]))
     barplotT(out$ml,CLoa[ff,],ylim=ylim)
       
     lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
-    lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-    lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
-    #legend('topright',legend=paste("n=",round(sum(CLobsA[,,,ff,],na.rm=T)/1000,1),"k",sep=""),bty='n',cex=0.9)
-      if(ff==9)legend('topright',legend="All years",bty='n') 
+    lines(out$ml,CLpaZ[ff,],col="green",lwd=2)
+ 
+    if(ff==9)legend('topright',legend="All years",bty='n') 
     
     if(all(is.na(CLoa10[ff,]))){
+      
       plot(1,col='white',axes=F,main="",xlab="",ylab="")
+    
     }else{
-      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,],UFfreq[,ff,]))
+      ylim=c(0,max(CLoa10[ff,],CLpa10[ff,]))
       barplotT(out$ml,CLoa10[ff,],ylim=ylim)
-      #plot(CLoa[ff,],ylim=ylim,col='orange',pch=19,cex=2)
          
       lines(out$ml,CLpa10[ff,],col="#0000ff90",lwd=2)
-      lines(out$ml,UFfreq[1,ff,],col="#99999990",lwd=2)
-      lines(out$ml,UFfreq[2,ff,],col="#99999990",lwd=2,lty=2)
+      lines(out$ml,CLpaZ10[ff,],col="green",lwd=2)
       
       if(ff==9)legend('topright',legend=paste(OMI@years[2]-9,"-",OMI@years[2]),bty='n')
     }
@@ -999,8 +1019,6 @@ Figure 11 cont. Length composition residuals.
   popnams=c("East","West")
   subyrnams=c("Jan-Mar","Apr-Jun","Jul-Sept","Oct-Dec")
   areanams=OMI@areanams
-  
- 
 
   par(mfcol=c(nr,ns),mai=c(0.05,0.15,0.01,0.01),omi=c(0.4,0.5,0.1,0.05))
   ylim=c(0,max(RAIp,na.rm=T))
@@ -1013,7 +1031,6 @@ Figure 11 cont. Length composition residuals.
   
     for(r in 1:nr){
     
-      #plot(yrs,RAIo[r,s,],col="#99999980",pch=pch,ylim=ylim,axes=F)
       plot(yrs,RAIp[r,s,],col="purple",pch=pch,ylim=ylim,axes=F,lwd=2,type="l",yaxs='i')
       for(p in 1:np){
         lines(yrs,RAIpP[r,s,,p],col=pcols[p],lwd=1.5)
@@ -1034,7 +1051,7 @@ Figure 11 cont. Length composition residuals.
   }
 
   mtext("Year",1,outer=T,line=2)
-  #mtext("Predicted relative abundance of Atlantic bluefin",3,line=1.5,outer=T)
+  
 ```
 
 Figure 12. The predicted seasonal and spatial biomass of Atlantic bluefin tuna by stock. 
@@ -1086,9 +1103,6 @@ Figure 13b. The movement transition probabilities. The square matrices show the 
 # Fit to stock-of-origin data
 
 ```{r SOO_fit_o, fig.width=7, fig.height=9,echo=FALSE}
-
-
-
 
 linebar<-function(obs,obsSE,pred,age,lwd=1,pcex=1,
                   cols=c("#ff000070","#00ff0070","#0000ff70"),xlim=NA,ylim=NA,allobs,allpred,type="untransformed"){
@@ -1176,8 +1190,6 @@ Figure 14a. The model fit to the observed probability eastern stock-of-origin da
 
 ```{r SOO_fit_o_logit, fig.width=7, fig.height=9,echo=FALSE}
 
-
-
 par(mfrow=c(nr-2,ns),mai=c(0.25,0.35,0.1,0.01),omi=c(0.4,0.6,0.3,0.05))
 firstplot<-0
 
@@ -1199,8 +1211,6 @@ for(rr in 2:(out$nr-1)){
 }
 mtext("Observed probability Eastern",1,line=0.8,outer=T)
 mtext("Predicted probability Eastern",2,line=2.5,outer=T)
-
-
 
 ```
 
@@ -1243,7 +1253,6 @@ Figure 14c. As figure 14a but for the genetics stock-of-origin data.
 
 
 ```{r SOO_fit_g_logit, fig.width=7, fig.height=9,echo=FALSE}
-
 
 par(mfrow=c(nr-2,ns),mai=c(0.25,0.35,0.1,0.01),omi=c(0.4,0.6,0.3,0.05))
 firstplot<-0
@@ -1393,7 +1402,6 @@ Figure 16. Predicted stock mixing (averaged over seasons, summed over areas). On
 
 ```{r mixingbystrata, fig.width=7, fig.height=9.5,echo=FALSE}
 
-
 subyrnams=c("Jan-Mar","Apr-Jun","Jul-Sept","Oct-Dec")
 areanams=OMI@areanams
 plab<-c(paste0("(",letters[1:26],")"),paste0("(",paste0(letters[1:26],letters[1:26]),")"))
@@ -1425,14 +1433,9 @@ for(rr in 1:nr){
 mtext("Year",1,outer=T,line=1.5,font=2)
 mtext("Fraction of biomass that is Eastern origin (%)",2,outer=T,line=3.5,font=2)
 
-
-
 ```
 
-
 Figure 17a. Predicted stock mixing by year, season and area. The red line is the fraction (%) of stock biomass that is Eastern.  
-
-
 
 ```{r SSBdistbystrataE, fig.width=7, fig.height=9.5,echo=FALSE}
 
@@ -1476,13 +1479,9 @@ for(rr in 1:nr){
 mtext("Year",1,outer=T,line=1.5,font=2)
 mtext("Fraction of biomass",2,outer=T,line=3.5,font=2)
 
-
-
 ```
 
-
 Figure 17b. Predicted spatial distribution of Eastern stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area.  
-
 
 
 ```{r SSBdistbystrataW, fig.width=7, fig.height=9.5,echo=FALSE}
@@ -1527,11 +1526,38 @@ for(rr in 1:nr){
 mtext("Year",1,outer=T,line=1.5,font=2)
 mtext("Fraction of biomass",2,outer=T,line=3.5,font=2)
 
-
-
 ```
-
 
 Figure 17c. Predicted spatial distribution of Western stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area.  
 
+# Seasonal / spatial priors
 
+```{r seasonaltrend, fig.width=7, fig.height=3,echo=FALSE}
+
+if(!is.null(OMI@SpatPr)){
+
+   ni<-max(OMI@SpatPr[,4]) 
+   par(mfrow=c(ceiling(ni/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.4,0.4,0.01,0.01))
+
+   for(i in 1:ni){
+     
+     daty<-OMI@SpatPr[OMI@SpatPr[,4]==i,]
+     
+     pred<-out$SPpred_vec[OMI@SpatPr[,4]==i]
+     #pred<-pred*(mean(daty[,5])/mean(pred))
+     plot(daty[,2],daty[,5])
+     lines(daty[,2],pred,col='blue')
+     legend('topright',legend=OMI@areanams[daty[1,3]],text.col='blue',bty='n')
+      
+   }
+  
+}else{
+  
+  plot(1,1,col="white",axes=F)
+  legend('centre',legend="no spatial priors")
+  
+}
+
+```
+
+Figure 17d. Estimated seasonal distribution relative to prior specification.   

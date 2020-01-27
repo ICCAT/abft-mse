@@ -2,9 +2,9 @@
 //
 //                         		           Modifiable Multistock Model (M3)                      
 //
-//                                	           	        v6.2                                 
+//                                	           	        v6.4                                 
 //
-//                                   		           21th Sept 2019                          
+//                                   		           5th Jan 2020                          
 //                                                                     
 //                           		            ICCAT GBYP, Tom Carruthers UBC 
 //
@@ -45,14 +45,18 @@
 // -- Some conventions ------
 //
 // 1) Matrices are arranged in order of population, year, season
-// 2) Timesteps include subyears and are indexed to year and subyear by yind and sind, respectively
-// 3) Stock separation is not explicit in the data except for stock of origin, some PSAT (not PSAT2) and some conventional tags
-// 4) Movement by subyear is the movement into an area in that subyear: models runs in the order: F(y-1) M(y-1), mov(y), F(y), M(y), mov(y+1),...
-// 5) Recapture probabilities are 100% assigned to the release area in first time step after which they are affected by movement e.g. for 
+// 2) Stock separation is not explicit in the data except for stock of origin, some PSAT (not PSAT2) and some conventional tags
+// 3) Movement by subyear is the movement into an area in that subyear: models runs in the order: F(y-1) M(y-1), mov(y), F(y), M(y), mov(y+1),...
+// 4) Recapture probabilities are 100% assigned to the release area in first time step after which they are affected by movement e.g. for 
 //    a 5 area model (0,1,0,0,0) (0.05,0.7,0.1,0.1,0.5),...
-// 6) First subyear of first year is for initialisation and there is no recorded fishing
-// 7) Rows in movement matrix with no recorded movements are assigned 1/nareas probability to avoid the vanishing fish problem (which 
-//    would occur if all areas were assigned zero probability)
+// 5) First subyear of first year is for initialisation and there is no recorded fishing
+//
+//-- Change v6.3 -----------
+// 
+// Following review of Carmen Fernandez
+//
+// * q estimation changed to MLE approach (Iobs, CPUEobs and SPprior now have an additional column)
+// * code cleaned to remove previous optional features and initial values
 //
 //-- Change v6.2 ------------
 //
@@ -92,7 +96,6 @@
 // * Dynamic age-length key based on linear interpolation between discrete growth groups
 // * If required, convert PSAT2 likelihood to movm configuration
 // 
-
 
 
 // ==========================================================================================================================================
@@ -150,7 +153,7 @@ DATA_SECTION
 	
 	init_int nCPUEq;                       // Number of estimated catchabilities for CPUE indices
 	init_int nCPUEobs;                     // Number of rows of CPUE data 
-	init_matrix CPUEobs(1,nCPUEobs,1,9);   // A table of CPUE index observations by year, subyear, area, fleet, index No. (nE), cv, wt
+	init_matrix CPUEobs(1,nCPUEobs,1,10);  // A table of CPUE index observations by year, subyear, area, fleet, index No. (nE), cv, wt, w (for q MLE calc)
 	//init_vector CPUEwt(1,nCPUEq);        // Individual fitting weights by CPUE index
 		
 	init_int nE;                           // Number of effort series used / partial F's
@@ -167,12 +170,12 @@ DATA_SECTION
 	// -- Fishery independent indices --
 	init_int nI;                           // Number of fishery independent indices
 	init_int nIobs;                        // Number of relative abundance index observations by timestep, area 
-	init_matrix Iobs(1,nIobs,1,11);        // Observed relative index observations year, subyear, area, stock, index number (nI), type (1) biomass (2) SSB, index, fleet (if type=4), cv, wt
+	init_matrix Iobs(1,nIobs,1,12);        // Observed relative index observations year, subyear, area, stock, index number (nI), type (1) biomass (2) SSB, index, fleet (if type=4), cv, wt, w (for q MLE calc)
 	//init_vector Iwt(1,nI);               // Individual fitting weights by fishery independent index
 	
 	// -- PSAT tags ----------
 	init_int nPSAT;                        // Number of PSAT recapture events (known SOO)
-	init_matrix PSAT(1,nPSAT,1,8);         // PSAT release-recapture events from stock, age class, subyear, timestep, from-area, to-area, N, Frac
+	init_matrix PSAT(1,nPSAT,1,8);         // PSAT release-recapture events from stock, age class, subyear, timestep, from-area, to-area, N, Frac, total from area
 	init_int nPSAT2;                       // Number of PSAT recapture events (not known SOO)
 	init_matrix PSAT2(1,nPSAT2,1,8);       // PSAT2 release-recapture events from age class, year, subyear, timestep, from-area, to-area, prob p=1, p=2...
 	
@@ -196,14 +199,9 @@ DATA_SECTION
 	
 		
 	// -- Movement estimation --
-	init_int nMP;                          // Number of movement parameters estimated
 	init_int nma;                          // Number of movement age-classes
 	init_matrix ma(1,np,1,na);             // Movement age classes by age for each stock
 	init_matrix macat(1,nma,1,2);          // Age class bounds 
-	init_int nmovind;                      // Number of non-residency paramters estimated              
-	init_matrix movind(1,nmovind,1,5);     // Index of estimable movements (stock, age class, subyear, area from, area to)
-	init_int nmov1;                        // Number of unestimated zero (logspace) movements
-	init_matrix mov1(1,nmov1,1,5);         // Index of first non-estimated movement parameter (fixed to zero)
 	init_int movtype;                      // 1: gravity (nr), 2: Markov ((nr-1) x nr), 3: fractional (nr-1, no viscosity)
 	init_int nMovExc;                      // Number of movement exclusions
 	init_matrix MovExc(1,nMovExc,1,6);     // Movement exclusions: 1: stock, 2: age class, 3: season, 4: from area, 5: to area
@@ -213,9 +211,6 @@ DATA_SECTION
 	init_matrix Ilencat(1,nIlencat,1,2);   // the upper and lower bounds of length categories for the fleet vulnerability schedules
 		
 	// -- Observation errors --
-	//init_vector CobsCV(1,nf);            // Catch observation error   
-	//init_vector CPUEobsCV(1,nCPUEq);     // CPUE observation error
-	//init_vector IobsCV(1,nI);            // Fishery independent index obs error (only if complexF = 1)
 	init_number CLCV_num;                  // Numerator of the Maunder normal composition likelihood function
 	
 	// -- Priors --
@@ -235,33 +230,22 @@ DATA_SECTION
 	init_number BSfracCV; 		       // BSfrac ratio 
 	init_int nSpatPrq;                     // Number of spatial indices
 	init_int nSpatPr;                      // Number of Spatial Prior observations by year, subyear, area, Ino, Index,  CV, wt, lb age, ub age 
-	init_matrix SpatPr(1,nSpatPr,1,9);     // Spatial Prior
+	init_matrix SpatPr(1,nSpatPr,1,10);    // Spatial Prior y, q, r, Ino, Index, CV wt lf lt w
 	
 	
 	// -- Likelihood weights --
 	init_int nLHw;                         // Number of likelihood weights
 	init_vector LHw(1,nLHw);               // Likelihood weights (1 catch, 2 cpue, 3 FIindex, 4 Lcomp, 5 SOO, 6 PSAT, 7 PSAT2, 8 RecDev, 9 mov, 10 sel)
-		
-	// -- Initial values --
-	init_vector muR_ini(1,np);                        // Mean historical recruitment
-	init_matrix sel_ini(1,nf,1,nl);                   // Selectivity 
-	init_matrix selpars_ini(1,nf,1,3);                // Selectivity parameters
-	init_vector lnF_ini(1,nCobs);                     // Effort (complexF=0) or log fishing mortality rate (complexF=1) 
-	init_matrix lnRD_ini(1,np,1,ny);                  // Recruitment deviations
-	init_5darray mov_ini(1,np,1,ns,1,na,1,nr,1,nr);   // Movement parameters
-	init_vector lnqCPUE_ini(1,nCPUEq);                // q estimates for CPUE fleets
-	init_vector lnqI_ini(1,nI);                       // q estimates for Fish. Ind. Indices
-	init_vector D_ini(1,np);                          // Simulated depletion
-        
+		    
 	// -- Misc --
-	init_int complexRD;                    // 0: estimate five year blocks of recruitment 1: estimate all annual recruitment deviations
-	init_int complexF;                     // 0: Estimate a q by fleet using C/index as a covariate of effort (nf params e.g. 5) 1: Estimate an F for every Cobs (nCobs params e.g. 1200)
-	init_int nF;                           // nCobs if complexF = 1, or 1 if complexF=0
+	init_int nF;                           // nCobs 
 	init_number MICV;                      // CV - extra Fmod variability in F in annual deviations from Master Index
 	init_int Phase1;                       // Phases for estimation
 	init_int Phase2;                       // Phases for estimation
 	init_int Phase3;                       // Phases for estimation
 	init_int Phase4;                       // Phases for estimation
+	init_int ET_LHF;                       // Electronic tag likelihood function 1: multinomial 2: scaled multinomial (zero intercept)
+	init_int LC_LHF;                       // Length Comp likelihood function 1: lognormal w const 2: lognormal no const
 	init_int debug;                        // 1 = run with initial values
 	init_int verbose;                      // 1 = print handy text
 	init_number datacheck;                 // Validates length of dat file read, 991199
@@ -390,8 +374,6 @@ PARAMETER_SECTION
         matrix SSBdist(1,np,1,nr);                  // A temporary vector storing the spatial distribution of spawning biomass
         matrix spawnr(1,np,1,nr);                   // The fraction of spawning in each area
         4darray VB(1,ny,1,ns,1,nr,1,nf);            // Vulnerable biomass
-        4darray VBi(1,ny,1,ns,1,nr,1,nf);           // Vulnerable biomass index
-        4darray VBind(1,ny,1,ns,1,nr,1,nf);         // 5 categories of vulnerability (1) 66-115 (2) 115-144 (3) less than 145 (4) greater than 177 (5) greater than 195
         5darray VL(1,ny,1,ns,1,nr,1,nf,1,nl);       // Vulnerable at length recorded
         5darray VBL(1,ny,1,ns,1,nr,1,nf,1,nl);      // Vulnerable at length recorded
         3darray B(1,ny,1,ns,1,nr);                  // Biomass
@@ -411,12 +393,9 @@ PARAMETER_SECTION
         matrix Rec(1,np,1,ny);                      // Recruitment deviations (fractions)
 	matrix R0(1,np,1,ny);                        // Unfished recruitment by stock and time period
 	matrix steep(1,np,1,ny);
-	matrix lnR02(1,np,1,2);                        // Unfished recruitment by stock and time period
 	5darray CTL(1,np,1,ny,1,ns,1,nr,1,nl);      // Catch at length
 	5darray CTA(1,np,1,ny,1,ns,1,nr,1,na);      // Catch at age
-        matrix Btrend(1,np,1,ny);                   // Total biomass trend
-        matrix meanF(1,np,1,ny);                    // Average F-at-age 
-        
+         
         LOCAL_CALCS
 	   if(debug)cout<<"here3"<<endl;
 	END_CALCS
@@ -462,10 +441,7 @@ PARAMETER_SECTION
         
         // -- Composition likelihood function
         vector CLprop(1,nCLobs);                       // Calculated proportions
-        vector CLsd(1,nf);                             // Conditional MLE std dev 
-        vector CLn(1,nf); 
-        vector CLvar(1,nf); 
-        
+          
         // -- Tagging --
         6darray RecapP(1,np,1,ns,1,nma,1,nRPT,1,nr,1,nr);    // Recapture probabilities
         
@@ -480,11 +456,9 @@ PARAMETER_SECTION
         // -- Temporary arrays --
         3darray stemp(1,np,1,ns,1,nr);                 // Temporary season index
         matrix BSfrac_pred(1,np,1,ns);                 // Predicted fraction of E/W stock in W/E area
-        vector sind(1,nRPT);                           // Temporary season index for calculation of recapture probabilities
         vector NLtemp(1,nl);                           // Stores a temporary vector of numbers at length (efficiency)
         number Ntemp;                                  // A temporarly record of stock numbers (SRA)
-        vector tempR(1,nr);
-        
+         
         LOCAL_CALCS
 	  if(debug)cout<<"here6"<<endl;
 	END_CALCS
@@ -531,9 +505,7 @@ PROCEDURE_SECTION
         
         if(debug)cout<<"Master index invariant calcs completed"<<endl; 
 	
-        if(debug==1)	assignInits();   // Overwrite R0, sel, F, iRD, RD, mov, qCPUE, qI to simulated values
-	
-	calcF();                         // Calculate fishing mortality rate at age / length
+        calcF();                         // Calculate fishing mortality rate at age / length
 		
 	if(debug)cout<<"Fs calculated"<<endl; 
 	
@@ -618,22 +590,6 @@ FUNCTION assignPars
   }
 
 
-
-FUNCTION assignInits
-  {
-	// -- Assign initial (starting) values --
-	//R0=R0_ini;                        // Assign unfished recruitment
-	//iRD=mfexp(ilnRD_ini);             // Assign initial recruitment deviations  
-	//muR=muR_ini;                        // Assing mean historical recruitment
-	//RD=mfexp(lnRD_ini);                 // Assign recruitment deviations
-	//if(complexF)F=mfexp(lnF_ini);       // Assign fishing mortality rates
-	//sel=sel_ini;                        // Assign selectivitiese
-	//mov=mov_ini;                        // Assign movement
-	//qCPUE=mfexp(lnqCPUE_ini);           // Assign CPUE index catchability
-	//qI=mfexp(lnqI_ini);                 // Assign fishery independent index catchability
-	
-	if(debug)cout<<"--- Finished assignInits ---"<<endl;
-  }
 
 
 FUNCTION calcFDY
@@ -883,8 +839,7 @@ FUNCTION calcF
   	FT.initialize();      // Total fishing mortality rate = 0
   	FAT.initialize();     // Total fishing mortality rate at age = 0
   	Z.initialize();       // Total mortality = 0
-  	meanF.initialize();   // Track average F = 0
-  	  	
+  		  	
   	for(int i=1;i<=nEobs;i++){
 			
 	  int yy=Eobs(i,1);    // Year
@@ -932,7 +887,6 @@ FUNCTION calcF
 	      for(int rr=1;rr<=nr;rr++){               // Loop over areas
 	      
 	        FAT(pp)(yy)(ss)(rr)=FT(yy)(ss)(rr)*trans(ALK(pp)(yy))+tiny; // Calculate fishing mortality rate at age, F(a) = sigma(l) P(l|a)*F(l)
-	        meanF(pp,yy)+=sum(FAT(pp)(yy)(ss)(rr))/(na*nr); // Calculate mean fishing mortality rate at age (debugging)
 	        
 	        for(int aa=1;aa<=na;aa++){             // Loop over ages
 	        
@@ -975,11 +929,9 @@ FUNCTION initModel
 	CLtotfrac.initialize();        // Total catch fractions (length class) = 0
 	CTA.initialize();              // Temporary catch at age = 0
 	VB.initialize();               // Vulnerable biomass = 0
-	VBi.initialize();              // Vulnerable biomass index = 0
 	VL.initialize();               // Vulnerable length
 	VBL.initialize();              // Vulnerable biomass at length
 	D.initialize();                // Spawning Stock depletion = 0
-	Btrend.initialize();           // Trend in biomass = 0
 	objSRA.initialize();           // Penalty for historical F's over 0.9 = 0
 	
 	for(int pp=1;pp<=np;pp++){
@@ -995,7 +947,7 @@ FUNCTION initModel
 	  
 	  stemp(pp)(ns)=1./nr;                                  // Distribute a fish evenly over areas                     
 	  
-	  for(int ii=1;ii<=20;ii++){                        // Loop over nydist initial spatial distribution (stabilizes within 3 usually)
+	  for(int ii=1;ii<=20;ii++){                            // Loop over nydist initial spatial distribution (stabilizes within 3 usually)
 	    
 	    for(int ss=1;ss<=ns;ss++){                          // Loop over subyears
 	        
@@ -1023,10 +975,10 @@ FUNCTION initModel
 	    
 	      for(int aa=1;aa<=na;aa++){
 	        
-	        N(pp,1,ss,aa,rr)=R0(pp,1)*surv(pp,aa)*stemp(pp,ss,rr);    // Stock numbers are spatial distribution multiplied by Survival and R0
-	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);           // Historical spawning stock biomass
+	        N(pp,1,ss,aa,rr)=R0(pp,1)*surv(pp,aa)*stemp(pp,ss,rr); // Stock numbers are spatial distribution multiplied by Survival and R0
+	        hSSB(pp,1,ss)+=N(pp,1,ss,aa,rr)*Fec(pp,aa);            // Historical spawning stock biomass
 	        
-	      }                                                       // end of ages
+	      }                                                        // end of ages
 	      
 	      N(pp,1,ss,na,rr)+=R0(pp,1)*surv(pp,na)*stemp(pp,ss,rr)*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na))); // Indefinite intergral for plus group
 	      hSSB(pp,1,ss)+=(N(pp,1,ss,na,rr)*Fec(pp,na))*mfexp(-Ma(pp,na))/(1-mfexp(-Ma(pp,na)));
@@ -1062,7 +1014,7 @@ FUNCTION initModel
 		  
 		  hFAT(yy-1,ns,aa,rr)=-log(posfun(1-(HCobs(yy-1,ns,aa,rr)/(Ntemp+tiny)),1-0.9,pen));            // F estimate based on half of M
 		  
-		  objSRA+=pen;
+		  objSRA+=pen/1000000.;
 		  
 		   
 		}
@@ -1244,8 +1196,7 @@ FUNCTION initModel
 	      NLtemp=colsum(NLA);                             // Numbers at length (sum over age classes)
 	      BL(1)(ss)(rr)+=elem_prod(NLtemp,wl(pp));
 	      B(1,ss,rr)+=sum(elem_prod(NLtemp,wl(pp)));      // Biomass summed over stocks	
-	      Btrend(pp)(1)+=B(1,ss,rr)/ns;                   // Record first year of biomass trend (debugging)
-	      
+	       
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleet types
 						  
 		VB(1,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));   // Vulnerable biomass summed over stocks
@@ -1417,8 +1368,7 @@ FUNCTION calcTransitions
 	        NLtemp=colsum(NLA);                                   // Calculate numbers by length class (sum over ages)
 	        BL(yy)(ss)(rr)+=elem_prod(NLtemp,wl(pp));             // Biomass at length summed over stocks
 		B(yy,ss,rr)+=sum(elem_prod(NLtemp,wl(pp)));           // Biomass summed over stocks				  
-	        Btrend(pp)(yy)+=B(yy,ss,rr)/ns;                       // Record biomass trend (debugging)
-	     
+	      
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
 		   
 		  VB(yy,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));    // Vulnerable biomass summed over stocks
@@ -1449,7 +1399,6 @@ FUNCTION calcTransitions
 	  }                                                          // End of year
 	
 	  SSBi(pp)=SSB(pp)/(sum(SSB(pp))/(ny*ns));                   // Calculate SSB index normalized to 1
-	  Btrend(pp)/=Btrend(pp,1);                                  // Normalize Btrend to depletion
 	  
 	  for(int pp=1;pp<=np;pp++){  // Loop over stocks
 	  		  		      
@@ -1524,6 +1473,10 @@ FUNCTION calcObjective
 	objFDY.initialize();                    // Penalty on extra Fmod annual variability in F=qE (master index)
 	objSP.initialize();                     // Prior on Spatial Priors
 	
+	qCPUE.initialize();                     // Catchability MLE calc for CPUE indices is a product
+	qI.initialize();                        // Catchability MLE calc for Fishery Independent indices is a product
+	qSP.initialize();                       // Catchability MLE calc for Spatial priors is a product
+	
 	CPUEpredtot.initialize();               // Record of fishery CPUE indices for normalization (dropping the leading qs)
 	CPUEpred_vec.initialize();              // Paired CPUE index predictions 
 	Ipredtot.initialize();                  // Record of fishery independent indices for normalization (dropping the leading qs)
@@ -1533,12 +1486,9 @@ FUNCTION calcObjective
 	
 	Ipred.initialize();                     // Predicted fishery-independent index
 	CLprop.initialize();                    // Catch at length composition predicted proportions
-	CLsd.initialize();                      // Conditional MLE estimate of the sd 
-	CLn.initialize();
-	CLvar.initialize();
-	
+		
 	dvariable LHtemp;                       // Temporary store of the calculated likelihood values
-        double tiny=1E-10;                      // Create a small constant to avoid log(0) error
+	double tiny=1E-10;                      // Create a small constant to avoid log(0) error
 	
 	// -- Catch observations --
 	
@@ -1565,47 +1515,14 @@ FUNCTION calcObjective
 	// -- CPUE observations --
 	
 	dvariable CPUEtemp;
-		
+	
+	for(int ii=1; ii<=nCPUEq;ii++){
+	    qCPUE(ii)=1.0; // these are products so need to start at 1
+	}
+	
 	if(nCPUEobs>0){                   // The CPUE indices are contributing to the likelihood function
 	  
-	  for(int ff=1;ff<=nf;ff++){
-	    
-	    CPUEtemp=0.;                      // Reset the counter
-	    
-	    for(int yy=1;yy<=ny;yy++){
-	      
-	      for(int ss=1;ss<=ns;ss++){
-	        
-	        for(int rr=1;rr<=nr;rr++){
-	        
-	          CPUEtemp+=VB(yy,ss,rr,ff);  // Sum vulnerable biomass over whole time series
-	       	
-	       	}
-	  	
-	      }
-	      
-	    }
-	   
-	    CPUEtemp/=ny*ns*nr; // Get mean 
-	   
-	    for(int yy=1;yy<=ny;yy++){
-	    	      
-	      for(int ss=1;ss<=ns;ss++){	    	        
-	        
-	        for(int rr=1;rr<=nr;rr++){
-	        
-	           VBi(yy,ss,rr,ff) = VB(yy,ss,rr,ff)/CPUEtemp; // normalise VB into an index with mean 1
-	        
-	        }
-	        
-	      }
-	     
-	    }
-	    
-	  } // End of fleets
-		
-	  
-	  for(int i=1;i<=nCPUEobs;i++){ // Loop over catch rate indices
+	   for(int i=1;i<=nCPUEobs;i++){ // Loop over catch rate indices
 		
 	    int yy=CPUEobs(i,1);    // Year
 	    int ss=CPUEobs(i,2);    // Subyear
@@ -1619,7 +1536,7 @@ FUNCTION calcObjective
 	    
 	    if(lt<1){ // vulnerable biomass
 	    	
-	      CPUEpred(i)=VBi(yy,ss,rr,ff);                                       // Calculate vulnerable biomass
+	      CPUEpred(i)=VB(yy,ss,rr,ff);                                       // Calculate vulnerable biomass
 	           	  	    
 	    }else{// 
 	      
@@ -1629,16 +1546,10 @@ FUNCTION calcObjective
 	    
 	    CPUEpredtot(1,ii)+=CPUEpred(i);
 	    CPUEpredtot(2,ii)+=CPUEobs(i,6);
-	    	  
+	    qCPUE(ii)*=	pow((CPUEobs(i,6)/CPUEpred(i)),CPUEobs(i,10)); //CPUEobs(i,10)= w_i = (1/sigma_i^2) / SUM_i{ (1/sigma_i^2) }
+ 	    	  
 	 }
-	 
-	 
-	 for(int ii=1; ii<=nCPUEq;ii++){
-	 
-	    qCPUE(ii)=CPUEpredtot(2,ii)/CPUEpredtot(1,ii); // q is sum of un-normalized observed indices / un-normalized predicted biomass, q=I/B
-	 
-	 }
-	  
+		 
 	 for(int i=1;i<=nCPUEobs;i++){ // Loop over catch rate indices
 		
 	    int yy=CPUEobs(i,1);    // Year
@@ -1661,7 +1572,13 @@ FUNCTION calcObjective
 	
 	// -- Fishery independent indices --
 	
+	
 	dvariable Itemp;              // Create a dummy variable cor calculating a normalilized (mean 1) index 
+	
+	for(int ii=1; ii<=nI;ii++){
+		  qI(ii)=1.0; // new q derivation is a product so requires initialization at 1
+	}
+	
 	
 	for(int i=1; i<=nIobs;i++){   // Loop over fishery - independent indices PRECALCULATION for normalization
 	
@@ -1699,7 +1616,7 @@ FUNCTION calcObjective
 	      
 	    case 4:  // Biomass first two stocks
 	     
-	      Ipred(i)= VBi(yy,ss,rr,ff); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
+	      Ipred(i)= VB(yy,ss,rr,ff); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
 	     
 	      break;  
 	      
@@ -1713,11 +1630,8 @@ FUNCTION calcObjective
 	  
 	  Ipredtot(1,ii)+=Ipred(i);
 	  Ipredtot(2,ii)+=Iobs(i,7);
-	  
-	}
-	
-	for(int ii=1; ii<=nI;ii++){
-	  qI(ii)=Ipredtot(2,ii)/Ipredtot(1,ii); // q is sum of un-normalized observed indices / un-normalized predicted biomass, q=I/B
+	  qI(ii)*= pow((Iobs(i,7)/Ipred(i)),Iobs(i,12)); //Iobs(i,12)= w_i = (1/sigma_i^2) / SUM_i{ (1/sigma_i^2) }
+ 		  
 	}
 	
 	for(int i=1; i<=nIobs;i++){   // Loop over fishery - independent indices PRECALCULATION for normalization
@@ -1741,25 +1655,6 @@ FUNCTION calcObjective
 	// -- Length composition data --  
 	
 	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
-		
-	  int yy=CLobs(i,1);   // Year
-          int ss=CLobs(i,2);   // Subyear
-	  int rr=CLobs(i,3);   // Region
-	  int ff=CLobs(i,4);   // Fleet type
-	  int ll=CLobs(i,5);   // Length class
-	  CLprop(i)=VL(yy,ss,rr,ff,ll)/sum(VL(yy)(ss)(rr)(ff));
-	  //CLn(ff)+=1;
-	  //CLvar(ff)+=pow(sqrt(CLprop(i)+tiny)-sqrt(CLobs(i,6)+tiny),2.);
-	  
-	}
-	
-	//for(int ff=1;ff<=nf;ff++){
-	
-	//  CLsd(ff)=sqrt(CLvar(ff)/CLn(ff)); // Some comp likelihoods need the sd estimate
-	  
-	//}
-		
-	for(int i=1;i<=nCLobs;i++){  // Loop over catch at length observations
 	
 	  int yy=CLobs(i,1);   // Year
 	  int ss=CLobs(i,2);   // Subyear
@@ -1767,8 +1662,24 @@ FUNCTION calcObjective
 	  int ff=CLobs(i,4);   // Fleet type
 	  int ll=CLobs(i,5);   // Length class
 	  //cout<<"y="<<yy<<" s="<<ss<<" r="<<rr<<" f="<<ff<<" l="<<ll<<" CLobs="<<CLobs(i,6)<<" CLpred="<<CLtotpred(yy,ss,rr,ff,ll)<<endl;
-	  //LHtemp=dnorm(log(CLtotpred(yy)(ss)(rr)(ff)(ll)),log(CLobs(i,6)),0.2);
-	  LHtemp=dnorm(log(CLprop(i)+tiny),log(CLobs(i,6)),sqrt(CLCV_num/CLobs(i,6))); // was 0.05
+	  CLprop(i)=CLtotfrac(yy)(ss)(rr)(ff)(ll);
+	  
+	  switch(LC_LHF){       // Cases match number of estimated parameters for simplicity
+	  	  		    
+	    case 1:  // lognormal
+	      LHtemp=dnorm(log(CLprop(i)+tiny),log(CLobs(i,6)+tiny),sqrt(CLCV_num/(CLobs(i,6)+tiny))); // Log-normal LHF
+	    break;
+	    
+	    case 2: // lognormal with no constant p(u,l) * {ln(p(u,l)) – ln(phat(u,l))}^2
+	      LHtemp=CLobs(i,6) * square(log(CLobs(i,6)+tiny) - log(CLprop(i)+tiny));
+	    break;
+	    
+	    case 3: // Sqrt difference 
+	      LHtemp= square(pow(CLobs(i,6)+tiny,0.5)-pow(CLprop(i)+tiny,0.5)); //sqrt multinomial is approximately normal 
+	    break;
+	    
+	  }
+	  
 	  objCL+=LHtemp*LHw(4)*CLobs(i,7);                                     // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(4)*CLobs(i,7);                                      // Weighted likelihood contribution
 	
@@ -1816,9 +1727,6 @@ FUNCTION calcObjective
 	  objG+=LHtemp*LHw(5)*SOOobs(i,9);                       // Weighted likelihood contribution
 	  	
 	}
-		
-	//cout<<SOOpred<<endl;
-	//exit(1);
 	
 	if(debug)cout<<"---  * Finished SOO LHF ---"<<endl;
 	
@@ -1832,47 +1740,30 @@ FUNCTION calcObjective
 	  int tt=PSAT(i,4);   // Time at liberty (subyears)
 	  int rr=PSAT(i,5);   // Region from
 	  int r2=PSAT(i,6);   // Region to
-	  	  	  
-	  if(ss==1){
-	   LHtemp=(-PSAT(i,7)*log(movm(pp,ns,aa,rr,r2)+tiny)); // Multinomial LHF
-	   PSATpred(i)=movm(pp,ns,aa,rr,r2);
-	  }else{
-	   LHtemp=(-PSAT(i,7)*log(movm(pp,ss-1,aa,rr,r2)+tiny)); // Multinomial LHF
-	   PSATpred(i)=movm(pp,ss-1,aa,rr,r2);
+	  
+	  PSATpred(i)=movm(pp,ss,aa,rr,r2); 
+	  
+	  switch(ET_LHF){       // Cases match number of estimated parameters for simplicity
+	  		    
+	    case 1:  // multinomial
+	   	LHtemp=(-PSAT(i,7)*log(movm(pp,ss,aa,rr,r2)+tiny)); // Multinomial LHF
+	    break;
+	   
+	    case 2: // approximately multinomial and zero when fit perfect: -[ET*ln(mov) – ET*ln(mov$)] 
+	        LHtemp=( PSAT(i,7)*log(PSAT(i,8)) - PSAT(i,7)*log(movm(pp,ss,aa,rr,r2)+tiny) ); // Multinomial LHF
+	    break;
+	    	
+	    case 3: // sqrt difference
+	    	LHtemp=square(pow(PSAT(i,8)+tiny,0.5)-pow(PSATpred(i)+tiny,0.5)); // multinomial approximation
+	    break; 
+	   
 	  }
-	  
-	  //LHtemp=(-PSAT(i,7)*log(RecapP(pp,ss,aa,tt,rr,r2)+tiny)); // Multinomial LHF
-	  //PSATpred(i)=RecapP(pp,ss,aa,tt,rr,r2);
-	  //LHtemp=dnorm(log(RecapP(pp,ss,aa,tt,rr,r2)+tiny),log(PSAT(i,8)),sqrt(0.04/(PSAT(i,7)*PSAT(i,8))));
-	  
+	 
 	  objPSAT+=LHtemp*LHw(6);                               // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(6);                                  // weighted likelihood contribution
+	  
 	}
 	
-	/*
-	for(int i=1;i<=nPSAT2;i++){ // Tags with uncertain stock of origin
-		
-	  int aa=PSAT2(i,1);   // Population 
-	  int yy=PSAT2(i,2);   // Movement age class
-	  int ss=PSAT2(i,3);   // Subyear
-	  int tt=PSAT2(i,4);   // Time at liberty (subyears)
-	  int rr=PSAT2(i,5);   // Region from
-	  int r2=PSAT2(i,6);   // Region to
-
-          if(aa==1){
-             Ntemp=(N(1)(yy)(ss)(4)(rr)*RecapP(1,ss,aa,tt,rr,r2)+N(2)(yy)(ss)(4)(rr)*RecapP(2,ss,aa,tt,rr,r2)) / (sum(RecapP(1)(ss)(aa)(tt)(rr)*N(1)(yy)(ss)(4)(rr)) + sum(RecapP(2)(ss)(aa)(tt)(rr)*N(2)(yy)(ss)(4)(rr)));
-          }else if(aa==2){
-             Ntemp=(N(1)(yy)(ss)(6)(rr)*RecapP(1,ss,aa,tt,rr,r2)+N(2)(yy)(ss)(6)(rr)*RecapP(2,ss,aa,tt,rr,r2)) / (sum(RecapP(1)(ss)(aa)(tt)(rr)*N(1)(yy)(ss)(6)(rr)) + sum(RecapP(2)(ss)(aa)(tt)(rr)*N(2)(yy)(ss)(6)(rr)));
-          }else{
-             Ntemp=(N(1)(yy)(ss)(9)(rr)*RecapP(1,ss,aa,tt,rr,r2)+N(2)(yy)(ss)(9)(rr)*RecapP(2,ss,aa,tt,rr,r2)) / (sum(RecapP(1)(ss)(aa)(tt)(rr)*N(1)(yy)(ss)(9)(rr)) + sum(RecapP(2)(ss)(aa)(tt)(rr)*N(2)(yy)(ss)(9)(rr)));
-          }
-	  LHtemp=(-PSAT2(i,7)*log(Ntemp+tiny)); // Multinomial LHF
-	  PSAT2pred(i)=Ntemp;
-	  //LHtemp = dnorm(log(Ntemp+tiny),log(PSAT2(i,8)+tiny),sqrt(0.05/(PSAT2(i,7)*PSAT2(i,8))));
-	  objPSAT2+=LHtemp*LHw(7);                               // Weighted likelihood contribution
-	  objG+=LHtemp*LHw(7);                                  // weighted likelihood contribution
-	}
-	*/
 	objPSAT2=0.;
 	
 	if(debug)cout<<"---  * Finished PSAT known SOO LHF ---"<<endl;
@@ -1948,7 +1839,10 @@ FUNCTION calcObjective
 		
 	
        // -- Spatial priors -----------
-       //exit(1);
+              
+       for(int ii=1; ii<=nSpatPrq;ii++){
+          qSP(ii)=1.0; // new derivation is a product so requires initialization at 1
+       }
        
        for(int i=1; i<=nSpatPr;i++){   // Loop over spatial priors 
        	
@@ -1962,13 +1856,10 @@ FUNCTION calcObjective
        	  SPpred(i)= sum(BL(yy)(ss)(rr)(lf,lt)); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
        	  SPpredtot(1,ii)+=SPpred(i);
        	  SPpredtot(2,ii)+=SpatPr(i,5);
+       	  qSP(ii)*= pow((SpatPr(i,5)/SPpred(i)),SpatPr(i,10)); //Iobs(i,12)= w_i = (1/sigma_i^2) / SUM_i{ (1/sigma_i^2) }
        	  
        }
-       	
-       for(int ii=1; ii<=nSpatPrq;ii++){
-       	  qSP(ii)=SPpredtot(2,ii)/SPpredtot(1,ii); // q is sum of un-normalized observed indices / un-normalized predicted biomass, q=I/B
-       }
-       	
+       	       	
        for(int i=1; i<=nSpatPr;i++){   // Loop over fishery - independent indices PRECALCULATION for normalization
        		
        	   int yy=SpatPr(i,1);       // Year
@@ -2043,12 +1934,10 @@ FUNCTION calcObjective
 	objFDY=LHtemp*LHw(17);
 	objG+=LHtemp*LHw(17);
 	
-	
 	// End of OBJ calcs
 	
 	if(debug)cout<<"---  * Finished rec dev penalty ---"<<endl;
 	if(debug)cout<<"--- Finished calcObjective ---"<<endl;
-	
 	if(verbose)cout<<"Catch LHF "<<objC<<endl;            // Report catch likelihood component
 	if(verbose)cout<<"CPUE LHF "<<objCPUE<<endl;          // Report CPUE likelihood component
 	if(verbose)cout<<"FI index LHF "<<objI<<endl;         // Report FI index likelihood component
@@ -2077,10 +1966,9 @@ FUNCTION simsam
   {
         // If working with simulated data do some printing
         cout<<"log R0 = " <<lnR0<<endl;                    // Estimated R0 
-        cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
+        cout<<"selpar = " <<selpar<<endl;                     // Estimated R0
         for(int ff=1;ff<=nf;ff++){
-          //cout<<"sel sim f1= "<<sel_ini(1)<<endl;            // Simulated selectivity fleet 1
-          cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;            // Estimated selectivity fleet 1
+           cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;            // Estimated selectivity fleet 1
         }
         cout<<"RecDevs= "<<Rec<<endl;
        	cout<<"Visc= "<<visc<<endl;
@@ -2360,22 +2248,7 @@ REPORT_SECTION
         
         report<<"wt_age (y,a,p) weight at age (pass through) used to calculate iALK and B independently"<<endl;
 	report<<wt_age<<endl;
-	
-	report<<"nMP"<<endl;
-	report<< nMP <<endl;                        // Number of movement parameters estimated
 		
-	report<<"nmovind"<<endl;
-	report<<nmovind<<endl;
-	
-	report<<"movind (nmovind, 4)"<<endl;
-	report<<movind<<endl;
-		
-	report<<"nmov1"<<endl;
-	report<<nmov1<<endl;
-		                  
-	report<<"mov1(nmov1,4)"<<endl;       // Index of first non-estimated movement parameter (fixed to zero)
-	report<<mov1<<endl; 
-	
 	report<<"movtype"<<endl;             // 1: gravity, 2: markov
 	report<<movtype<<endl;
 	
@@ -2446,9 +2319,6 @@ REPORT_SECTION
 	report<<"lnRD: log recruitment deviations"<<endl; 
 	report<<log(Rec)<<endl;
 	
-	report<<"D_ini: simulated depletion"<<endl;
-	report<<D_ini<<endl;
-	
 	report<<"D: depletion SSB(last year, last subyear)/SSB0"<<endl;
 	report<<D<<endl;
 	
@@ -2460,8 +2330,11 @@ REPORT_SECTION
 	
 	//names(LHs)<- c("Catch", "CPUE", "Survey", "L Comp", "SOO", "PSAT",  "Rec Dev", "Mov Pr", "Sel Pr", "SRA pen", "SSB Pr", "Dep Pr",      "MI Pr", "R0 diff","TOT")
 
-	report<<"objC"<<" objCPUE"<<" objI"<<" objCL"<<" objSOO"<<" objPSAT"<<" objRD"<<" objmov"<<" objsel"<<" objSRA"<<" objSSB"<<" objDep"<<" objFmod"<<" objR0"<<" objG"<<" objSOOm"<<" objSOOg"<<endl;
-	report<<objC<<" "<<objCPUE<<" "<<objI<<" "<<objCL<<" "<<objSOO<<" "<<objPSAT<<" "<<objRD<<" "<<objmov<<" "<<objsel<<" "<<objSRA*LHw(11)<<" "<<objSSB<<" "<<objDep<<" "<<objFmod<<" "<<objR0<<" "<<objG<<" "<<objSOOm<<" "<<objSOOg<<endl;
+        report<<"LHw"<<endl;
+        report<<LHw<<endl;
+
+	report<<"objC"  <<" objCPUE"<<" objI"  <<" objCL"  <<" objSOO"  <<" objPSAT"  <<" objRD"  <<" objmov"<<" objsel"    <<" objSRA"           <<" objSSB" <<" objDep"   <<" objFmod" <<" objR0"   <<" objG" <<" objSOOm"  <<" objSOOg"   <<" objSP"<<endl;
+	report<<objC<<" "<<objCPUE<<" "<<objI<<" "<<objCL<<" "<<objSOO<<" "<<objPSAT<<" "<<objRD<<" "<<objmov<<" "<<objsel<<" "<<objSRA*LHw(11)<<" "<<objSSB<<" "<<objDep<<" "<<objFmod<<" "<<objR0<<" "<<objG<<" "<<objSOOm<<" "<<objSOOg<<" "<<objSP<<endl;
 		
 	report<<"SOOpred: logit-space predictions of stock of origin paired to OMI@SOOobs"<<endl;
 	report<<SOOpred<<endl;
@@ -2494,7 +2367,7 @@ REPORT_SECTION
 
 
 RUNTIME_SECTION
-    maximum_function_evaluations 10000
+    maximum_function_evaluations 100000
     convergence_criteria 1.e-6
 
 
@@ -2509,7 +2382,7 @@ TOP_OF_MAIN_SECTION
 GLOBALS_SECTION
         
         #include <admodel.h>
-	#include "stats.cxx"
+	#include "stats2.cxx"
 	#include <fstream>
         ofstream nodesout("nodes.cha");
        	

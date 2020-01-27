@@ -690,6 +690,7 @@ getBH<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 }
 
 
+
 getHS<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0){
 
   inflect<-pars
@@ -950,6 +951,158 @@ SRplot<-function(out,years=NULL,type=c("BH","BH","HS","BH"),plot=T,SRminyr=c(1,1
   return(list(type=type,par1=par,lnR0=lnR0,VC=VC,resid=resid,R0s_now=R0s_now,SRtype_now=SRtype_now,par_now=par_now))
 
 }
+
+
+getBHYR<-function(pars,SSB,rec,SSBpR,mode=1,plot=F,R0,yr_nam=""){
+
+  h<-pars
+
+  recpred<-((0.8*R0*h*SSB)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB))
+
+  if(plot){
+    recentrec<-rec[length(rec)]
+    ord<-order(SSB)
+    cols=rep("#0000ff95",length(rec))
+    cols[length(rec)]<-"#ff000095"
+    plot(SSB[ord],rec[ord],ylim=c(0,max(rec,R0)),xlim=c(0,max(SSB,R0*SSBpR)),xlab="",ylab="",col="white")
+
+
+    cols<-rainbow(length(SSB),start=0.65,end=1)
+
+    text(SSB,rec,yr_nam,cex=0.9,font=2,col=cols)
+    SSB2<-seq(0,max(R0*SSBpR,max(SSB)),length.out=500)
+    recpred2<-((0.8*R0*h*SSB2)/(0.2*SSBpR*R0*(1-h)+(h-0.2)*SSB2))
+    lines(SSB2,recpred2,col='blue')
+    abline(v=c(0.2*R0*SSBpR,R0*SSBpR),lty=2,col='red')
+    abline(h=c(R0,R0*h),lty=2,col='red')
+    legend('topright',legend=c(paste0("h = ",round(h,3)),paste0("lnR0 = ",round(log(R0),3))),bty='n')
+  }
+
+  if(mode==1){
+    #return(sum(((recpred-rec)/10000)^2))
+    return(-sum(dnorm(log(recpred)-log(rec),0,0.5,log=T))-dnorm(pars[1],0,2,log=T)) # add a vague prior on h = 0.8
+    #return(-sum(dnorm(recpred,rec,rec*0.5,log=T)))
+  }else{
+    return(rec-recpred)
+  }
+
+}
+
+
+SRplotYR<-function(out,years=NULL,type=c("BH","BH","HS","BH"),plot=T,SRminyr=c(1,1,1,1),SRmaxyr=c(1,1,1,1)){
+
+  # what recruitments are estimated
+  nt<-rep(1,2)
+  yswitch<-rep(NA,2)
+
+  for(pp in 1:out$np) {
+    recs<-unique(out$R0[pp,])
+    nt[pp]<-length(recs)
+    if(nt[pp]>1)yswitch[pp]=match(recs[2],out$R0[pp,])
+  }
+
+  tott<-sum(nt)
+  if(tott==2){
+    row1<-row2<-c(1,1,2,2)
+  }else{
+    if(nt[1]==1){
+      row1<-c(tott,1,1,tott)
+      tott<-tott+1
+      n1<-1
+    }else{
+      row1<-c(1,1,2,2)
+      n1=2
+    }
+
+    if(nt[2]==1){
+      row2<-c(tott+1,nt[1]+1,nt[1]+1,tott+1)
+    }else{
+      row2<-c(1,1,2,2)+nt[1]
+    }
+  }
+
+  if(plot){
+    par(mfrow=c(out$np,2),mai=c(0.4,0.5,0.3,0.05),omi=c(0.5,0.5,0.5,0.01))
+    layout(cbind(row2,row1))
+  }
+  #for(i in 1:sum(nt))plot(i,i)
+
+  blocksize<-sum(out$RDblock==1)
+
+  resid<-new('list') #array(NA,c(out$np,3))
+  pnam<-c("East","West")
+
+  Rec<-out$Rec_wd#mu# got to add back in mortality from end of time step
+  VC<-new('list')
+
+  i=1
+  R0s<-rep(NA,sum(nt))
+  par<-rep(NA,sum(nt))
+
+  for(pp in 1:out$np){
+
+    Fec<-out$mat_age[pp,]*out$wt_age[out$ny,,pp]
+    surv<-exp(-cumsum(c(0,out$M_age[pp,1:(out$na-1)])))
+
+    SSBpR=sum(surv*Fec)#*
+    SSBpR=SSBpR+surv[out$na]*exp(-out$M_age[pp,out$na])/(1-exp(-out$M_age[pp,out$na]))*Fec[out$na]
+
+    for(tt in 1:nt[pp]){
+
+      ind<-(1:out$ny)[unique(out$R0[pp,])[tt] == out$R0[pp,]]
+      if(tt==1)R0ind<-1
+      if(tt==2)R0ind<-out$ny
+      R0<-out$R0[pp,R0ind]
+      R0s[i]<-R0
+      yr_nam<-years[1]+ind-1
+      rec<-out$Rec_wd[pp,ind]
+      SSB=out$SSB_mu[pp,ind]
+      if(type[i]=="BH"){
+        par[i]<-out$h[pp,R0ind]
+      }else if(type[i]=="HS"){
+        if(pp==2)ind_inflect<-yr_nam<1996&yr_nam>1989 # hinge 1990-1995 in West
+        if(pp==1)ind_inflect<-(yr_nam==1973)          # hinge at 1973 in the East
+        SSB_inflect<-mean(SSB[ind_inflect])
+        SSB0<-R0*SSBpR
+        par[i]<-SSB_inflect/SSB0
+      }
+      if(type[i]=="BH"){
+        devs<-getBHYR(par[i],SSB,rec,SSBpR,mode=2,plot=plot,R0=R0,yr_nam=yr_nam)
+      } else if(type[i]=="HS"){
+        devs<-getHS_BFT(par[i],ind_inflect,SSB,rec,SSBpR,mode=2,plot=plot,R0=R0)
+      }
+      if(plot)legend('top',paste(SRminyr[i]+years[1]-1,"-",SRmaxyr[i]+years[1]-1),bty='n',text.font=2)
+      resid[[i]]<-data.frame(yrs=yr_nam,SSB=SSB,rec=rec,devs=devs)
+      VC[[i]]<-matrix(0,nrow=1)
+      i<-i+1
+
+      if(plot&nt[pp]==1)mtext(c("East stock","West stock")[pp],3,line=0.8)
+
+    }
+  }
+
+  R0s_now<-SRtype_now<-par_now<-rep(NA,2)
+  R0s_now[1]<-R0s[nt[1]]
+  R0s_now[2]<-R0s[nt[1]+nt[2]]
+  SRtype_now[1]<-type[nt[1]]
+  SRtype_now[2]<-type[nt[1]+nt[2]]
+  par_now[1]<-par[nt[1]]
+  par_now[2]<-par[nt[1]+nt[2]]
+
+  if(plot){
+    if(sum(nt)>2)mtext(c("West stock","East stock"),3,at=c(0.25,0.75),line=0.8,outer=T)
+    mtext("Spawning Biomass (kg)",1,line=0.8,outer=T)
+    mtext("Recruits (n)",2,line=0.8,outer=T)
+  }
+
+  lnR0<-log(R0)
+  return(list(type=type,par1=par,lnR0=lnR0,VC=VC,resid=resid,R0s_now=R0s_now,SRtype_now=SRtype_now,par_now=par_now))
+
+}
+
+
+
+
 
 
 SRopt<-function(out,plot=F,quiet=F,years=NULL,type="BH",R0p=NA){

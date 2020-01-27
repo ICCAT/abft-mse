@@ -73,6 +73,12 @@ dvariable dnorm(const dvariable& x, const double& mu, const double& std)
 	return 0.5*log(2.*pi)+log(std)+0.5*square(x-mu)/(std*std);
 }
 
+dvariable dnorm(const dvariable& x, const double& mu, const dvariable& std)
+{
+	double pi=3.141593;
+	return 0.5*log(2.*pi)+log(std)+0.5*square(x-mu)/(std*std);
+}
+
 //normal distribution
 dvariable dnorm(const dvariable& x, const dvariable& mu, const double& std)
 {
