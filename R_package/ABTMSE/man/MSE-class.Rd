@@ -68,6 +68,8 @@
 \item{BBa}{currently unused}
 \item{SSB}{a 4D array containing true simulated spawning biomass [MP x nsim x nstocks x nyears]}
 \item{SSB0}{a 2D array containing unfished spawnign biomass by simulation and stock [nsim x nstocks]}
+\item{Iobs}{a 4D array containing Index observations [MP x nsim x nind x allyears]}
+\item{VBi}{a 4D array containing Index vulnerable biomass (true without error) [MP x nsim x nind x allyears]}
 \item{dynB0}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and projection year [nsim x nstocks x proyears]}
 \item{dynB0h}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and historical year [nsim x nstocks x nyears]}
 \item{MSY}{a 2D array containing MSY estimates (2018 parameters) [sim x nstocks]}
@@ -81,7 +83,7 @@
 \item{Snames}{a character vector naming the stocks [nstocks]}
 \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 \item{areanams}{a character vector of area names}
-\item{Istats}{an array of index fit statistics nsim x nind x 4 (beta, AC, sd, cor)}
+\item{Istats}{a data.frame of index fit statistics nind x 6 (name, lnq, sd, ac1, lencat LB, lencat UB)}
 \item{Fleet_comp}{an array of Fleet composition data nsim x MP x nfleet x proyear x length class}
 \item{TACtaken}{an array of TAC actually taken nsim x MP x NAss x proyear}
 \item{MPs}{a list object containing the names of the MPs [nMPs]}

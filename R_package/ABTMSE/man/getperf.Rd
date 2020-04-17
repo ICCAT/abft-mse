@@ -4,8 +4,7 @@
 \alias{getperf}
 \title{Calculate performance metrics.}
 \usage{
-getperf(MSE, rnd = 3, outdir = NA, quantiles = c(0.05, 0.95),
-  quantile = F)
+getperf(MSE, rnd = 3, outdir = NA, quantiles = c(0.05, 0.95), quantile = F)
 }
 \arguments{
 \item{MSE}{an object of class MSE}

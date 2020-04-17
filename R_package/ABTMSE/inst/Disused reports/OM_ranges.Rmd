@@ -1,0 +1,197 @@
+
+---
+title: "Operating Model Summary of Ranges"
+subtitle: "ABT-MSE"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 14px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+# Introduction / notes
+
+
+# Comparison of global likelihoods
+
+```{r loadsecret,echo=F,warning=F,error=F,message=F}
+
+snams<-c("East","West")
+stocknames<-c("East area","West area","All Atlantic")
+outs<-OMIs<-new('list')
+nOMs<-length(OMdirs)
+outread<-function(x,OMdirs)M3read(OMdirs[x])
+OMIread<-function(x,OMdirs){
+  load(paste0(OMdirs[x],"/OMI"))
+  return(OMI)
+}
+sfInit(parallel=T,cpus=min(nOMs,detectCores()))
+M3read<-ABTMSE::M3read
+sfExport("M3read")
+outs<-sfLapply(1:nOMs,outread,OMdirs=dirs)
+OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=dirs)
+out<-outs[[1]]
+OMI<-OMIs[[1]]
+nHy<-out$nHy
+ny<-out$ny
+np<-out$np
+na<-out$na
+ns<-out$ns
+nr<-out$nr
+nl<-out$nl
+nf<-out$nf
+
+refyr<-2016-OMI@years[1]+1
+SSBastore<-array(0,c(nOMs,out$np,out$ny))
+
+Stats<-array(NA,c(2,nOMs,3))
+
+for(i in 1:nOMs){
+  OMI<-OMIs[[i]]
+  out<-outs[[i]]
+  Nind<-TEG(dim(out$N))
+  SSB<-array(NA,dim(out$N))
+  SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
+  SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
+  SSBmu<-apply(SSBsum,c(1,3),mean)
+  SSBastore[i,1,]<-apply(SSBmu*rep(c(0,0,0,1,1,1,1),each=out$ny),1,sum)
+  SSBastore[i,2,]<-apply(SSBmu*rep(c(1,1,1,0,0,0,0),each=out$ny),1,sum)
+  dynB0<-get_dynB0(OMI,out)
+  res<-doMSY(out,OMI,dynB0,refyr)
+  Stats[,i,1]<-round(res[,6],2)
+  Stats[,i,2]<-round(res[,6]*res[,3]/1E3,1)
+  Stats[1,i,3]<-round(lm('y~x',dat=data.frame(x=1:10,y=apply(out$SSB[1,43:52,]/out$SSB[1,43,],1,mean)))$coefficients[2]*100,2)
+  Stats[2,i,3]<-round(lm('y~x',dat=data.frame(x=1:10,y=apply(out$SSB[2,43:52,]/out$SSB[2,43,],1,mean)))$coefficients[2]*100,2)
+}
+
+tab<-array(NA,c(3,4))
+tab[,1]<-paste(apply(Stats[2,,],2,min),"-",apply(Stats[2,,],2,max))
+tab[,2]<-paste(round(apply(Stats[2,,],2,quantile,p=0.25),2),"-",round(apply(Stats[2,,],2,quantile,p=0.75),2))
+tab[,3]<-paste(apply(Stats[1,,],2,min),"-",apply(Stats[1,,],2,max))
+tab[,4]<-paste(round(apply(Stats[1,,],2,quantile,p=0.25),2),"-",round(apply(Stats[1,,],2,quantile,p=0.75),2))
+tab[2,2]<-paste(round(quantile(Stats[2,,2],p=0.25),1),"-",round(quantile(Stats[2,,2],p=0.75),1))
+tab[2,4]<-paste(round(quantile(Stats[1,,2],p=0.25),1),"-",round(quantile(Stats[1,,2],p=0.75),1))
+
+tab<-as.data.frame(tab)
+names(tab)<-c("West range","West interquartile","East range","East interquartile")
+row.names(tab)<-c("SSB2016 relative to dyn SSBMSY","2016 SSB (kt)","SSB trajectory 2007-2016 (% per year)")
+
+```
+
+## Ranges
+
+Table 1.  
+
+```{r tab_ranges, results='asis',echo=FALSE,fig.width=5}
+
+
+tab%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+
+```
+
+
+```{r Figs ranges, results='asis',echo=FALSE,fig.width=6.5,fig.height=6}
+
+par(mfcol=c(3,2),mai=c(0.6,0.2,0.05,0.1),omi=c(0.1,0.4,0.5,0.1))
+
+labs<-c("SSB2016/SSBMSY","SSB2016 (kt)","SSB trajectory 2007-2016(kt per year)")
+cols<-c("blue","grey","orange")
+
+for(ss in 2:1){
+  
+  for(m in 1:3){
+    
+    hist(Stats[ss,,m],breaks=6,border='white',col=cols[m],main="",xlab=labs[m])
+    if(m==1)abline(v=1,col='red')
+    if(m==3)abline(v=0,col='red')
+  }
+}
+
+mtext(c("West Stock","East Stock"),side=3,adj=c(0.25,0.8),outer=T)
+mtext("Frequency (No OMs)",side=2,outer=T,line=1.8)
+
+
+
+```
+
+Figure 1. 
+
+```{r Figs_ranges_SSB, results='asis',echo=FALSE,fig.width=7,fig.height=5}
+
+if(exists('FreeComp')){
+  
+  cols<-rep("blue",1000)#rep(c('black','blue'),each=8)
+}else{
+   toplot<-Design_Ref[Design_Ref[,1]!="3",4]
+  cols<-c('black','blue')[as.integer(toplot=='-')+1]
+  
+}
+par(mfcol=c(1,2),mai=c(0.35,0.35,0.01,0.1),omi=c(0.4,0.4,0.4,0.05))
+
+for(pp in np:1){
+  
+  # SSB 
+  tdat<-subset(dat,dat$area==snams[pp])[,c(2:4)]
+  names(tdat)<-c("Assessment","Year","Val")
+  
+  plot(yrs,SSBastore[1,pp,]/1E6,ylab="",type="l",ylim=c(0,max(SSBastore[,pp,]/1E6)),yaxs='i',col=cols[1])
+  for(i in 2:nOMs)lines(yrs,SSBastore[i,pp,]/1E6,col=cols[i])
+  cond<-tdat$Assessment=="SS"
+  lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1000,col="#ff000090",lwd=2)
+  lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1000,col="#00ff0090",lwd=2)
+  mtext(paste(c("(B)","(A)")[pp],stocknames[pp]),3,line=1,font=2)
+  if(pp==np)mtext("SSB(kt)",2,line=2.8,font=2)
+  if(pp==2)legend('bottomleft',legend=c("SS","VPA"),cex=0.75,text.col=c('red','green'),text.font=2,bty='n')
+  #if(pp==1) legend('top',legend=c("- OMs","+ OMs"),text.col=c("black","blue"),bty='n',cex=1)
+  
+
+#legend('top',legend=LHs[,2],cex=0.75,text.col=cols,lty=ltys,col=cols,text.font=2,bty='n')
+}
+
+#mtext(c("West Stock","East Stock"),side=3,adj=c(0.25,0.8),outer=T)
+#mtext("Frequency (No OMs)",side=2,outer=T,line=1.8)
+
+
+
+```
+
+Figure 2. 
+
+

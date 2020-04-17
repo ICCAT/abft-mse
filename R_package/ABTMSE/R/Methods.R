@@ -116,13 +116,13 @@ setMethod("plot",
             allyears<-proyears+nyears
             nMPs<-MSE@nMPs
 
-            CC<-MSE@C/1000000
+            CC<-MSE@C/1E6
 
             #somenames=c("Green Kobe","Final depletion","AAV Yield","Yield","Yield 5% DR", "Yield 10% DR", "Yield -5% DR")
 
             #stats<-getperf(MSE)
-            yrs<-startyr:(startyr+MSE@proyears-4)
-            refyears<-modelyr:(modelyr+MSE@proyears-4)
+            yrs<-startyr:(startyr+MSE@proyears-5)
+            refyears<-modelyr:(modelyr+MSE@proyears-5)
             worms<-1:min(nworms,MSE@nsim)
 
             xtick<-pretty(seq(yrs[1],yrs[length(yrs)],length.out=3))

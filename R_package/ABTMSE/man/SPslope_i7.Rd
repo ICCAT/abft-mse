@@ -2,7 +2,7 @@
 % Please edit documentation in R/MPs.R
 \name{SPslope_i7}
 \alias{SPslope_i7}
-\title{A surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).}
+\title{A surplus production management procedure using INDEX 7 (JPN_LL_NEAtl2) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).}
 \usage{
 SPslope_i7(x, dset)
 }
@@ -21,7 +21,7 @@ SPslope_i7(x, dset)
 a TAC recommendation arising from \code{x, dset}.
 }
 \description{
-A surplus production management procedure using INDEX 7 (GOM_LAR_SUV) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
+A surplus production management procedure using INDEX 7 (JPN_LL_NEAtl2) that attempts to identify the slope of changes in surplus production and biomass to locate a gradient of zero (a management procedure of class MP).
 }
 \examples{
 SPslope_i7(1,dset_example_East)

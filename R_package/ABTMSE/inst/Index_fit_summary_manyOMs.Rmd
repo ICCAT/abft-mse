@@ -1,0 +1,709 @@
+
+---
+title: "Summary of operating model index fits"
+subtitle: "ABT-MSE"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 16px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+# Introduction / notes
+
+```{r intro, results='asis',echo=FALSE,size="small"}
+cat(introtext)
+```
+
+
+```{r refpoints_E, echo=FALSE,warning=F,error=F,message=F}
+
+#OMnames<-rep("",nOMs)
+library(TSA)
+library(geoR)
+
+outs<-OMIs<-new('list')
+nOMs<-length(OMdirs)
+
+outread<-function(x,OMdirs)M3read(OMdirs[x])
+OMIread<-function(x,OMdirs){
+  load(paste0(OMdirs[x],"/OMI"))
+  return(OMI)
+}
+
+sfInit(parallel=T,cpus=min(nOMs,detectCores()))
+M3read<-ABTMSE::M3read
+sfExport("M3read")
+
+outs<-sfLapply(1:nOMs,outread,OMdirs=OMdirs)
+OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=OMdirs)
+
+#outs<-lapply(1:nOMs,outread,OMdirs=OMdirs)
+#OMIs<-lapply(1:nOMs,OMIread,OMdirs=OMdirs)
+```
+
+
+# Residuals in indices
+
+```{r refpoints_E2, fig.width=8, fig.height=13,echo=FALSE,warning=F,error=F,message=F}
+
+out<-outs[[1]]
+OMI<-OMIs[[1]]
+yrs<-OMI@years[1]:OMI@years[2]
+refyr<-2016-OMI@years[1]+1
+
+
+OMlab<-unlist(lapply(strsplit(OMdirs,"/"),FUN=function(x)x[length(x)]))
+
+# FI stuff
+
+firstrow<-match(1:OMI@nI,OMI@Iobs[,5])
+Fleetnos<-as.vector(OMI@Iobs[firstrow,5])
+Seasons<-as.vector(OMI@Iobs[firstrow,2])
+Areas<-OMI@areanams[as.vector(OMI@Iobs[firstrow,3])]
+Types<-as.vector(OMI@Iobs[firstrow,6])
+
+CPUEres<-new('list')
+obs_a<-new('list')
+pred_a<-new('list')
+yrs_a<-new('list')
+
+for(i in 1:nOMs){
+  
+  out<-outs[[i]]
+  OMI<-OMIs[[i]]
+ 
+  #chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE)) 
+  #groups<-chunk2(1:OMI@nCPUEq,5)
+
+  k<-0
+  for(j in CPUEnos){
+    k<-k+1  
+    ind<-OMI@CPUEobs[,4]==j
+    tempdat<-subset(OMI@CPUEobs,ind)  
+    obs<-as.numeric(tempdat[,6])
+    pred<-out$CPUEpred_vec[ind]
+    yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
+    if(i==1){
+      CPUEres[[k]]<-log(obs)-log(pred)
+      obs_a[[k]]<-obs
+      pred_a[[k]]<-pred
+      yrs_a[[k]]<-yrs
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],log(obs)-log(pred))
+      obs_a[[k]]<-cbind(obs_a[[k]],obs)
+      pred_a[[k]]<-cbind(pred_a[[k]],pred)
+      yrs_a[[k]]<-cbind(yrs_a[[k]],yrs)
+    }
+   
+  }
+  
+  for(j in Inos){
+    
+    k<-k+1
+    ind<-OMI@Iobs[,5]==j
+    tempdat<-subset(OMI@Iobs,ind) 
+    
+    obs<-as.numeric(tempdat[,7])
+    pred<-out$Ipred_vec[ind]
+    yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
+    
+    if(i==1){
+      CPUEres[[k]]<-log(obs)-log(pred)
+      obs_a[[k]]<-obs
+      pred_a[[k]]<-pred
+      yrs_a[[k]]<-yrs
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],log(obs)-log(pred))
+      obs_a[[k]]<-cbind(obs_a[[k]],obs)
+      pred_a[[k]]<-cbind(pred_a[[k]],pred)
+      yrs_a[[k]]<-cbind(yrs_a[[k]],yrs)
+    }
+ 
+  }  
+  
+}
+
+n_ind<-length(CPUEnos)+length(Inos)
+Ilabs<-c(OMI@CPUEnames[CPUEnos],OMI@Inames[Inos])
+Icols<-rep('black',n_ind)
+
+statmat<-array(NA,c(nOMs,n_ind,6))
+# Uncertainty in StDev
+nSDsamp<-1000
+SDsamp<-array(NA,c(nOMs,n_ind,nSDsamp))
+
+runsstat_old<-function(x,type='crosses'){
+  runs<-list()
+  crosses<-0
+  val<-x[1]<0
+  j<-0
+  for(i in 2:length(x)){
+    j<-j+1
+    if((x[i]<0)!=val){
+      val=x[i]<0
+      crosses<-crosses+1
+      runs[[crosses]]<-j
+      j<-0
+    }
+  }
+  if(crosses==0){runs<-list();  runs[[1]]<-length(x)}
+  if(type=="runs")return(unlist(runs))
+  if(type=="crosses")return(crosses)
+}
+
+runstat<-function(Vec,type='crosses'){
+  
+  nn<-length(Vec)
+  code<-paste(Vec[1:(nn-1)]>0,Vec[2:nn]>0)
+  crosses<-sum(code=="TRUE FALSE")+sum(code=="FALSE TRUE")
+  y <- rle(as.integer(Vec>0))
+  runs<-c( y$lengths[y$values==0], y$lengths[y$values==1])
+  if(type=="runs")return(runs)
+  if(type=="crosses")return(crosses)
+}
+
+maxrun<-function(x){
+  y<-x[length(x)-(min(9,length(x)-1):0)]
+  max(runstat(y,'runs'))
+}
+
+
+for(i in 1:n_ind){
+
+  acs<-apply(CPUEres[[i]],2,function(x)stats::acf(x,plot=F)$acf[2,1,1])
+  sds<-apply(CPUEres[[i]],2,sd)
+  rss<-apply(CPUEres[[i]],2,runstat)/(length(CPUEres[[i]][,1])-1)
+  lrs<-apply(CPUEres[[i]],2,maxrun)
+  rstat<-apply(CPUEres[[i]],2,function(x)runs(x)$pvalue)
+ 
+  statmat[,i,1]<-sds
+  statmat[,i,2]<-acs
+  statmat[,i,3]<-rss
+  statmat[,i,4]<-lrs
+  statmat[,i,5]<-length(CPUEres[[i]][,1])
+  statmat[,i,6]<-rstat
+  
+  for(j in 1:nOMs) SDsamp[j,i,] <-sqrt( rinvchisq(n=nSDsamp, df=statmat[j,i,5], scale= statmat[j,i,1]^2) )
+
+  
+  ac_toplot<-c(which.min(acs),which.max(acs))
+  sd_toplot<-c(which.min(sds),which.max(sds))
+  toplot<-c(ac_toplot,sd_toplot)
+  stats<-c(acs[ac_toplot],sds[sd_toplot])
+  labs<-c("Min AC","Max AC","Min SD","Max SD")
+  
+  par(mai=c(0.3,0.15,0.25,0.01),omi=c(0.3,0.3,1.2,0.05))
+  layout(t(matrix(c(rep(c(1,2),each=4),rep(c(3,4,5,6),each=2),6+(1:nOMs)),nrow=8)))
+  cols<-c('green','orange','green','orange')
+  
+  hist(acs,breaks=10,col='grey',border='white',main="Lag-1 autocorrelation (all OMs)")
+  abline(v=(0:10)/5,lty=c(1,2,2,2,2,1,2,2,2,2,2,2,2,2),col='red')
+  hist(sds,breaks=10,col='grey',border='white',main="Standard deviation (all OMs)")
+  abline(v=(0:10)/5,lty=c(1,2,2,2,2,1,2,2,2,2,2,2,2,2),col='red')
+  
+  for(j in 1:4){ # loop over stats
+    obs<-obs_a[[i]][,toplot[j]]
+    pred<-pred_a[[i]][,toplot[j]]
+    yrs<-yrs_a[[i]][,toplot[j]]
+    plot(yrs,obs,pch=19,ylim=c(0,max(obs,pred)*1.05),ylab="",xlab="",yaxs='i',col="red")
+    lines(yrs,pred,lwd=1.5,col="#0000ff95")
+    legend('topleft',legend=paste0(labs[j],": '",OMnames[toplot[j]],"' = ",round(stats[j],2)),bty='n',text.col=cols[j])
+  }
+  
+  cols<-rep('black',nOMs)
+  cols[(1:nOMs)%in%toplot[c(1,3)]]<-'green'
+  cols[(1:nOMs)%in%toplot[c(2,4)]]<-'orange'
+  
+  for(k in 1:nOMs){
+  
+   resplot2(yrs=rep(NA,length(CPUEres[[i]][,k])),res=CPUEres[[i]][,k])
+   mtext(OMnames[k],3,line=0.1,col=cols[k])  
+    
+  }
+  
+  mtext(Ilabs[i],3,line=0.5,outer=T,font=2,col=Icols[i])
+  mtext("Residual error. log(Obs.)-log(Pred.)",1,outer=T,line=0.5)
+
+}
+
+#cat("\n\n\\pagebreak\n")
+
+
+
+```
+
+
+
+# Standard Deviation of Residuals
+
+Table 1. Standard deviation in log residuals
+
+```{r statmat_SD, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  divslist<-list()
+  colslist<-list()
+  muslist<-list()
+
+  roundy<-2
+  coly<-1
+  
+  dropspace<-function(x,y)paste0(strsplit(y[x]," ")[[1]],collapse="")
+  replacewspace<-function(x,y)paste0(strsplit(y[x],"_")[[1]],collapse=" ")
+  colnams<-c("OM","R","P","M","S","L",sapply(1:n_ind,replacewspace,y=Ilabs))
+  DTab<-as.data.frame(round(statmat[,,coly],roundy))
+  
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+
+ # row.names(DTab)<-paste(1:nOMs,sapply(1:nOMs,dropspace,y=OMnames),sep=" ")
+  names(DTab)<-colnams
+  divs<-quantile(statmat[,,1],c(0.33,0.66))
+  
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(statmat[,,1],2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  )
+  
+  divslist[[1]]<-divs
+  colslist[[1]]<-c('lightgreen', 'yellow','orange')
+  muslist[[1]]<-mus
+
+
+```
+
+
+# Standard Error of Residuals
+
+Table 2. Standard error in log residuals (St.Dev/(n)^0.5)
+
+```{r statmat_StErr, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  roundy<-2
+  coly<-1
+  
+  dropspace<-function(x,y)paste0(strsplit(y[x]," ")[[1]],collapse="")
+  replacewspace<-function(x,y)paste0(strsplit(y[x],"_")[[1]],collapse=" ")
+  stat<-statmat[,,1]/statmat[,,5]^0.5
+  DTab<-as.data.frame(round(stat,roundy))
+  
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+
+ # row.names(DTab)<-paste(1:nOMs,sapply(1:nOMs,dropspace,y=OMnames),sep=" ")
+  names(DTab)<-colnams
+  divs<-quantile(stat,c(0.33,0.66))
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(stat,2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  )
+
+  divslist[[2]]<-divs
+  colslist[[2]]<-c('lightgreen', 'yellow','orange')
+  muslist[[2]]<-mus
+
+```
+
+# Autocorrelation of Residuals
+
+Table 3. Lag-1 autocorrelation in log residuals
+
+```{r statmat_AC, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  coly<-2
+  DTab<-as.data.frame(round(statmat[,,coly],roundy))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-c(-0.2,0.2,0.5)
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('white','lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(statmat[,,coly],2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('white','lightgreen', 'yellow','orange'))
+  )
+  
+  divslist[[3]]<-divs
+  colslist[[3]]<-c('white','lightgreen', 'yellow','orange')
+  muslist[[3]]<-mus
+
+
+```
+
+
+# Runs in residuals: proportion crosses
+
+Table 4. Proportion crosses (crosses / (n-1))
+
+```{r statmat_RT, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  mus<-as.data.frame(matrix(statmat[1,,5],nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1))
+
+  coly<-3
+  DTab<-as.data.frame(round(statmat[,,coly],roundy))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-quantile(statmat[,,coly],c(0.33,0.66))
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(statmat[,,coly],2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
+  )
+
+  divslist[[4]]<-divs
+  colslist[[4]]<-c('orange', 'yellow','lightgreen')
+  muslist[[4]]<-mus
+  
+```
+
+
+# Runs in residuals: runs statistic 
+
+Table 5. Runs statistic (p-value) 
+
+```{r statmat_Rstat, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  mus<-as.data.frame(matrix(statmat[1,,5],nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1))
+
+  coly<-6
+  DTab<-as.data.frame(round(statmat[,,coly],roundy))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-c(0.05,0.1)
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(statmat[,,coly],2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
+  )
+
+  divslist[[6]]<-divs
+  colslist[[6]]<-c('orange', 'yellow','lightgreen')
+  muslist[[6]]<-mus
+  
+```
+
+
+# Maximum length of recent runs
+
+Table 6. Maximum run (positive or negative residuals) in last 10 years
+
+```{r statmat_run10, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  
+  mus<-as.data.frame(matrix(statmat[1,,5],nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1))
+  
+  coly<-4
+  DTab<-as.data.frame(round(statmat[,,coly],roundy))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-quantile(statmat[,,coly],c(0.33,0.66))
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  mus<-as.data.frame(matrix(apply(statmat[,,coly],2,mean),nrow=1))
+  mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
+  names(mutab)<-colnams
+  datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  )
+  
+  divslist[[5]]<-divs
+  colslist[[5]]<-c('lightgreen', 'yellow','orange')
+  muslist[[5]]<-mus
+
+```
+
+# Mean statistics (all OMs)
+
+Table 7a. Summary statistics for the West Area indices (mean values) over all operating models. A.C. = lag-1 temporal autocorrelation, Prop. Crs = number of residuals divided by length of index - 1. Max run 10 = maximum size of a positive or negative run over the last 10 years. Runs p = the p-value of the runs statistic. 
+
+```{r meanstatsW, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  labs<-c("St.Dev","St.Err","A.C.","Prop. Crs.","Max run 10","Runs p")
+  Proplab<-c("No","Yes")[as.integer(Ilabs%in%Proposed)+1]
+ 
+  ord<-c(1,3,6,5,2,4)
+  mutab<-as.data.frame(round(t(matrix(unlist(muslist),ncol=n_ind,byrow=T)),2))
+  mutab<-cbind(Iarea,OMI@areanams[Iarea],Proplab,statmat[1,,5],mutab[,ord])
+  row.names(mutab)<-Ilabs
+  names(mutab)<-c("Strata","Area","Proposed","n",labs[ord])
+  
+  mutabW<-mutab[mutab$Strata<4,]
+  mutabW<-mutabW[order(mutabW$Proposed)[nrow(mutabW):1],]
+  
+  datatable(mutabW,rownames = TRUE,extensions = 'Buttons',options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(labs[ord[1]], backgroundColor = styleInterval(divslist[[ord[1]]], colslist[[ord[1]]]))%>% 
+  formatStyle(labs[ord[2]], backgroundColor = styleInterval(divslist[[ord[2]]], colslist[[ord[2]]]))%>% 
+  formatStyle(labs[ord[3]], backgroundColor = styleInterval(divslist[[ord[3]]], colslist[[ord[3]]]))%>% 
+  formatStyle(labs[ord[4]], backgroundColor = styleInterval(divslist[[ord[4]]], colslist[[ord[4]]]))
+  
+
+```
+
+
+
+
+```{r ind_remindW, fig.width=10, fig.height=7.2,echo=FALSE,warning=F,error=F,message=F}
+
+ inds<-match(row.names(mutabW),Ilabs)
+ ncol<-3
+ nrow<-ceiling(length(inds)/ncol)
+ 
+ par(mfrow=c(nrow,ncol),mai=c(0.3,0.3,0.05,0.05))
+ for(i in inds){
+   plot(yrs_a[[i]][,1],obs_a[[i]][,1],col='red',pch=19,ylim=c(0,max(obs_a[[i]][,1])),yaxs='i')
+   matplot(yrs_a[[i]][,1],pred_a[[i]],add=T,col="#0000ff40",lwd=2,type='l',lty=1)
+   points(yrs_a[[i]][,1],obs_a[[i]][,1],col='red',pch=19,cex=1.4)
+   legend('top',Ilabs[i],bty='n',text.col='black',text.font=2)
+ }
+  
+
+```
+
+Figure 2. West area indices (red) and  OM fits (blue).
+
+
+
+Table 7b. As Table 7a but for the East area indices.
+
+```{r meanstatsE, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  mutabE<-mutab[mutab$Strata>3,]
+  mutabE<-mutabE[order(mutabE$Proposed)[nrow(mutabE):1],]
+  drows<-match(discont,row.names(mutabE))
+  mutabE[as.matrix(expand.grid(drows,6:8))]<-NA
+ 
+  datatable(mutabE,rownames = TRUE,extensions = 'Buttons',options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(labs[ord[1]], backgroundColor = styleInterval(divslist[[ord[1]]], colslist[[ord[1]]]))%>% 
+  formatStyle(labs[ord[2]], backgroundColor = styleInterval(divslist[[ord[2]]], colslist[[ord[2]]]))%>% 
+  formatStyle(labs[ord[3]], backgroundColor = styleInterval(divslist[[ord[3]]], colslist[[ord[3]]]))%>% 
+  formatStyle(labs[ord[4]], backgroundColor = styleInterval(divslist[[ord[4]]], colslist[[ord[4]]]))
+
+```
+```{r ind_remindE, fig.width=10, fig.height=4.5,echo=FALSE,warning=F,error=F,message=F}
+
+ inds<-match(row.names(mutabE),Ilabs)
+ ncol<-3
+ nrow<-ceiling(length(inds)/ncol)
+ 
+ par(mfrow=c(nrow,ncol),mai=c(0.3,0.3,0.05,0.05))
+ for(i in inds){
+   plot(yrs_a[[i]][,1],obs_a[[i]][,1],col='red',pch=19,ylim=c(0,max(obs_a[[i]][,1])),yaxs='i')
+   matplot(yrs_a[[i]][,1],pred_a[[i]],add=T,col="#0000ff40",lwd=2,type='l',lty=1)
+   points(yrs_a[[i]][,1],obs_a[[i]][,1],col='red',pch=19,cex=1.4)
+   legend('top',Ilabs[i],bty='n',text.col='black',text.font=2)
+ }
+  
+
+```
+
+
+Figure 3. East area indices (red) and  OM fits (blue).
+
+
+
+# Uncertainty in standard deviation (all OMs)
+
+Table 8a. Uncertainty in standard deviation in log residuals of West area indices (generated by an inverse chi-squared distribution) expressed by the 5th, 25th, 50th, 75th and 95th percentiles.  
+
+```{r SDrange, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  labs<-c("Strata","Area","Proposed","n","St.Dev","5th","25th","50th","75th","95th")
+  Proplab<-c("No","Yes")[as.integer(Ilabs%in%Proposed)+1]
+  SDtab<-as.data.frame(round(t(apply(SDsamp,2,quantile,p=c(0.05,0.25,0.5,0.75,0.95))),2))
+  
+  ord<-1:5
+  
+  SDtab2<-cbind(Iarea,OMI@areanams[Iarea],Proplab,statmat[1,,5],mutab[,5],SDtab[,ord])
+  row.names(SDtab2)<-Ilabs
+  names(SDtab2)<-labs
+  
+  SDtabW<-SDtab2[SDtab2$Strata<4,]
+  SDtabW<-SDtabW[order(SDtabW$Proposed)[nrow(SDtabW):1],]
+  
+  datatable(SDtabW,rownames = TRUE,extensions = 'Buttons',options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel')))
+
+```
+
+
+Table 8b. Uncertainty in standard deviation in log residuals of East area indices (generated by an inverse chi-squared distribution) expressed by the 5th, 25th, 50th, 75th and 95th percentiles.  
+
+```{r SDrangeW, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  SDtabE<-SDtab2[SDtab2$Strata>3,]
+  SDtabE<-SDtabE[order(SDtabE$Proposed)[nrow(SDtabE):1],]
+  
+  datatable(SDtabE,rownames = TRUE,extensions = 'Buttons',options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel')))
+
+```
+
+
+# Interquantile ranges of SD estimates 
+
+Table 9a. The 25th percentile of the sampled St.Dev by index and operating model
+
+```{r SD25, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  dats<-apply(SDsamp,1:2,quantile,p=0.25)
+  DTab<-as.data.frame(round(apply(SDsamp,1:2,quantile,p=0.25),2))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-quantile(dats,p=c(0.33,0.66))
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  
+```
+
+
+Table 9b. The 75th percentile of the sampled St.Dev by index and operating model
+
+```{r SD75, fig.width=8, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+  dats2<-apply(SDsamp,1:2,quantile,p=0.75)
+  DTab<-as.data.frame(round(apply(SDsamp,1:2,quantile,p=0.75),2))
+  breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
+  DTab<-cbind(OMnos,t(breakdown),DTab)
+  names(DTab)<-colnams
+  divs<-quantile(dats2,p=c(0.33,0.66))
+  
+  datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
+  formatStyle(colnams[6+(1:n_ind)],
+     backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
+  ) %>% 
+  formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
+  
+  
+```
+
+
+
+Figure 4. The interquartile range of SD estimates by index
+
+```{r IQSD, fig.width=10, fig.height=24,echo=FALSE,warning=F,error=F,message=F}
+
+par(mfrow=c(ceiling(n_ind/2),2),mai=c(0.7,0.3,0.01,0.01))
+
+for(i in 1:n_ind){
+  
+  plot(c(1,nOMs),c(0,max(dats[,i],dats2[,i])),axes=F,xlab="",ylab="",col='white')
+  abline(h=mean(c(mean(dats[,i]),mean(dats2[,i]))),col="#00ff0050",lwd=2)
+  abline(h=mean(mean(dats),mean(dats2)),col="#ff000050",lwd=2)
+  axis(1,1:nOMs,labels=OMnames,las=2)
+  axis(2)
+  for(j in 1:nOMs){
+    lines(c(j,j),c(dats[j,i],dats2[j,i]),lwd=custom_lwds[j],col=custom_cols[j],lty=custom_ltys[j])
+    points(c(j,j),c(dats[j,i],dats2[j,i]),pch=19,col=custom_cols[j])
+  }
+  legend('top',Ilabs[i],bty='n')
+ 
+}
+  
+  
+```
+
+
+
+

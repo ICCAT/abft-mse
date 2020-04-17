@@ -435,3 +435,45 @@ multiMSE<-function(OMdirs,MPs=MPs,nsim=12, Obs, rebuildOMs=T,outfolder,seed=1,de
 
 
 
+#' Plot the true and simulated indices for an MSE run
+#'
+#' @param MSEobj An object of class 'MSE'
+#' @param index An integer number of the index to be plotted
+plot_Indices<-function(MSEobj,index=1){
+
+  nMPs<-dim(MSEobj@VBi)[1]
+  nsim<-dim(MSEobj@VBi)[2]
+  nind<-dim(MSEobj@VBi)[3]
+  ub<-min(nsim,10)
+  par(mfcol=c(3,nMPs),mai=c(0.2,0.2,0.1,0.1),omi=c(0.4,0.4,0.45,0.01))
+  yrs<-1965+(1:allyears)
+
+  VBylim<-c(0,max(MSEobj@VBi[,,index,]))
+  Iobsylim<-c(0,max(MSEobj@Iobs[,,index,],na.rm=T))
+
+  for(mm in 1:nMPs){
+
+    cols<-c('red','blue','dark green','green','grey','purple','brown','orange','pink','black')
+    matplot(yrs,t(MSEobj@VBi[mm,1:2,index,]),col=cols,lty=1,type='l',lwd=2,yaxs='i',ylim=VBylim)
+    matplot(yrs,t(MSEobj@Iobs[mm,1:2,index,]),col=cols,lty=1,add=T,type='l')
+    abline(v=2016.5,col='#99999970',lwd=2)
+    legend('topright',legend="First two simulations",bty='n')
+    if(mm==1)legend('topleft',legend=c("True Vuln Bio","Index"),lwd=c(2,1),bty='n')
+    mtext(MSEobj@MPs[mm],3,line=0.5,cex=0.9)
+
+
+    matplot(yrs,t(MSEobj@VBi[mm,1:ub,index,]),col=cols,lty=1,type='l',yaxs='i',ylim=VBylim)
+    abline(v=2016.5,col='#99999970',lwd=2)
+    legend('topright',legend="True Vuln Bio, 10 sims",bty='n')
+
+    matplot(yrs,t(MSEobj@Iobs[mm,1:ub,index,]),col=cols,lty=1,type='l',yaxs='i',ylim=Iobsylim)
+    abline(v=2016.5,col='#99999970',lwd=2)
+    legend('topright',legend="Indices, 10 sims",bty='n')
+
+  }
+  mtext(paste0("Index: ", MSEobj@Istats[index,1]," (StDev = ",MSEobj@Istats[index,3],", AC1 = ",MSEobj@Istats[index,4],")"),3,line=1.25,outer=T,font=2)
+  mtext("Year",1,line=1.3,outer=T)
+  mtext("Index (or calibrated vulnerable biomass)",2,line=1.6,outer=T)
+
+}
+

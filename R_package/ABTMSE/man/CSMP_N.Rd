@@ -4,9 +4,20 @@
 \alias{CSMP_N}
 \title{Combined Stock Management Procedure no mix.}
 \usage{
-CSMP_N(x, dset, AS, Balpha = 1, Bbeta = 2, Falpha = 0.8,
-  Fbeta = 0.5, i1CR = 1, i1SUV = 3, i2CR = 6, i2SUV = 7,
-  theta = matrix(c(1, 0, 0, 1), nrow = 2))
+CSMP_N(
+  x,
+  dset,
+  AS,
+  Balpha = 1,
+  Bbeta = 2,
+  Falpha = 0.8,
+  Fbeta = 0.5,
+  i1CR = 1,
+  i1SUV = 3,
+  i2CR = 6,
+  i2SUV = 7,
+  theta = matrix(c(1, 0, 0, 1), nrow = 2)
+)
 }
 \arguments{
 \item{x}{a simulation number.}

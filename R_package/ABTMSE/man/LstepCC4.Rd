@@ -4,8 +4,14 @@
 \alias{LstepCC4}
 \title{A length based management procedure that incrementally changes TAC based on recent and long-term length observations (a management procedure of class MP).}
 \usage{
-LstepCC4(x, dset, yrsmth = 5, xx = 0.3, stepsz = 0.05,
-  llim = c(0.96, 0.98, 1.05))
+LstepCC4(
+  x,
+  dset,
+  yrsmth = 5,
+  xx = 0.3,
+  stepsz = 0.05,
+  llim = c(0.96, 0.98, 1.05)
+)
 }
 \arguments{
 \item{x}{a simulation number.}

@@ -4,8 +4,7 @@
 \alias{EMP2e}
 \title{Example Management Procedure 2 east.}
 \usage{
-EMP2e(x, dset, Jtarg = 4.8, lup = 0.05, ldown = 0.15, pup = 0.05,
-  pdown = 0.15)
+EMP2e(x, dset, Jtarg = 4.8, lup = 0.05, ldown = 0.15, pup = 0.05, pdown = 0.15)
 }
 \arguments{
 \item{x}{a simulation number.}

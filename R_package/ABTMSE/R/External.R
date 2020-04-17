@@ -114,10 +114,17 @@ indfit<-function(SSBt,ind,Year,sim=F,plot=T,lcex=0.8){
     x3
   }
 
-  SSBt<-lcs(SSBt)#SSB/mean(SSB,na.rm=T) # log space conversion of standardized SSB
-  ind<-lcs(ind)#/mean(ind,na.rm=T) # log space conversion of standardized ind
-  #SSB<-SSB/mean(SSB)      #
-  #ind<-ind/mean(ind)
+  AC1_int0<-function(res){
+
+    nr<-length(res)
+    sum(res[2:nr]*res[1:(nr-1)]) / sum(res[1:nr]^2)
+
+  }
+
+  SSBt<-log(SSBt)      # SSB/mean(SSB,na.rm=T) # log space conversion of standardized SSB
+  ind <-log(ind)       # /mean(ind,na.rm=T) # log space conversion of standardized ind
+  SSB <-SSB/mean(SSB)  # normalize (adjust for q)
+  ind <-ind/mean(ind)  # normalize (adjust for q)
 
   if(plot){
     par(mfrow=c(1,2),mai=c(0.7,0.5,0.05,0.01),omi=c(0.01,0.2,0.01,0.01))
@@ -129,10 +136,10 @@ indfit<-function(SSBt,ind,Year,sim=F,plot=T,lcex=0.8){
   getbeta<-function(beta,x,y)sum((y-x^beta)^2)
   opt<-optimize(getbeta,x=exp(SSBt),y=exp(ind),interval=c(0.1,10))
   res<-exp(ind)-(exp(SSBt)^opt$minimum)
-  ac<-acf(res,plot=F)$acf[2,1,1] # lag-1 autocorrelation
+  ac<-AC1_int0(res)#acf(res,plot=F)$acf[2,1,1] # lag-1 autocorrelation
 
   res2<-ind-SSBt                  # linear, without hyperdepletion / hyperstability
-  ac2<-acf(res2,plot=F)$acf[2,1,1] # linear AC
+  ac2<-AC1_int0(res2) #stats::acf(res2,plot=F)$acf[2,1,1] # linear AC
 
   if(plot){
     SSBseq<-seq(min(exp(SSBt)),max(exp(SSBt)),length.out=1000)
@@ -153,5 +160,6 @@ indfit<-function(SSBt,ind,Year,sim=F,plot=T,lcex=0.8){
   list(stats=data.frame(beta=opt$minimum,AC=ac,sd=sd(exp(ind)/(exp(SSBt)^opt$minimum)),cor=cor(SSBt,ind),AC2=ac2,sd2=sd(ind-SSBt)),mult=exp(ind)/(exp(SSBt)^opt$minimum))
 
 }
+
 
 

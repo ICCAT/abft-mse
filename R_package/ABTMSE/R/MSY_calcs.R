@@ -1,7 +1,37 @@
 # MSY calculations
 
+get_dynB0<-function(OMI,out){
 
-doMSY<-function(out,OMI,dynB0,refyr,res){
+  surv<-exp(-t(apply(cbind(c(0,0),OMI@Ma[,1:(OMI@na-1)]),1,cumsum)))
+  surv[,OMI@na]<-surv[,OMI@na]+surv[,OMI@na]*exp(-OMI@Ma[,OMI@na])/(1-exp(-OMI@Ma[,OMI@na]))
+  matwt<-t(out$wt_age[out$ny,,])*out$mat_age*surv
+  SSBpR<-OMI@SSBpR
+
+  dynB0<-array(NA,c(OMI@np,OMI@nHy+OMI@ny))
+
+  for(pp in 1:OMI@np){
+
+    SSB=out$R0[pp,1]*SSBpR[pp]#OMI@SSBpR[pp]
+    dynB0[pp,1:OMI@nHy]<-rep(SSB,OMI@nHy)
+    N<-out$R0[pp,1]*surv[pp,]
+
+    for(yy in 1:OMI@ny){
+      Nplus<-N[OMI@na]*exp(-OMI@Ma[pp,OMI@na])
+      for(aa in OMI@na:2)N[aa]<-N[aa-1]*exp(-OMI@Ma[pp,aa-1])
+      N[1]<-out$R0[pp,yy]
+      N[OMI@na]<-N[OMI@na]+Nplus
+      dynB0[pp,OMI@nHy+yy]<-sum(out$wt_age[out$ny,,pp]*out$mat_age[pp,]*N)
+    }
+
+  }
+
+  dynB0
+
+}
+
+doMSY<-function(out,OMI,dynB0,refyr){
+
+  res<-MSYMLE(out,OMI)
 
   Fap<-meanFs(FML=out$FL[refyr,,,,], iALK=out$iALK[,refyr,,], N=out$N[,refyr,,,],
               wt_age=t(out$wt_age[refyr,,]))
@@ -11,18 +41,17 @@ doMSY<-function(out,OMI,dynB0,refyr,res){
 
   F_FMSY<-apply(Fap,1,max)/res[,2]
   SSB_SSB0<-apply(out$SSB[,refyr,],1,mean)/out$SSB0#res$SSBMSY
-  res<-cbind(res,F_FMSY,SSB_SSB0)
-  res[,c(2,3,6,7,8,9,10)]<-round(res[,c(2,3,6,7,8,9,10)],3)
-  res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)
-  res[res[,2]==5,2]<-"5 (hit max bound)"
+  res2<-cbind(res,F_FMSY,SSB_SSB0)
+  res2[,c(2,3,6,7,8,9,10)]<-round(res2[,c(2,3,6,7,8,9,10)],3)
+  res2[,c(1,4,5)]<-round(res2[,c(1,4,5)]/1000,0)
+  res2[res2[,2]==5,2]<-"5 (hit max bound)"
 
-  BMSY<-round(res[,7]*dynB0[,nHy+ny]/1000,0)
+  BMSY<-round(res2[,7]*dynB0[,nHy+ny]/1000,0)
   B_BMSY<-round(apply(out$SSB,1:2,mean)[,out$ny]/(BMSY*1000),3)
   Dep_dyn<-round(apply(out$SSB,1:2,mean)[,out$ny]/dynB0[,nHy+ny],3)
-  #res<-res[,c(1,2,5,7,9,10)]
-  res<-cbind(res[,c(1,2)],BMSY,res[,c(7,9)],B_BMSY,Dep_dyn)
-  names(res)<-c("MSY","FMSY","BMSY","BMSY_B0","F_FMSY","B_BMSY","Dep")
-  res
+  res2<-cbind(res2[,c(1,2)],BMSY,res2[,c(7,9)],B_BMSY,Dep_dyn)
+  names(res2)<-c("MSY","FMSY","BMSY","BMSY_B0","F_FMSY","B_BMSY","Dep")
+  res2
 
 }
 
@@ -313,19 +342,87 @@ MSYMLE_parallel<-function(i,FMLs,iALK,N,wt_age,M_age,mat_age,R0_arr,fixpar_arr,S
 
 optMSY_eq <- function(M_age, Wt_age, Mat_age, V, maxage, R0, SRrel, hs) {
   bounds <- c(0.0000001, 5)
-  doopt <- optimise(MSYCalcs, log(bounds), MatAge=M_age, WtAge=Wt_age,
-                    MatureAge=Mat_age, VAge=V, maxage, R0=R0, SRrel=SRrel, hs=hs, opt=1)
+  doopt <- optimise(MSYCalcs_plus, log(bounds), M_at_Age=M_age, Wt_at_Age=Wt_age,
+                    Mat_at_Age=Mat_age, V_at_Age=V, maxage, R0x=R0, SRrelx=SRrel, hx=hs, opt=1)
 
   apicFMSY <- exp(doopt$minimum)
   apicFMSY2 <- apicFMSY
 
-  MSYs <- MSYCalcs(log(apicFMSY), MatAge=M_age, WtAge=Wt_age,
-                   MatureAge=Mat_age, VAge=V, maxage, R0=R0, SRrel=SRrel, hs=hs, opt=2)
+  MSYs <- MSYCalcs_plus(log(apicFMSY), M_at_Age=M_age, Wt_at_Age=Wt_age,
+                        Mat_at_Age=Mat_age, V_at_Age=V, maxage, R0x=R0, SRrelx=SRrel, hx=hs, opt=2)
 
   return(MSYs)
 
 }
 
+
+MSYCalcs_plus <- function(logF, M_at_Age, Wt_at_Age, Mat_at_Age, V_at_Age,
+                     maxage, R0x, SRrelx, hx, opt=1, plusgroup=1) {
+  # Box 3.1 Walters & Martell 2004
+  FF <- exp(logF)
+  lx <- rep(1, maxage)
+  l0 <- c(1, exp(cumsum(-M_at_Age[1:(maxage-1)]))) # unfished survival
+
+  surv <- exp(-M_at_Age - FF * V_at_Age)
+  for (a in 2:maxage) {
+    lx[a] <- lx[a-1] * surv[a-1] # fished survival
+  }
+
+  if (plusgroup == 1) {
+    l0[length(l0)] <- l0[length(l0)]/(1-exp(-M_at_Age[length(l0)]))
+    lx[length(lx)] <- lx[length(lx)]/(1-surv[length(lx)])
+  }
+
+  Egg0 <- sum(l0 * Wt_at_Age * Mat_at_Age) # unfished egg-per-recruit (assuming fecundity proportional to weight)
+  EggF <- sum(lx * Wt_at_Age * Mat_at_Age) # fished egg-per-recruit (assuming fecundity proportional to weight)
+
+  vB0 <- sum(l0 * Wt_at_Age * V_at_Age) # unfished and fished vuln. biomass per-recruit
+  vBF <- sum(lx * Wt_at_Age * V_at_Age)
+
+  SB0 <- sum(l0 * Wt_at_Age * Mat_at_Age) # spawning biomas per-recruit - same as eggs atm
+  SBF <- sum(lx * Wt_at_Age * Mat_at_Age)
+
+  B0 <- sum(l0 * Wt_at_Age) # biomass-per-recruit
+  BF <- sum(lx * Wt_at_Age)
+
+  hx[hx>0.999] <- 0.999
+  recK <- (4*hx)/(1-hx) # Goodyear compensation ratio
+  reca <- recK/Egg0
+
+  SPR <- EggF/Egg0
+  # Calculate equilibrium recruitment at this SPR
+  if (SRrelx ==1) { # BH SRR
+    recb <- (reca * Egg0 - 1)/(R0x*Egg0)
+    RelRec <- (reca * EggF-1)/(recb*EggF)
+  }
+  if (SRrelx ==2) { # Ricker
+    bR <- (log(5*hx)/(0.8*SB0))
+    aR <- exp(bR*SB0)/(SB0/R0x)
+    RelRec <- (log(aR*EggF/R0x))/(bR*EggF/R0x)
+  }
+
+  RelRec[RelRec<0] <- 0
+
+  Z_at_Age <- FF * V_at_Age + M_at_Age
+  YPR <- sum(lx * Wt_at_Age * FF * V_at_Age * (1 - exp(-Z_at_Age))/Z_at_Age)
+  Yield <- YPR * RelRec
+
+  if (opt == 1)  return(-Yield)
+  if (opt == 2) {
+    out <- c(Yield=Yield,
+             F= FF,
+             SB = SBF * RelRec,
+             SB_SB0 = (SBF * RelRec)/(SB0 * R0x),
+             B_B0 = (BF * RelRec)/(B0 * R0x),
+             B = BF * RelRec,
+             VB = vBF * RelRec,
+             VB_VB0 = (vBF * RelRec)/(vB0 * R0x),
+             RelRec=RelRec,
+             SB0 = SB0 * R0x,
+             B0=B0 * R0x)
+    return(out)
+  }
+}
 
 MSYCalcs <- function(logapicF, MatAge, WtAge, MatureAge, VAge, maxage, R0, SRrel, hs, opt=1) {
   # Box 3.1 Walters & Martell 2004

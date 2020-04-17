@@ -303,7 +303,8 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write(OMI@DepCV,datfile,1,append=T) # CV on SSB prior in current model year
 
   write("# BSfrac, mixing assumptions the proportion of E/W stock biomass in W/E areas",datfile,1,append=T)
-  write(t(OMI@BSfrac),datfile,4,append=T) # CV on SSB prior in current model year
+  #write(t(OMI@BSfrac),datfile,4,append=T) # CV on SSB prior in current model year
+  write(OMI@BSfrac,datfile,1,append=T) # mean fraction of western stock in East areas
 
   write("# FCV, prior precision of deviations from mean F from master index x q",datfile,1,append=T)
   write(OMI@FCV,datfile,1,append=T) # CV on SSB prior in current model year

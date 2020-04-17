@@ -4,8 +4,7 @@
 \alias{SBT2}
 \title{A Southern Bluefin Tuna management procedure that uses recruitment trajectory to adjust TAC (a management procedure of class MP).}
 \usage{
-SBT2(x, dset, epsB = 0.25, epsR = 0.75, tauR = 5, tauB = 7,
-  gamma = 1)
+SBT2(x, dset, epsB = 0.25, epsR = 0.75, tauR = 5, tauB = 7, gamma = 1)
 }
 \arguments{
 \item{x}{a simulation number.}

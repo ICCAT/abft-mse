@@ -417,3 +417,86 @@ Mat_Ref<-function(OMI,lev=NA){
 
   }
 }
+
+
+Bmu_Ref<-function(OMI,lev){
+
+  if(is.na(lev)){
+
+    return(4)
+
+  }else if(lev=='Names'){
+
+    return(c("--","-+","+-","++"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Mean biomass of 15kt and 200kt (1965-2016) for the west and east areas",
+             "Mean biomass of 15kt and 400kt (1965-2016) for the west and east areas",
+             "Mean biomass of 50kt and 200kt (1965-2016) for the west and east areas",
+             "Mean biomass of 50kt and 400kt (1965-2016) for the west and east areas"))
+
+  }else{
+
+    SSBmus<-cbind(c(200,400,200,400,700),c(15,15,50,50,90))*1000
+    OMI@SSBprior[OMI@SSBprior[,1]==1,3] <- SSBmus[lev,1]
+    OMI@SSBprior[OMI@SSBprior[,1]==2,3] <- SSBmus[lev,2]
+    return(OMI)
+
+  }
+}
+
+
+Mig_Ref<-function(OMI,lev){
+
+  if(is.na(lev)){
+
+    return(3)
+
+  }else if(lev=='Names'){
+
+    return(c("LowWmix","HighWmix"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Low mixing of west stock biomass in east areas of 1% from 1965-2016",
+             "High mixing of west stock biomass in east areas of 20% from 1965-2016"))
+
+  }else{
+
+    if(lev==1)OMI@BSfrac<-matrix(0.01)
+    if(lev==2)OMI@BSfrac<-matrix(0.2)
+    return(OMI)
+
+  }
+
+}
+
+
+Lcomp_Ref<-function(OMI,lev){
+
+  if(is.na(lev)){
+
+    return(5)
+
+  }else if(lev=='Names'){
+
+    return(c("LowLcomp","HighLcomp"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Low log-likelihood weight on length composition data of 1/20",
+             "High log-likelihood weight on length composition data of 1/20"))
+
+  }else{
+
+    if(lev==1){      # East,  West
+      OMI@LHw[4]<-1/20
+    }else{
+      OMI@LHw[4]<-1
+    }
+    return(OMI)
+
+  }
+
+}

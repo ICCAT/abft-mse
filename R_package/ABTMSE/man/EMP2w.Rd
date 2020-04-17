@@ -4,8 +4,15 @@
 \alias{EMP2w}
 \title{Example Management Procedure 2 west.}
 \usage{
-EMP2w(x, dset, Jtarg = 0.66, lup = 0.05, ldown = 0.15, pup = 0.05,
-  pdown = 0.15)
+EMP2w(
+  x,
+  dset,
+  Jtarg = 0.66,
+  lup = 0.05,
+  ldown = 0.15,
+  pup = 0.05,
+  pdown = 0.15
+)
 }
 \arguments{
 \item{x}{a simulation number.}

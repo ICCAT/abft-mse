@@ -4,9 +4,18 @@
 \alias{multiMSE}
 \title{Run whole MSE runs in parallel}
 \usage{
-multiMSE(OMdirs, MPs = MPs, nsim = 12, Obs, rebuildOMs = T,
-  outfolder, seed = 1, deterministic = F, Recs = Recs,
-  Design = Design)
+multiMSE(
+  OMdirs,
+  MPs = MPs,
+  nsim = 12,
+  Obs,
+  rebuildOMs = T,
+  outfolder,
+  seed = 1,
+  deterministic = F,
+  Recs = Recs,
+  Design = Design
+)
 }
 \arguments{
 \item{MPs}{A vector of management procedures for analysis}

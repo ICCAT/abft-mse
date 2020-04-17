@@ -9,8 +9,6 @@ runAll(OMdirs, MPs, Obs, outfolder)
 \arguments{
 \item{MPs}{A vector of management procedures for analysis}
 
-\item{OMdir}{A vector of operating model directories (e.g. those found in abft-mse/Objects/OMs/)}
-
 \item{nsim}{The number of simulations}
 
 \item{OMdir}{Obs an observation error model of class 'Obs' e.g. Perfect_Obs}

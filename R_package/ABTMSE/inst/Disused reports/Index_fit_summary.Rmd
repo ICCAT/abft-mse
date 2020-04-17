@@ -1,0 +1,266 @@
+
+---
+title: "Summary of the fitted operating models"
+subtitle: "ABT-MSE"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 16px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+# Introduction / notes
+
+```{r intro, results='asis',echo=FALSE,size="small"}
+cat(introtext)
+```
+
+
+# OM design 
+
+## Factor 1: Regime shift 
+
+```{r OMdesign1, results='asis',echo=FALSE,size="small"}
+T1<-data.frame(Design$all_lnams[[1]])
+names(T1)<-""
+kable(T1,format='markdown')
+#("normalsize", "tiny", "scriptsize", "footnotesize", "small", "large", "Large", "LARGE", "huge", "Huge
+```
+
+## Factor 2: Natural Mortality / Maturity
+
+```{r OMdesign2, results='asis',echo=FALSE}
+T1<-data.frame(Design$all_lnams[[2]])
+names(T1)<-""
+kable(T1,format='markdown')
+
+```
+
+## Factor 3: Stock mixing
+
+```{r OMdesign3, results='asis',echo=FALSE}
+T1<-data.frame(Design$all_lnams[[3]])
+names(T1)<-""
+kable(T1,format='markdown')
+
+```
+
+## Factor 4: Scale
+
+```{r OMdesign4, results='asis',echo=FALSE}
+T1<-data.frame(Design$all_lnams[[4]])
+names(T1)<-""
+kable(T1,format='markdown')
+
+```
+
+
+# OMs presented in this report 
+Table 1. The subset of wider operating models included in this comparison report. 
+
+```{r OMdesigngrid, results='asis',echo=FALSE,fig.width=5}
+
+DM<-cbind(OMnames,Design$Design_Ref[OMnos,])
+DM[,5]<-paste0("\\",DM[,5])
+names(DM)<-c("Code.","Regime shift","Maturity / M","Stock mixing","Scale")
+DM%>%
+ kable(format = "html", escape = F) %>%
+  kable_styling("striped", full_width = T)
+
+```
+
+# Residuals in indices
+
+```{r refpoints_E, echo=FALSE,warning=F,error=F,message=F}
+
+#OMnames<-rep("",nOMs)
+
+outs<-OMIs<-new('list')
+nOMs<-length(OMdirs)
+
+outread<-function(x,OMdirs)M3read(OMdirs[x])
+OMIread<-function(x,OMdirs){
+  load(paste0(OMdirs[x],"/OMI"))
+  return(OMI)
+}
+
+sfInit(parallel=T,cpus=min(nOMs,detectCores()))
+M3read<-ABTMSE::M3read
+sfExport("M3read")
+
+outs<-sfLapply(1:nOMs,outread,OMdirs=OMdirs)
+OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=OMdirs)
+```
+
+
+```{r refpoints_E2, fig.width=8, fig.height=11,echo=FALSE,warning=F,error=F,message=F}
+
+Sres1<-Sres2<-NULL#array(NA,c(nOMs,8))
+out<-outs[[1]]
+OMI<-OMIs[[1]]
+yrs<-OMI@years[1]:OMI@years[2]
+refyr<-2016-OMI@years[1]+1
+
+SSBstore<-array(0,c(nOMs,out$np,out$ny))
+SSB0store<-array(0,c(nOMs,out$np))
+SSBastore<-array(0,c(nOMs,out$np,out$ny))
+ny<-out$ny
+nHy<-out$nHy
+np<-out$np
+na<-out$na
+dynB0<-array(NA,c(nOMs,out$np,nHy+ny))
+B_BMSY_st<-array(NA,c(nOMs,out$np))
+
+OMlab<-unlist(lapply(strsplit(OMdirs,"/"),FUN=function(x)x[length(x)]))
+CPUEres<-new('list')
+
+# FI stuff
+
+firstrow<-match(1:OMI@nI,OMI@Iobs[,5])
+Fleetnos<-as.vector(OMI@Iobs[firstrow,5])
+Seasons<-as.vector(OMI@Iobs[firstrow,2])
+Areas<-OMI@areanams[as.vector(OMI@Iobs[firstrow,3])]
+Types<-as.vector(OMI@Iobs[firstrow,6])
+
+
+for(i in 1:nOMs){
+  
+  out<-outs[[i]]
+  OMI<-OMIs[[i]]
+ 
+  muSSB<-apply(out$SSB,1:2,mean) # by stock (below is by east-west area)
+  Nind<-TEG(dim(out$N))
+  SSB<-array(NA,dim(out$N))
+  SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
+  SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
+  SSBmu<-apply(SSBsum,c(1,3),mean)
+  SSBastore[i,1,]<-apply(SSBmu*rep(c(0,0,0,1,1,1,1),each=out$ny),1,sum)
+  SSBastore[i,2,]<-apply(SSBmu*rep(c(1,1,1,0,0,0,0),each=out$ny),1,sum)
+
+  j<-strsplit(OMdirs[i],"/")
+  j<-as.numeric(j[[1]][length(j[[1]])])
+  OMI<-OMIs[[i]]
+  
+  
+  #OMnames[i]<-paste(as.character(Design$Design_Ref[j,1]),
+  #                  paste(as.character(Design$Design_Ref[j,2])),
+  #                  paste(as.character(Design$Design_Ref[j,3])))
+  
+  VBi<-out$VB/rep(apply(out$VB,4,mean),each=out$ny*out$ns*out$nr)
+
+  chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE)) 
+  groups<-chunk2(1:OMI@nCPUEq,5)
+
+  for(k in 1:OMI@nCPUEq){
+      
+    ind<-OMI@CPUEobs[,4]==k
+    tempdat<-subset(OMI@CPUEobs,ind)  
+    obs<-as.numeric(tempdat[,6])
+    pred<-out$CPUEpred_vec[ind]
+    
+    if(i==1){
+      CPUEres[[k]]<-lcs(obs)-lcs(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],lcs(obs)-lcs(pred))
+    }
+
+  }
+  
+  for(k in OMI@nCPUEq+1:OMI@nI){
+  
+    j<-k-OMI@nCPUEq
+    ind<-OMI@Iobs[,5]==j
+    tempdat<-subset(OMI@Iobs,ind)  
+    obs<-as.numeric(tempdat[,7])
+    pred<-out$Ipred_vec[ind]
+   
+    if(i==1){
+      CPUEres[[k]]<-lcs(obs)-lcs(pred)
+    }else{
+      CPUEres[[k]]<-cbind(CPUEres[[k]],lcs(obs)-lcs(pred))
+    }
+ 
+  }  
+  
+  opt<-SRplot(out,years=OMI@years,type=OMI@SRtype,plot=F,OMI@SRminyr,OMI@SRmaxyr)
+  R0s<-opt$R0s_now
+  dynB0[i,,]<-get_dynB0(OMI,out)
+  res<-doMSY(out,OMI,dynB0[i,,],refyr)
+  #res<-MSYMLE(out,OMI)
+
+  SSBs<-round(out$SSB[,out$ny,out$ns]/1000,0)
+  B_BMSY_st[i,]<-res[,6]
+ 
+  SSBstore[i,,]<-apply(out$SSB,1:2,mean)/1000
+  SSB0store[i,]<-out$SSB0/1000
+  
+  Sres1<-rbind(Sres1,c(OM=OMlab[i],Code=OMnames[i],res[1,]))
+  Sres2<-rbind(Sres2,c(OM=OMlab[i],Code=OMnames[i],res[2,]))
+
+}
+
+chunk2 <- function(x,n) split(x, cut(seq_along(x), n, labels = FALSE))
+groups<-chunk2(1:(OMI@nCPUEq+OMI@nI),6)
+
+for(j in 1:length(groups)){
+  
+  par(mfrow=c(length(groups[[j]]),length(OMnos)),mai=c(0.3,0.08,0.1,0.01),omi=c(0.3,0.3,0.2,0.05))
+  
+  for(k in groups[[j]]){
+    
+    for(i in 1:length(OMnos)){
+      resplot2(yrs=rep(NA,length(CPUEres[[k]][,i])),res=CPUEres[[k]][,i])
+      if(i==1)mtext(c(OMI@CPUEnames,OMI@Inames)[k],2,line=1.5)
+      if(k == groups[[j]][1])mtext(OMnames[i],3,line=0.8)
+    }
+    
+  }
+  
+  #cat("\n\n\\pagebreak\n")
+  
+}
+
+mtext("Residual error. log(Obs.)-log(Pred.)",1,outer=T,line=0.5)
+
+
+```
+
+
+
+
+
+

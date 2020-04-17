@@ -11,10 +11,10 @@ export(
     "MSE_report",
     "readme",
 
-    "DD_i7",
-    "DD_i7_4010",
-    "CDD_i7",
-    "Islope1_i3",
+    "DD_i4",
+    "DD_i4_4010",
+    "CDD_i4",
+    "Islope1_i4",
     "Islope1_i7",
     "LstepCC4",
     "ZeroC",
@@ -31,13 +31,13 @@ export(
     "UMSY",
     "UMSY_PI",
     "XSA",
-    "SPslope_i3",
-    "SPslope_i7",
-    "Fadapt_i3",
+    "SPslope_i4",
+    "SPslope_i4",
+    "Fadapt_i4",
     "Fadapt_i7",
     "SBT2",
-    "SP_i7",
-    "MCD_i7",
+    "SP_i4",
+    "MCD_i4",
     "DD_R",
     "DD",
     "CDD",
@@ -55,7 +55,6 @@ export(
     "runMulti",
     "multiMSE",
 
-
     "Deterministic",
 
     "getperf",
@@ -69,6 +68,7 @@ export(
     "TOPNTplt",
     "tradeoff",
     "areaplot",
+    "plot_Indices",
     "Umax_30",
     "Umax_50",
     "Umax_90",
@@ -131,6 +131,7 @@ export(
     "optMSY_eq",
     "MSYCalcs",
     "getMSYfast",
+    "get_dynB0",
     "doMSY",
     "sdensplot",
     "meanFs",
@@ -170,6 +171,10 @@ export(
     "Mat_Ref",
     "Steep_Ref",
     "SSBref",
+    "Mig_Ref",
+    "Bmu_Ref",
+    "Lcomp_Ref",
+
 
     "MSYMLE",
     "optMSY_eq",
@@ -187,10 +192,21 @@ export(
     "IRW_bd",
     "LHtabs",
 
+    "retseq",
+    "lcs",
+    "resplot",
+    "resplot2",
+
     "DesignEffect",
 
     "tiny",
     "MPlag",
+
+    "solveforR1",
+    "lnormdev",
+    "lndev",
+    "apply_AC1_vec",
+    "apply_AC1",
 
     "Shiny"
 )

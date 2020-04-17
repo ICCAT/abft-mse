@@ -1,5 +1,5 @@
 Package: ABTMSE
-Version: 6.3.2
+Version: 6.6.9
 Title: Atlantic Bluefin Tuna Management Strategy Evaluation
 Description: Simulation testing of management strategies and data-collection
     protocols for the multi-stock Atlantic bluefin tuna fishery.
@@ -23,12 +23,13 @@ Depends: roxygen2,
     ggplot2,
     dplyr,
     kableExtra,
-    DT
+    DT,
+    geoR
 Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 6.1.2
+RoxygenNote: 7.0.2
 BugReports: https://github.com/ICCAT/abft-mse/R_package/ABTMSE/issues
 LazyData: yes
 LazyLoad: yes

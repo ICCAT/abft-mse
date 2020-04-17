@@ -4,8 +4,13 @@
 \alias{MSE_report}
 \title{Make standardized MSE MP performance report}
 \usage{
-MSE_report(MSE, dir = NA, Author = "Anon", introtext = NA,
-  filenam = "MSE_report")
+MSE_report(
+  MSE,
+  dir = NA,
+  Author = "Anon",
+  introtext = NA,
+  filenam = "MSE_report"
+)
 }
 \arguments{
 \item{MSE}{An object of class MSE return from a function call MSE<-new('MSE',...)}

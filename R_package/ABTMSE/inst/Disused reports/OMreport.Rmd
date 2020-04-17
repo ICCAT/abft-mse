@@ -462,13 +462,10 @@ Table 3a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Bioma
 Wareas<-1:3
 Eareas<-4:7
 
-B<-SSB2<-array(NA,dim(out$N))
-
+B<-array(NA,dim(out$N))
 ind<-TEG(dim(out$N))
 indw<-ind[,c(2,4,1)]
 B[ind]<-out$N[ind]*out$wt_age[indw]
-SSB2[ind]<-out$N[ind]*out$wt_age[indw]*out$mat_age[indw[,3:2]]
-SSBmu2<-apply(SSB2,c(5,3,2,1),mean)
 
 RAIp<-apply(B,c(5,3,2),sum) # r s y
 RAIo<-out$RAI
@@ -642,7 +639,7 @@ Figure 7. Age-specific quantities determining 2016 MSY reference points. Surviva
 
 ```
 
-Figure 8a. The size selectivity of the various fishing fleets estimated in the operating model. 
+Figure 8a. The size selectivity of the various fishing fleets included in the operating model. 
 
 ```{r estimatedselsbyfleet, fig.width=7.5, fig.height=7.5,echo=FALSE}
 
@@ -660,7 +657,7 @@ Figure 8a. The size selectivity of the various fishing fleets estimated in the o
 
 ```
 
-Figure 8b. The size selectivity of the various fishing fleets estimated in the operating model. 
+Figure 8b. The size selectivity of the various fishing fleets included in the operating model. 
 
 # Fit to aggregate catches ###
 
@@ -848,7 +845,7 @@ Figure 10. Length composition residuals. The left-hand panels show residuals ove
     ylim=c(0,max(CLoa[ff,],CLpa[ff,]))
     barplotT(out$ml,CLoa[ff,],ylim=ylim)
 
-    if(exists('oldfit'))lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
+    #lines(out$ml,CLpa[ff,],col="#0000ff90",lwd=2)
     lines(out$ml,CLpaZ[ff,],col="green",lwd=2)
     legend('topleft',legend=OMI@Fleets$name[ff],bty='n')
    
@@ -1301,7 +1298,7 @@ mtext("Fraction of biomass that is Eastern origin (%)",2,outer=T,line=3.5,font=2
 
 ```
 
-Figure 17a. Predicted stock mixing by year, season and area. The red line is the fraction (%) of stock biomass that is Eastern. 
+Figure 17a. Predicted stock mixing by year, season and area. The red line is the fraction (%) of stock biomass that is Eastern.  
 
 ```{r SSBdistbystrataE, fig.width=7, fig.height=9.5,echo=FALSE}
 
@@ -1325,16 +1322,12 @@ for(rr in 1:nr){
 for(rr in 1:nr){
   for(ss in 1:ns){
     l<-l+1
-    Bf2<-SSBmu2[rr,ss,,stk]/apply(SSBmu2[,ss,,stk],2,sum)*100
     Bf<-RAIpP[rr,ss,,stk]/apply(RAIpP[,ss,,stk],2,sum)*100
     plot(yrs,Bf,type="l",ylim=c(0,maxfrac),xlab="",ylab="",yaxs="i",col="white",axes=F)
-   
     abline(h=ys,col="light grey")
     abline(h=c(50,100),col="black")
-    lines(yrs,Bf,col="#ff000070",lwd=2)
-    lines(yrs,Bf2,col="#0000ff70",lwd=2)
-    
-    #points(yrs,Bf,col="red",pch=19,cex=0.8)
+    lines(yrs,Bf,col="red")
+    points(yrs,Bf,col="red",pch=19,cex=0.8)
     if(rr==nr)axis(1,xs,xs)
     if(rr<nr)axis(1,xs,NA)
     if(ss==1)axis(2,ys,ys)
@@ -1351,7 +1344,7 @@ mtext("Fraction of biomass",2,outer=T,line=3.5,font=2)
 
 ```
 
-Figure 17b. Predicted spatial distribution of Eastern stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area, blue lines are spawning stock biomass.  
+Figure 17b. Predicted spatial distribution of Eastern stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area.  
 
 
 ```{r SSBdistbystrataW, fig.width=7, fig.height=9.5,echo=FALSE}
@@ -1377,14 +1370,11 @@ for(rr in 1:nr){
   for(ss in 1:ns){
     l<-l+1
     Bf<-RAIpP[rr,ss,,stk]/apply(RAIpP[,ss,,stk],2,sum)*100
-    Bf2<-SSBmu2[rr,ss,,stk]/apply(SSBmu2[,ss,,stk],2,sum)*100
-   
     plot(yrs,Bf,type="l",ylim=c(0,maxfrac),xlab="",ylab="",yaxs="i",col="white",axes=F)
     abline(h=ys,col="light grey")
     abline(h=c(50,100),col="black")
-    lines(yrs,Bf,col="#ff000070",lwd=2)
-    lines(yrs,Bf2,col="#0000ff70",lwd=2)
-    #points(yrs,Bf,col="red",pch=19,cex=0.8)
+    lines(yrs,Bf,col="blue")
+    points(yrs,Bf,col="blue",pch=19,cex=0.8)
     if(rr==nr)axis(1,xs,xs)
     if(rr<nr)axis(1,xs,NA)
     if(ss==1)axis(2,ys,ys)
@@ -1401,7 +1391,7 @@ mtext("Fraction of biomass",2,outer=T,line=3.5,font=2)
 
 ```
 
-Figure 17c. Predicted spatial distribution of Western stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area,blue lines are spawning stock biomass.  
+Figure 17c. Predicted spatial distribution of Western stock biomass by year and season. The red line is the fraction (%) of stock biomass found in each area.  
 
 # Seasonal / spatial priors
 
@@ -1410,7 +1400,7 @@ Figure 17c. Predicted spatial distribution of Western stock biomass by year and 
 if(!is.null(OMI@SpatPr)){
 
    ni<-max(OMI@SpatPr[,4]) 
-   par(mfrow=c(ceiling(ni/2),2),mai=c(0.3,0.4,0.01,0.01),omi=c(0.8,0.8,0.01,0.01))
+   par(mfrow=c(ceiling(ni/2),2),mai=c(0.3,0.3,0.01,0.01),omi=c(0.4,0.4,0.01,0.01))
 
    for(i in 1:ni){
      
@@ -1418,13 +1408,11 @@ if(!is.null(OMI@SpatPr)){
      
      pred<-out$SPpred_vec[OMI@SpatPr[,4]==i]
      #pred<-pred*(mean(daty[,5])/mean(pred))
-     plot(daty[,2],daty[,5],ylim=c(0,max(daty[,5])),yaxs='i',xlab="",ylab="")
+     plot(daty[,2],daty[,5])
      lines(daty[,2],pred,col='blue')
      legend('topright',legend=OMI@areanams[daty[1,3]],text.col='blue',bty='n')
       
    }
-   mtext("Quarter",1,line=1.8,outer=T)
-   mtext("Index",2,line=1.8,outer=T)
   
 }else{
   

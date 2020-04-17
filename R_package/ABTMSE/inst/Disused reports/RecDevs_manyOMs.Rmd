@@ -1,0 +1,162 @@
+
+---
+title: "Summary of operating model index fits"
+subtitle: "ABT-MSE"
+author: "Tom Carruthers"
+date:  "`r format(Sys.time(), '%B %d, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true 
+---
+
+
+<style type="text/css">
+
+body{ /* Normal  */
+   font-size: 16px;
+}
+td {  /* Table  */
+   font-size: 16px;
+}
+title { /* title */
+ font-size: 26px;
+}
+h1 { /* Header 1 */
+ font-size: 24px;
+ color: DarkBlue;
+}
+h2 { /* Header 2 */
+ font-size: 21px;
+ color: DarkBlue;
+}
+h3 { /* Header 3 */
+ font-size: 19px;
+ color: DarkBlue;
+}
+code.r{ /* Code block */
+  font-size: 16px;
+}
+pre { /* Code block */
+  font-size: 16px
+}
+</style>
+
+# Introduction / notes
+
+```{r intro, results='asis',echo=FALSE,size="small"}
+cat(introtext)
+```
+
+
+
+```{r refpoints_E, echo=FALSE,warning=F,error=F,message=F}
+
+#OMnames<-rep("",nOMs)
+
+outs<-OMIs<-new('list')
+nOMs<-length(OMdirs)
+
+outread<-function(x,OMdirs)M3read(OMdirs[x])
+OMIread<-function(x,OMdirs){
+  load(paste0(OMdirs[x],"/OMI"))
+  return(OMI)
+}
+
+sfInit(parallel=T,cpus=min(nOMs,detectCores()))
+M3read<-ABTMSE::M3read
+sfExport("M3read")
+
+outs<-sfLapply(1:nOMs,outread,OMdirs=OMdirs)
+OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=OMdirs)
+
+#outs<-lapply(1:nOMs,outread,OMdirs=OMdirs)
+#OMIs<-lapply(1:nOMs,OMIread,OMdirs=OMdirs)
+```
+
+
+# Residuals in indices
+
+```{r refpoints_E2, fig.width=10, fig.height=18,echo=FALSE,warning=F,error=F,message=F}
+
+out<-outs[[1]]
+OMI<-OMIs[[1]]
+yrs<-OMI@years[1]:OMI@years[2]
+refyr<-2016-OMI@years[1]+1
+
+OMlab<-unlist(lapply(strsplit(OMdirs,"/"),FUN=function(x)x[length(x)]))
+
+CPUEres<-new('list')
+obs_a<-new('list')
+pred_a<-new('list')
+yrs_a<-new('list')
+
+par(mai=c(0.3,0.15,0.65,0.01),omi=c(0.3,0.3,0.9,0.05))
+nr<-ceiling(nOMs/8)*2
+nos<-(rep((0:(nr-1)),each=11)*8)+c(1,2,0,3,4,0,5,6,0,7,8)
+mat=matrix(nos,nrow=nr,byrow=T)
+mat[,c(3,6,9)]<-0
+
+layout(mat=mat,widths=c(1,1,0.3,1,1,0.3,1,1,0.3,1,1))
+
+snames<-c("East","West")
+for(i in 1:nOMs){
+  for(ss in 2:1){   
+    out<-outs[[i]]
+    OMI<-OMIs[[i]]
+    
+    opt<-SRplot(out=out,years=OMI@years,type=OMI@SRtype,plot=F,SRminyr=OMI@SRminyr, SRmaxyr=OMI@SRmaxyr)
+    
+    Rec1<-length(opt$resid)>2
+    if(Rec1){  
+      
+      res0<-NULL
+      yrs<-NULL
+      
+      for(j in 1:2){ # 2 rec phases
+         lb<-(ss-1)*2+j
+         resid<-opt$resid[[lb]]
+         nyrs<-nrow(resid)
+         ind<-rep(T,nyrs)
+         estrec<-resid$rec[ind]
+         dev<-resid$devs[ind]
+         modrec<-estrec-dev
+         res0<-c(res0,log(estrec/modrec))
+         yrs<-c(yrs,resid$yrs[ind])
+      }
+      
+      divv<-(c(1987.5,1974.5)-1965+1)[ss]
+      
+    }else{
+      resid<-opt$resid[[ss]]
+      nyrs<-nrow(resid)
+      ind<-rep(T,nyrs)
+      estrec<-resid$rec[ind]
+      dev<-resid$devs[ind]
+      modrec<-estrec-dev
+      res0<-log(estrec/modrec)
+      yrs<-resid$yrs[ind]
+      divv<-NA
+    }
+    
+    resplot2(rep(NA,length(res0)),res0)
+    mtext(snames[ss],3,line=0.3)
+    
+  }
+  
+  mtext(OMnames[i],3,line=1.6,adj=-0.6,font=2)
+  
+}
+
+mtext("Residual error. log(Obs.)-log(Pred.)",1,outer=T,line=0.5)
+
+
+
+```
+
+
+
+
+
+

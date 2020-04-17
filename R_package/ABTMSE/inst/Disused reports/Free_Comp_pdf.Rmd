@@ -5,9 +5,8 @@ subtitle: "ABT-MSE"
 author: "Tom Carruthers"
 date:  "`r format(Sys.time(), '%B %d, %Y')`"
 output: 
-  html_document:
+  pdf_document:
     toc: true
-    toc_float: true
     number_sections: true 
 ---
 
@@ -56,27 +55,15 @@ cat(introtext)
 
 ```{r loadsecret,echo=F,warning=F,error=F,message=F}
 
+
+
+
 outs<-OMIs<-new('list')
 nOMs<-length(OMdirs)
 
-outread<-function(x,OMdirs)M3read(OMdirs[x])
-OMIread<-function(x,OMdirs){
-  load(paste0(OMdirs[x],"/OMI"))
-  return(OMI)
-}
-
-sfInit(parallel=T,cpus=min(nOMs,detectCores()))
-M3read<-ABTMSE::M3read
-sfExport("M3read")
-
-outs<-sfLapply(1:nOMs,outread,OMdirs=OMdirs)
-OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=OMdirs)
-#outs<-lapply(1:nOMs,outread,OMdirs=OMdirs)
-#OMIs<-lapply(1:nOMs,OMIread,OMdirs=OMdirs)
-
-
-out<-outs[[1]]
-OMI<-OMIs[[1]]
+Sres1<-Sres2<-NULL#array(NA,c(nOMs,8))
+out<-M3read(OMdirs[1])
+load(paste0(OMdirs[1],"/OMI"))
 SSBstore<-array(0,c(nOMs,out$np,out$ny))
 SSB0store<-array(0,c(nOMs,out$np))
 SSBastore<-array(0,c(nOMs,out$np,out$ny))
@@ -84,42 +71,114 @@ ny<-out$ny
 nHy<-out$nHy
 np<-out$np
 na<-out$na
-Nind<-TEG(dim(out$N))
-refyr<-2016-OMI@years[1]+1
-dynB0<-array(NA,c(nOMs,np,nHy+ny))
-B_BMSY_st<-array(NA,c(nOMs,np))
-Brel_st<-array(NA,c(nOMs,np))
+dynB0<-array(NA,c(nOMs,out$np,nHy+ny))
+B_BMSY_st<-array(NA,c(nOMs,out$np))
 
-Sres1<-Sres2<-NULL#array(NA,c(nOMs,8))
+
+
+#sfInit(parallel=T,cpus=min(nOMs,8))
+#M3read<-ABTMSE::M3read
+#sfExport("M3read")
+
+outread<-function(x,OMdirs)M3read(OMdirs[x])
+OMIread<-function(x,OMdirs){
+  load(paste0(OMdirs[x],"/OMI"))
+  return(OMI)
+}
+
 for(i in 1:nOMs){
   
-  out<-outs[[i]]
-  OMI<-OMIs[[i]]
- 
+  out<-M3read(OMdirs[i])
+  outs[[i]]<-out
+  
+  muSSB<-apply(out$SSB,1:2,mean) # by stock (below is by east-west area)
+  Nind<-TEG(dim(out$N))
   SSB<-array(NA,dim(out$N))
   SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
   SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
   SSBmu<-apply(SSBsum,c(1,3),mean)
-  
+  #sum(SSBmu[55,])==sum(SSBsum[55,,])/4 # Debug test
   SSBastore[i,1,]<-apply(SSBmu*rep(c(0,0,0,1,1,1,1),each=out$ny),1,sum)
   SSBastore[i,2,]<-apply(SSBmu*rep(c(1,1,1,0,0,0,0),each=out$ny),1,sum)
-  SSBstore[i,,]<-apply(out$SSB,1:2,mean)/1000# by stock (below is by east-west area)
 
-  SSB0store[i,]<-out$SSB0/1000 
   j<-strsplit(OMdirs[i],"/")
   j<-as.numeric(j[[1]][length(j[[1]])])
+  #load(paste0(OMdirs[i],"/OM"))
+  load(paste0(OMdirs[i],"/OMI"))
   OMIs[[i]]<-OMI
-  yrs<-OMI@years[1]:OMI@years[2]
   
-  dynB0[i,,]<-get_dynB0(OMI,out)
-  res<-doMSY(out,OMI,dynB0[i,,],refyr)
+  #OMnames[i]<-paste(as.character(Design$Design_Ref[j,1]),
+  #                  paste(as.character(Design$Design_Ref[j,2])),
+  #                  paste(as.character(Design$Design_Ref[j,3])))
+  
+  VBi<-out$VB/rep(apply(out$VB,4,mean),each=out$ny*out$ns*out$nr)
+
+  opt<-SRplot(out,years=OMI@years,type=OMI@SRtype,plot=F,OMI@SRminyr,OMI@SRmaxyr)
+
+  R0s<-opt$R0s_now
+  res<-MSYMLE(out,OMI)
+
+  res[,c(2,3,6,7,8)]<-round(res[,c(2,3,6,7,8)],3)
+  res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000000,2)
+  SSBs<-round(out$SSB[,out$ny,out$ns]/1000,0)
   B_BMSY_st[i,]<-res[,6]
-  Brel_st[i,]<-res[,4]
+ 
+  SSBstore[i,,]<-apply(out$SSB,1:2,mean)/1000
+  SSB0store[i,]<-out$SSB0/1000
   
+  
+  yrs<-OMI@years[1]:OMI@years[2]
+  surv<-exp(-t(apply(cbind(c(0,0),OMI@Ma[,1:(OMI@na-1)]),1,cumsum)))
+  surv[,OMI@na]<-surv[,OMI@na]+surv[,OMI@na]*exp(-OMI@Ma[,OMI@na])/(1-exp(-OMI@Ma[,OMI@na]))
+  matwt<-t(out$wt_age[out$ny,,])*out$mat_age*surv
+  SSBpR<-apply(matwt,1,sum)
+  
+ 
+  for(pp in 1:np){
+    
+    SSB=out$R0[pp,1]*SSBpR[pp]#OMI@SSBpR[pp]
+    dynB0[i,pp,1:nHy]<-rep(SSB,nHy)
+    N<-out$R0[pp,1]*surv[pp,]
+    for(yy in 1:ny){
+      Nplus<-N[na]*exp(-OMI@Ma[pp,na])
+      for(aa in na:2)N[aa]<-N[aa-1]*exp(-OMI@Ma[pp,aa-1])
+      N[1]<-out$R0[pp,yy]
+      N[na]<-N[na]+Nplus
+      dynB0[i,pp,nHy+yy]<-sum(out$wt_age[out$ny,,pp]*out$mat_age[pp,]*N)
+    }
+  }
+
+  refyr<-2016-OMI@years[1]+1
+
+  Fap<-meanFs(FML=out$FL[refyr,,,,], iALK=out$iALK[,refyr,,], N=out$N[,refyr,,,],
+         wt_age=t(out$wt_age[refyr,,]))
+
+  F_FMSY<-apply(Fap,1,max)/res[,2]
+  SSB_SSB0<-apply(out$SSB[,refyr,],1,mean)/out$SSB0#res$SSBMSY
+  res<-MSYMLE(out,OMI)
+  res<-cbind(res,F_FMSY,SSB_SSB0)
+  res[,c(2,3,6,7,8,9,10)]<-round(res[,c(2,3,6,7,8,9,10)],3)
+  res[,c(1,4,5)]<-round(res[,c(1,4,5)]/1000,0)
+  res[res[,2]==5,2]<-"5 (hit max bound)"
+  BMSY<-round(res[,7]*dynB0[i,,nHy+ny]/1000,0)
+  B_BMSY<-round(apply(out$SSB,1:2,mean)[,out$ny]/(BMSY*1000),3)
+
+  Dep_dyn<-round(apply(out$SSB,1:2,mean)[,out$ny]/dynB0[i,,nHy+ny],3)
+  res<-cbind(res[,c(1,2)],BMSY,res[,c(7,9)],B_BMSY,Dep_dyn)
+  names(res)<-c("MSY","FMSY","BMSY","BMSY_B0","F_FMSY","B_BMSY","Dep")
   Sres1<-rbind(Sres1,c(OM=OMnos[i],Code=OMnames[i],res[1,]))
   Sres2<-rbind(Sres2,c(OM=OMnos[i],Code=OMnames[i],res[2,]))
 
 }
+
+Sres1<-as.data.frame(Sres1)
+Sres2<-as.data.frame(Sres2)
+
+
+#outs<-sfLapply(1:nOMs,outread,OMdirs=OMdirs)
+#OMIs<-sfLapply(1:nOMs,OMIread,OMdirs=OMdirs)
+#outs<-lapply(1:nOMs,outread,OMdirs=OMdirs)
+#OMIs<-lapply(1:nOMs,OMIread,OMdirs=OMdirs)
 
 tabs<-LHtabs(outs,OMIs,OMnos,OMnams=OMnames)
 LHs<-tabs$LHs
@@ -142,6 +201,8 @@ library(dplyr)
 library(kableExtra)
 
 
+
+
 ```
 
 
@@ -152,8 +213,9 @@ Table 1. Reference points for the Eastern stock using 2015 stock-recruitment (R0
 
 ```{r refpoints_Et, results='asis',echo=FALSE,fig.width=5}
 Sres1%>%
- kable(format = "html", escape = F) %>%
+ kable(format = "markdown", escape = F) %>%
   kable_styling("striped", full_width = T) 
+#kable(Sres1)
 
 ```
 
@@ -165,7 +227,7 @@ Table 2. As Table 1 but for the Western stock.
 ```{r refpoints_W, results='asis',echo=FALSE,fig.width=5}
 
 Sres2%>%
- kable(format = "html", escape = F) %>%
+ kable(format = "markdown", escape = F) %>%
   kable_styling("striped", full_width = T)
   
 ```
@@ -178,28 +240,28 @@ Table 3. These are weighted negative log-likelihoods. Color coding is by column.
 
 LHs%>%
   mutate(
-    OM=cell_spec(OM,"html",bold=T),
-    Code=cell_spec(Code,"html",bold=T),
-    Cat=cell_spec(Cat,"html",color=colr(LHs$Cat),bold=T),
-    CR=cell_spec(CR,"html",color=colr(LHs$CR),bold=T),
-    Surv=cell_spec(Surv,"html",color=colr(LHs$Surv),bold=T),
-    Comp=cell_spec(Comp,"html",color=colr(LHs$Comp),bold=T),
-    SOOm=cell_spec(SOOm,"html",color=colr(LHs$SOOm),bold=T),
-    SOOg=cell_spec(SOOg,"html",color=colr(LHs$SOOg),bold=T),
-    Tag=cell_spec(Tag,"html",color=colr(LHs$Tag),bold=T),
-    Rec=cell_spec(Rec,"html",color=colr(LHs$Rec),bold=T),
-    Mov=cell_spec(Mov,"html",color=colr(LHs$Mov),bold=T),
-    Sel=cell_spec(Sel,"html",color=colr(LHs$Sel),bold=T),
-    SRA=cell_spec(SRA,"html",color=colr(LHs$SRA),bold=T),
-    R0diff=cell_spec(R0diff,"html",color=colr(LHs$R0diff),bold=T),
-    MI=cell_spec(MI,"html",color=colr(LHs$MI),bold=T),
-    SPr=cell_spec(SPr,"html",color=colr(LHs$SPr),bold=T),
-    TOT_nP=cell_spec(TOT_nP,"html",color=colr(LHs$TOT_nP),bold=T),
-    TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
+    OM=cell_spec(OM,"markdown",bold=T),
+    Code=cell_spec(Code,"markdown",bold=T),
+    Cat=cell_spec(Cat,"markdown",color=colr(LHs$Cat),bold=T),
+    CR=cell_spec(CR,"markdown",color=colr(LHs$CR),bold=T),
+    Surv=cell_spec(Surv,"markdown",color=colr(LHs$Surv),bold=T),
+    Comp=cell_spec(Comp,"markdown",color=colr(LHs$Comp),bold=T),
+    SOOm=cell_spec(SOOm,"markdown",color=colr(LHs$SOOm),bold=T),
+    SOOg=cell_spec(SOOg,"markdown",color=colr(LHs$SOOg),bold=T),
+    Tag=cell_spec(Tag,"markdown",color=colr(LHs$Tag),bold=T),
+    Rec=cell_spec(Rec,"markdown",color=colr(LHs$Rec),bold=T),
+    Mov=cell_spec(Mov,"markdown",color=colr(LHs$Mov),bold=T),
+    Sel=cell_spec(Sel,"markdown",color=colr(LHs$Sel),bold=T),
+    SRA=cell_spec(SRA,"markdown",color=colr(LHs$SRA),bold=T),
+    R0diff=cell_spec(R0diff,"markdown",color=colr(LHs$R0diff),bold=T),
+    MI=cell_spec(MI,"markdown",color=colr(LHs$MI),bold=T),
+    SPr=cell_spec(SPr,"markdown",color=colr(LHs$SPr),bold=T),
+    TOT_nP=cell_spec(TOT_nP,"markdown",color=colr(LHs$TOT_nP),bold=T),
+    TOT=cell_spec(TOT,"markdown",color=colr(LHs$TOT),bold=T)
     
   )%>%
   select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
-  kable(format = "html", escape = F) %>%
+  kable(format = "markdown", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
 
 
@@ -216,28 +278,28 @@ for(i in 3:17)LHs[,i]<-round(LHs[,i]-LHs[1,i],1)
 
 LHs%>%
   mutate(
-    OM=cell_spec(OM,"html",bold=T),
-    Code=cell_spec(Code,"html",bold=T),
-    Cat=cell_spec(Cat,"html",color=colr(LHs$Cat),bold=T),
-    CR=cell_spec(CR,"html",color=colr(LHs$CR),bold=T),
-    Surv=cell_spec(Surv,"html",color=colr(LHs$Surv),bold=T),
-    Comp=cell_spec(Comp,"html",color=colr(LHs$Comp),bold=T),
-    SOOm=cell_spec(SOOm,"html",color=colr(LHs$SOOm),bold=T),
-    SOOg=cell_spec(SOOg,"html",color=colr(LHs$SOOg),bold=T),
-    Tag=cell_spec(Tag,"html",color=colr(LHs$Tag),bold=T),
-    Rec=cell_spec(Rec,"html",color=colr(LHs$Rec),bold=T),
-    Mov=cell_spec(Mov,"html",color=colr(LHs$Mov),bold=T),
-    Sel=cell_spec(Sel,"html",color=colr(LHs$Sel),bold=T),
-    SRA=cell_spec(SRA,"html",color=colr(LHs$SRA),bold=T),
-    R0diff=cell_spec(R0diff,"html",color=colr(LHs$R0diff),bold=T),
-    MI=cell_spec(MI,"html",color=colr(LHs$MI),bold=T),
-    SPr=cell_spec(SPr,"html",color=colr(LHs$SPr),bold=T),
-    TOT_nP=cell_spec(TOT_nP,"html",color=colr(LHs$TOT_nP),bold=T),
-    TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
+    OM=cell_spec(OM,"markdown",bold=T),
+    Code=cell_spec(Code,"markdown",bold=T),
+    Cat=cell_spec(Cat,"markdown",color=colr(LHs$Cat),bold=T),
+    CR=cell_spec(CR,"markdown",color=colr(LHs$CR),bold=T),
+    Surv=cell_spec(Surv,"markdown",color=colr(LHs$Surv),bold=T),
+    Comp=cell_spec(Comp,"markdown",color=colr(LHs$Comp),bold=T),
+    SOOm=cell_spec(SOOm,"markdown",color=colr(LHs$SOOm),bold=T),
+    SOOg=cell_spec(SOOg,"markdown",color=colr(LHs$SOOg),bold=T),
+    Tag=cell_spec(Tag,"markdown",color=colr(LHs$Tag),bold=T),
+    Rec=cell_spec(Rec,"markdown",color=colr(LHs$Rec),bold=T),
+    Mov=cell_spec(Mov,"markdown",color=colr(LHs$Mov),bold=T),
+    Sel=cell_spec(Sel,"markdown",color=colr(LHs$Sel),bold=T),
+    SRA=cell_spec(SRA,"markdown",color=colr(LHs$SRA),bold=T),
+    R0diff=cell_spec(R0diff,"markdown",color=colr(LHs$R0diff),bold=T),
+    MI=cell_spec(MI,"markdown",color=colr(LHs$MI),bold=T),
+    SPr=cell_spec(SPr,"markdown",color=colr(LHs$SPr),bold=T),
+    TOT_nP=cell_spec(TOT_nP,"markdown",color=colr(LHs$TOT_nP),bold=T),
+    TOT=cell_spec(TOT,"markdown",color=colr(LHs$TOT),bold=T)
     
   )%>%
   select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
-  kable(format = "html", escape = F) %>%
+  kable(format = "markdown", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
 
 
@@ -250,8 +312,10 @@ Table 5. Weightings of likelihood components.
 
 ```{r LHwt, fig.width=9, fig.height=9,echo=FALSE}
 
+
+
 wts_tab%>%
-kable(format = "html", escape = F) %>%
+kable(format = "markdown", escape = F) %>%
   kable_styling("striped")#, full_width = T)
 
 
@@ -273,14 +337,8 @@ nr<-outs[[1]]$nr
 nf<-outs[[1]]$nf
 nl<-outs[[1]]$nl
 na<-outs[[1]]$na
-#cols<-rep(c('black','grey','blue','lightblue'),2)
-#ltys<-rep(c(1,2),each=4)
-
-cols=rep(c('black','blue'),4)
-ltys=rep(rep(1:2,each=2),2)
-lwds=rep(1:2,each=4)
-
-
+cols<-rep(c('black','grey','blue','lightblue','pink'),2)
+ltys<-rep(c(1,2),each=5)
 muSSB<-new('list')
 ylim<-new('list')
 ylim[[1]]<-ylim[[2]]<-c(0,-1000)
@@ -310,17 +368,16 @@ for(pp in np:1){
   tdat<-subset(dat,dat$area==snams[pp])[,c(2:4)]
   names(tdat)<-c("Assessment","Year","Val")
   
-  plot(yrs,muSSB[[1]][pp,]/1E6,ylab="",type="l",ylim=ylim[[pp]]/1E6,yaxs='i',col=cols[1],lty=ltys[1],lwd=lwds[1])
-  for(i in 2:nOMs)lines(yrs,muSSB[[i]][pp,]/1E6,col=cols[i],lty=ltys[i],lwd=lwds[i])
+  plot(yrs,muSSB[[1]][pp,]/1E6,lwd=2,ylab="",type="l",ylim=ylim[[pp]]/1E6,yaxs='i',col=cols[1],lty=ltys[1])
+  for(i in 2:nOMs)lines(yrs,muSSB[[i]][pp,]/1E6,lwd=2,col=cols[i],lty=ltys[i])
   cond<-tdat$Assessment=="SS"
   lines(tdat$Year[cond],as.numeric(as.character(tdat$Val[cond]))/1000,col="#ff000090",lwd=2)
   lines(tdat$Year[!cond],as.numeric(as.character(tdat$Val[!cond]))/1000,col="#00ff0090",lwd=2)
   mtext(stocknames[pp],3,line=1,font=2)
   if(pp==np)mtext("SSB(kt)",2,line=2.8,font=2)
 
-  if(pp==2)legend('top',legend=c("SS","VPA"),cex=0.75,text.col=c('red','green'),text.font=2,bty='n')
-  if(pp==1) legend('top',legend=c("Rec 1","Rec 2","Mat/M A","Mat/M B","Mix I","Mix II"),lty=c(1,1,1,2,1,1),lwd=c(1,1,1,1,1,2),col=c("black","blue",rep('black',4)),bty='n',cex=0.9)
-#legend('top',legend=LHs[,2],cex=0.75,text.col=cols,lty=ltys,col=cols,text.font=2,bty='n')
+  if(pp==2)legend('top',legend=c("M3","SS","VPA"),cex=0.75,text.col=c('black','red','green'),text.font=2,bty='n')
+  if(pp==1)legend('top',legend=LHs[,2],cex=0.75,text.col=cols,lty=ltys,col=cols,text.font=2,bty='n')
 }
 
 mtext("Year",1,line=0.5,font=2,outer=T)
@@ -388,22 +445,23 @@ par(mfrow=c(2,2),mai=c(0.35,0.35,0.4,0.01),omi=c(0.4,0.4,0.05,0.05))
 yrs<-OMIs[[1]]@years[1]:OMIs[[1]]@years[2]
 
 plot(yrs,SSB_W[[1]],col="white",ylim=c(0,ylim_SSB_W[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,SSB_W[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,SSB_W[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("West stock SSB",3,line=1,font=2)
 
-legend('topright',legend=LHs[,2],cex=1,text.col=cols,lty=ltys,lwd=lwds,col=cols,text.font=2,bty='n')
+legend('topright',legend=LHs[,2],cex=1,text.col=cols,lty=ltys,col=cols,text.font=2,bty='n')
 
 plot(yrs,SSB_E[[1]],col="white",ylim=c(0,ylim_SSB_E[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,SSB_E[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,SSB_E[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("East stock SSB",3,line=1,font=2)
 
 plot(yrs,D_W[[1]],col="white",ylim=c(0,ylim_D_W[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,D_W[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,D_W[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("West stock SSB trend",3,line=1,font=2)
 
 plot(yrs,D_E[[1]],col="white",ylim=c(0,ylim_D_E[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,D_E[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,D_E[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("East stock SSB trend",3,line=1,font=2)
+
 
 
 ```
@@ -411,80 +469,6 @@ mtext("East stock SSB trend",3,line=1,font=2)
 
 Figure 2. Stock-specific spawning biomass in kilo tonnes (top row) and relative to 1952 (bottom row)
 
-
-# Spawning stock biomass by stock and area
-
-```{r SSBa_overlap, results='asis',echo=FALSE,fig.width=9,fig.height=6}
-
-  cols=rep(c('black','blue'),4)
-  ltys=rep(rep(1:2,each=2),2)
-  lwds=rep(1:2,each=4)
-
-  par(mai=c(0.2,0.2,0.5,0.2),omi=c(0.5,0.5,0.1,0.1))
-
-  layout(matrix(c(1:2,3:4,5:8),ncol=4),width=c(1,0.2,1,0.4))
-
-  yrs<-OMI@years[1]:OMI@years[2]
-
-  anams<-c("East","West")
-  
-  ny<-dim(SSBstore)[3]
-  set.seed(2)
-  
-  for(aa in 2:1){
-
-    matplot(yrs,t(SSBstore[,aa,]/1000),col=cols,lty=ltys,lwd=lwds,type='l',ylab="",ylim=c(0,quantile(SSBstore[,aa,]/1000,0.99)),yaxs="i")
-    mtext(paste(anams[aa],"Stock"),3,line=0.5)
-   
-    matplot(yrs,t(SSBastore[,aa,]/1000000),col=cols,lty=ltys,lwd=lwds,type='l',ylab="",ylim=c(0,quantile(SSBastore[,aa,]/1000000,0.99)),yaxs="i")
-    mtext(paste(anams[aa],"Area"),3,line=0.5)
-
-    plot(rep(1,nOMs),SSBstore[,aa,ny]/1000,xlim=c(0.6,1.4),ylim=range(SSBstore[,aa,]/1000),col="white",axes=F)
-    #text(rep(1,nOMs)+runif(length(OMnos),-0.3,0.3),SSBstore[,aa,ny],OMnos,col=cols,font=2,cex=1.3)
-    if(aa==1) legend('bottom',legend=c("Rec 1","Rec 2","Mat/M A","Mat/M B","Mix I","Mix II"),lty=c(1,1,1,2,1,1),lwd=c(1,1,1,1,1,2),col=c("black","blue",rep('black',4)),bty='n')
-
-    plot(rep(1,nOMs),SSBastore[,aa,ny]/1000,xlim=c(0.6,1.4),ylim=range(SSBastore[,aa,]/1000),col="white",axes=F)
-    #text(rep(1,nOMs)+runif(nOMs,-0.3,0.3),SSBastore[,aa,ny],OMnos,col=cols,font=2,cex=1.3)
-    
-  }
-   mtext("Year",1,line=1.6,outer=T)
-  mtext("Spawning biommass (kt)",2,line=1.6,outer=T)
-
-```
-
-
-Figure 3. Comparison of stock (top row) and area (bottom row) specific spawning biomass in kilo tonnes.
-
-
-
-# SSB relative to dynamic BMSY
-
-
-```{r SSBtrends, fig.width=7, fig.height=9,echo=FALSE}
-
-SSBrel<-array(NA,dim(SSBstore))
-for(i in 1:nOMs){
-
-  SSBrel[i,,]<-(1000*SSBstore[i,,])/(dynB0[i,,nHy+(1:ny)]*Brel_st[i,])
-
-}  
-  
-par(mfcol=c(1,2),mai=c(0.35,0.35,0.01,0.1),omi=c(0.4,0.4,0.4,0.05))
-
-for(pp in np:1){
-  
-  matplot(yrs,t(SSBrel[,pp,]),type='l',col=cols,lwd=lwds,lty=ltys,ylim=c(0,max(SSBrel[,pp,])),yaxs='i')
-  abline(h=c(0.5,1),col='#ff000060',lty=c(2,1),lwd=2)
-  if(pp==1) legend('topright',legend=c("Rec 1","Rec 2","Mat/M A","Mat/M B","Mix I","Mix II"),lty=c(1,1,1,2,1,1),lwd=c(1,1,1,1,1,2),col=c("black","blue",rep('black',4)),bty='n',cex=0.9)
-   mtext(stocknames[pp],3,line=1,font=2)
-}
-
-mtext("Year",1,line=0.5,font=2,outer=T)
-mtext("SSB relative to dynamic SSBMSY",4,outer=T,line=0.5)
-
-```
-
-Figure 4. Comparison of stock status estimates (SSB relative to dynamic SSBMSY)
 
 
 # Stock mixing 
@@ -503,25 +487,26 @@ yrs<-OMIs[[1]]@years[1]:OMIs[[1]]@years[2]
 par(mfrow=c(2,2),mai=c(0.35,0.35,0.4,0.01),omi=c(0.4,0.4,0.05,0.05))
 
 plot(yrs,F_EinW[[1]],col="white",ylim=c(0,ylim_EinW[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,F_EinW[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,F_EinW[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("Eastern stock in the West area",3,line=1,font=2)
 
 plot(yrs,F_WinE[[1]],col="white",ylim=c(0,ylim_WinE[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,F_WinE[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,F_WinE[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("Western stock in the East area",3,line=1,font=2)
 
+
 plot(yrs,F_E_W[[1]],col="white",ylim=c(0,ylim_E_W[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,F_E_W[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,F_E_W[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("Western area biomass that is Eastern",3,line=1,font=2)
 
 plot(yrs,F_W_E[[1]],col="white",ylim=c(0,ylim_W_E[2]),yaxs='i')
-for(i in 1:nOMs)lines(yrs,F_W_E[[i]],col=cols[i],lty=ltys[i],lwd=lwds[i])
+for(i in 1:nOMs)lines(yrs,F_W_E[[i]],col=cols[i],lty=ltys[i],lwd=2)
 mtext("Eastern area biomass that is Western",3,line=1,font=2)
 
-legend('topright',legend=LHs[,2],cex=1,text.col=cols,lty=ltys,lwd=lwds,col=cols,text.font=2,bty='n')
+legend('topright',legend=LHs[,2],cex=1,text.col=cols,lty=ltys,col=cols,text.font=2,bty='n')
 mtext("Biomass fraction",2,line=0.5,font=2,outer=T)
 mtext("Year",1,line=0.5,font=2,outer=T)
 
 ```
 
-Figure 5. Biomass fractions by stock (top row) and area (bottom row).  
+Figure 3. Biomass fractions by stock (top row) and area (bottom row).  
