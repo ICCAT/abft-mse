@@ -57,8 +57,8 @@
 #' \item{CW}{a 4D array containing true simulated catches by east-west area [MP x nsim x 2 x nyears]}
 #' \item{CWa}{a 4D array containing true simulated catches by east-west area [MP x nsim x 2 x nyears]}
 #' \item{D}{a 4D array containing true simulated stock depletion (SSB/SSB0) [MP x nsim x nstocks x nyears]}
-#' \item{B_BMSY}{a 4D array containing true simulated biomass relative to BMSY [MP x nsim x nstocks x nyears]}
-#' \item{F_FMSY}{a 4D array containing true simulated fishing mortality rate relative to FMSY [MP x nsim x nstocks x nyears]}
+#' \item{B_BMSY}{a 4D array containing true simulated SSB relative to dynamic SSBMSY (dynamic SSB0 x 2016 SSBMSY/SSB0) [MP x nsim x nstocks x nyears]}
+#' \item{F_FMSY}{a 4D array containing true simulated fishing mortality rate relative to FMSY (actually U / UMSY) [MP x nsim x nstocks x nyears]}
 #' \item{BB}{currently unused}
 #' \item{BBa}{currently unused}
 #' \item{SSB}{a 4D array containing true simulated spawning biomass [MP x nsim x nstocks x nyears]}
@@ -67,18 +67,19 @@
 #' \item{VBi}{a 4D array containing Index vulnerable biomass (true without error) [MP x nsim x nind x allyears]}
 #' \item{dynB0}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and projection year [nsim x nstocks x proyears]}
 #' \item{dynB0h}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and historical year [nsim x nstocks x nyears]}
-#' \item{MSY}{a 2D array containing MSY estimates (2018 parameters) [sim x nstocks]}
-#' \item{BMSY}{a 2D array containing BMSY estimates (2018 parameters) [sim x nstocks]}
-#' \item{SSBMSY}{a 2D array containing SSBMSY estimates (2018 parameters) [sim x nstocks]}
-#' \item{UMSY}{a 2D array containing UMSY estimates (2018 parameters) [sim x nstocks]}
-#' \item{FMSYa}{a 2D array containing apical FMSY estimates (2018 parameters) [sim x nstocks]}
-#' \item{SSBMSY_SSB0}{a 2D array containing MSY estimates (2018 parameters) [sim x nstocks]}
+#' \item{MSY}{a 2D array containing MSY estimates (2016 parameters) [sim x nstocks]}
+#' \item{BMSY}{a 2D array containing BMSY (vulnerable biomass) estimates (2016 parameters) [sim x nstocks]}
+#' \item{SSBMSY}{a 2D array containing SSBMSY estimates (2016 parameters) [sim x nstocks]}
+#' \item{UMSY}{a 2D array containing UMSY estimates (2016 parameters) [sim x nstocks]}
+#' \item{FMSYa}{a 2D array containing apical FMSY estimates (2016 parameters) [sim x nstocks]}
+#' \item{SSBMSY_SSB0}{a 2D array containing MSY estimates (2016 parameters) [sim x nstocks]}
 #' \item{TAC}{a 4D array containing the TAC recommendations [nsim x MP x stock x proyear]}
 #' \item{nMPs}{an integer number representing the number of MPs in the MSE}
 #' \item{Snames}{a character vector naming the stocks [nstocks]}
 #' \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 #' \item{areanams}{a character vector of area names}
 #' \item{Istats}{a data.frame of index fit statistics nind x 6 (name, lnq, sd, ac1, lencat LB, lencat UB)}
+#' \item{Inames}{a character vector of index names as they appear in the MPind slot of the obs object}
 #' \item{Fleet_comp}{an array of Fleet composition data nsim x MP x nfleet x proyear x length class}
 #' \item{TACtaken}{an array of TAC actually taken nsim x MP x NAss x proyear}
 #' \item{MPs}{a list object containing the names of the MPs [nMPs]}
@@ -146,6 +147,7 @@ setClass("MSE",representation(
   area_defs="list",
   areanams="character",
   Istats="data.frame",
+  Inames="character",
 
   Fleet_comp="array",
   TACtaken="array",
@@ -154,7 +156,7 @@ setClass("MSE",representation(
 
 ))
 
-setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=list(c("UMSY","UMSY")),interval=2,IE="Umax_90",
+setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=list(c("U5","U5")),interval=2,IE="Umax_90",
                                         TAC2015=c(16142000,2000000),TAC2016=c(19296000,1912000),TAC2017=c(23155000,2000000),
                                         TAC2018=c(28200000,2350000),TAC2019=c(32240000,2350000),TAC2020=c(36000000,2350000),
                                         Allocation=ABTMSE:::Allocation,MPareas=NA,Fdistyrs=3,maxTAC=c(10,10),MSEparallel=F,
@@ -317,6 +319,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   nind<-max(Obs@MPind$No)
   Index_areas<-array(FALSE,c(nind,nareas))
   Istats<-OM@Istats
+  .Object@Inames<-as.character(unique(Obs@MPind$Name)) # Index names in the order they are simulated
   if(Deterministic)Istats[,3]<-0
   Ires<-OM@Ires
   Isim<-array(NA,c(nsim,nind,nyears+proyears,2)) # 1 is the index value, 2 is the residual
@@ -327,12 +330,14 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   sid<-MPQ<-MParea<-newq<-rep(NA,nind) # the correct index of the Istats and Ires slots in the OM object
   VB_index<-rep(F,nind)
   MPFleet<-rep(NA,nind)
+  VN_index<-rep(F,nind)
 
   for(i in 1:nind){
     idd<-subset(Obs@MPind,Obs@MPind$No==i & Obs@MPind$Year<=(OM@nyears+3)) # include up to 2019 observations
     if(grepl('Fleet',idd$Fleet[1])){  # is it a fleet vulnerability index?
       VB_index[i]<-T
-      MPFleet[i]<-as.numeric(strsplit(as.character(idd$Fleet[1]),"Fleet_")[[1]][2])
+      MPFleet[i]<-as.numeric(strsplit(as.character(idd$Fleet[1]),"_")[[1]][2])
+      if(length(strsplit(as.character(idd$Fleet[1]),"_")[[1]])==3)VN_index[i]<-T
     }
   }
 
@@ -662,7 +667,12 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
         for(pp in 1:npop){
           Nttind<-as.matrix(expand.grid(1:nsim,pp,1:nages,y,MPQ[i],MParea[i],1:nlen))
           NLAa[Nttind[,c(1,3,7)]]<-N[Nttind[,1:6]]*iALK[Nttind[,c(1,2,4,3,7)]] # N x iALK gives numbers by age and length
-          BL<-apply(NLAa,c(1,3),sum)*array(rep(wl[pp,],each=nsim),c(nsim,nlen)) # Biomass at length
+
+          if(VN_index[i]){ # hack to add vulnerability at numbers for the CAN_ACO_SUV
+            BL<-apply(NLAa,c(1,3),sum) # Numbers at length
+          }else{
+            BL<-apply(NLAa,c(1,3),sum)*array(rep(wl[pp,],each=nsim),c(nsim,nlen)) # Biomass at length
+          }
           if(!is.na(Istats[sid[i],5])){ # do len cat truncation
             BL[,(1:nlen)[!(1:nlen)%in%Istats[sid[i],5]:Istats[sid[i],6]]]<-0 #not vulnerable outside hard limits US and CAN ACO SUV
           }
@@ -930,9 +940,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   # Run projections ------------------------------------------------
   cat("Running projections")
   cat("\n")
-  if(sfIsRunning())sfExport(list=c("XSA","DD_i4","Islope1",
+  if(sfIsRunning())sfExport(list=c("DD_i4","Islope1",
                   "DD_i4_4010","CDD_i4","SPslope","DD",
-                  "DD_R","UMSY","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
+                  "DD_R","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
 
   upyrs<-(nyears+MPlag+1)+(0:(floor((OM@proyears-2)/interval)-1))*interval  # the years in which there are updates (every three years)
 
@@ -1037,9 +1047,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           for(i in 1:nind){
 
-            Isim[,i,nyears+(1:proyears),2]<-lndev(proyears*nsim,as.numeric(Istats[sid[i],3]))         # matplot(t(Isim[,i,,2]),type='l')
+            Isim[,i,nyears+(1:proyears),2]<-rnorm(proyears*nsim,0, as.numeric(Istats[sid[i],3]))#lndev(proyears*nsim,as.numeric(Istats[sid[i],3]))         # matplot(t(Isim[,i,,2]),type='l')
             Isim[,i,resyrs[[i]],2]<-log(Isim[,i,resyrs[[i]],1])-log(VBi[,resyrs[[i]],i]*newq[i]) # matplot(t(Isim[,i,,2]),type='l')
-            Isim[,i,nyears+(1:proyears),2]<- apply_AC1(Isim[,i,nyears+(1:proyears),2],as.numeric(Istats[sid[i],4]))           # matplot(t(Isim[,i,,2]),type='l')
+            Isim[,i,max(resyrs[[i]]):(nyears+proyears),2]<- apply_AC1(Isim[,i,max(resyrs[[i]]):(nyears+proyears),2],as.numeric(Istats[sid[i],4]))           # matplot(t(Isim[,i,,2]),type='l')
 
           }
         }
@@ -1073,22 +1083,14 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            "K"=OM@Kmu[,AS]*.Object@Kb,        # for now these assume same growth by stock
                            "Linf"=OM@Linfmu[,AS]*.Object@Kb,  # for now these assume same growth by stock
                            "t0"=OM@t0[,AS],                   # no error in t0
-                           "M"=OM@M[,AS,,(y-2)]*.Object@Mb,  # assume AS is same as stock
-                           "Bt"=apply(N[,,,y-2,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA))*exp(-Ftot[,,,AA]),1,sum)*.Object@Bterr[,y-2],#
-                           "MSY"=OM@MSY[,AS]*.Object@MSYb,
-                           "BMSY"=OM@BMSY[,AS]*.Object@BMSYb,
-                           "UMSY"=OM@UMSY[,AS]*.Object@FMSYb,
+                           "M"=OM@M[,AS,,(y-2)]*.Object@Mb,
                            "a"=rep(OM@a,nsim),
                            "b"=rep(OM@b,nsim),
                            "nages"=OM@nages,
                            "ageM"=OM@ageM[,AS]*.Object@ageMb,
                            "Mat"=OM@mat[,AS,,nyears],
                            "Bt_PI"=apply(N[,,,y-1,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA))*exp(-Ftot[,,,AA]),1,sum),
-                           #"Bt_PI"=apply(N[,,,y-1,nsubyears,]*
-                            #               array(Wt_age[,,,nyears],c(nsim,npop,nages,nareas)),1,sum),
-                           "UMSY_PI"=OM@UMSY[,AS],
+                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA)),1,sum),
                            "MPrec"=TAC[,AS],
                            "TAC"=matrix(.Object@TAC[,MP,AS,1:(y-nyears)],ncol=(y-nyears),nrow=nsim),
                            "curTAC"=rep(TAC2020[AS],nsim)
@@ -1276,7 +1278,13 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
             Nttind<-as.matrix(expand.grid(1:nsim,pp,1:nages,y,MPQ[i],MParea[i],1:nlen))
             iALKind<-cbind(Nttind[,1:2],rep(nyears,nrow(Nttind)),Nttind[,c(3,7)])
             NLAa[Nttind[,c(1,3,7)]]<-N[Nttind[,1:6]]*iALK[iALKind] # N x iALK gives numbers by age and length
-            BL<-apply(NLAa,c(1,3),sum)*array(rep(wl[pp,],each=nsim),c(nsim,nlen)) # Biomass at length
+
+            if(VN_index[i]){ # hack for the CAN_ACO_SUV
+              BL<-apply(NLAa,c(1,3),sum)# Numbers at length
+            }else{
+              BL<-apply(NLAa,c(1,3),sum)*array(rep(wl[pp,],each=nsim),c(nsim,nlen)) # Biomass at length
+            }
+
             if(!is.na(Istats[sid[i],5])){ # do len cat truncation
               BL[,(1:nlen)[!(1:nlen)%in%Istats[sid[i],5]:Istats[sid[i],6]]]<-0 #not vulnerable outside hard limits US and CAN ACO SUV
             }
@@ -1341,8 +1349,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   } # end of MP
 
-  .Object@SSB0<-apply(array(OM@Recpars[,OM@Recind[,1],2],dim(surv))*surv*Wt_age[,,,nyears]*mat[,,,nyears],1:2,sum)
-
+  #.Object@SSB0<-apply(array(OM@Recpars[,OM@Recind[,1],2],dim(surv))*surv*Wt_age[,,,nyears]*mat[,,,nyears],1:2,sum)
+  .Object@SSB0<-.Object@SSBMSY/.Object@SSBMSY_SSB0
   # This is all about calculating the equilibrium unfished SSB0 for the various recruitment types in the future
   .Object@BB<-BB
   .Object@BBa<-BBa

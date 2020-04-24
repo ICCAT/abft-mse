@@ -317,14 +317,19 @@ MSYMLE_parallel<-function(i,FMLs,iALK,N,wt_age,M_age,mat_age,R0_arr,fixpar_arr,S
 
     # 1      2  3   4       5     6  7   8       9       10   11  12
     # Yield, F, SB, SB/SB0, B/B0, B, VB, VB_VB0, RelRec, SB0, B0, ApicalF
+    # from func        2        3                 4                                   5
+    #Yield=Yield,     F= FF, SB = SBF * RelRec, SB_SB0 = (SBF * RelRec)/(SB0 * R0x), B_B0 = (BF * RelRec)/(B0 * R0x),
+    #      6                  7                      8                              9              10                 11
+    #B = BF * RelRec,  VB = vBF * RelRec, VB_VB0 = (vBF * RelRec)/(vB0 * R0x),  RelRec=RelRec,  SB0 = SB0 * R0x,    B0=B0 * R0x
     MSY<-res[1]
-    FMSYap<-res[12]
+    FMSYap<-res[2]
     UMSY<-res[1]/(res[7]+res[1])
     BMSY<-res[7]
     SSBMSY<-res[3]
     BMSY_B0<-res[5]
     SSBMSY_SSB0<-res[4]
     RMSY_R0<-res[9]/R0[pp]
+    #                1    2      3   4     5       6       7          8
     all<-data.frame(MSY,FMSYap,UMSY,BMSY,SSBMSY,BMSY_B0,SSBMSY_SSB0,RMSY_R0)
     if(pp==1){
       MSYs<-all

@@ -353,8 +353,6 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
 
       }
 
-
-
     } else{ # Hockey stick with fixed hinge point
 
       # get MLE hingepoint
@@ -394,11 +392,6 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
     yind<-OMI@SRminyr[SRno]:OMI@SRmaxyr[SRno]
     recind<-(1:nparams)[paste0("lnRD",SRno)==pnam]
     estind<-rep(recind,each=yblock)[1:length(yind)]
-
-    # test of lognormal bias adjustment
-    #recs<-samps[1,recind]
-    #var<-sum(recs^2)/(length(recs)-1)
-    #exp(recs-var/2)
 
     Ntemp<-apply(as.matrix(samps[,recind]),1,function(x)sum(x^2)/(length(x)-1))
 
@@ -704,7 +697,7 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
     Istats[k,1]<-CPUEinds[k]
     Istats[k,2]<-out$lnqCPUE[j]
     Istats[k,3]<-round(sd(res),4)
-    Istats[k,4]<- round(AC1_int0(res),4)
+    Istats[k,4]<- max(0,round(AC1_int0(res),4)) # was decided this should be max 0
     if(tempdat[1,7]>0){
      Istats[k,5]<-OMI@Ilencat[1,tempdat[1,7]]
      Istats[k,6]<-OMI@Ilencat[2,tempdat[1,7]]
@@ -739,7 +732,7 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
     Istats[k,1]<-Iinds[k-length(CPUEinds)]
     Istats[k,2]<-out$lnqI[j]
     Istats[k,3]<-round(sd(res),4)
-    Istats[k,4]<-round(AC1_int0(res),4)
+    Istats[k,4]<-max(0,round(AC1_int0(res),4))
 
     if(Iinds[k-length(CPUEinds)]%in%SD_override$Name){
       pos<-match(Iinds[k-length(CPUEinds)],SD_override$Name)

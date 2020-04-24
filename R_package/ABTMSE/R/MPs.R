@@ -231,32 +231,41 @@ CurC125<-function (x, dset) dset$curTAC[x] * 1.25
 class(CurC125)<-'MP'
 
 
-
-
-
-#' Fish at MSY harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
+#' Fish at 5 percent harvest rate given current biomass (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
 #' @export
 #' @examples
-#' UMSY(1,dset_example_West)
-#' sapply(1:10,UMSY,dset_example_West)
-UMSY<-function(x,dset,Urat=1) dset$UMSY[x]*dset$Bt[x]*Urat
-class(UMSY)<-"MP"
+#' U5(1,dset_example_West)
+#' sapply(1:10,U5,dset_example_West)
+U5<-function(x,dset,Urat=0.05)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+class(U5)<-"MP"
 
-#' Fish at MSY harvest rate with perfect information of UMSY and current biomass (a management procedure of class MP).
+#' Fish at 10 percent harvest rate  (a management procedure of class MP).
 #'
 #' @param x a simulation number.
 #' @param dset a list of simulated data for use by management procedures.
 #' @return a TAC recommendation arising from \code{x, dset}.
 #' @export
 #' @examples
-#' UMSY_PI(1,dset_example_West)
-#' sapply(1:10,UMSY_PI,dset_example_West)
-UMSY_PI<-function(x,dset) dset$UMSY_PI[x]*dset$Bt_PI[x]
-class(UMSY_PI)<-"MP"
+#' U10(1,dset_example_West)
+#' sapply(1:10,U10,dset_example_West)
+U10<-function(x,dset,Urat=0.1)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+class(U10)<-"MP"
+
+#' Fish at 15harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
+#' @examples
+#' U15(1,dset_example_West)
+#' sapply(1:10,U15,dset_example_West)
+U15<-function(x,dset,Urat=0.15)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+class(U15)<-"MP"
 
 #' A rapid 3 parameter observation error only delay difference model FOR INDEX 4 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 #'

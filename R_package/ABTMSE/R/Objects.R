@@ -261,9 +261,6 @@ setClass("OMI",representation(
 #' \item{BMSYbcv}{a 2 item vector specifying the maximum extend of bias in simulated BMSY (a target biomass level) as a lognormal sd}
 #' \item{MPind}{a data frame containing the indices that may be used by MPs in closed loop simulation [year, index number, index name, index, CV, stock, type (1: vulnerable biomass, 2: ssb), source, applies to model areas]}
 #' \item{MPind_stats}{a list containing the statistical properties of model fits (currently unused)}
-#' \item{SD_override}{a data frame containing a list of names indices and user specified standard deviations}
-#' \item{AC_override}{a data frame containing a list of names indices and user specified lag-1 autocorrelation values}
-#' \item{Yrs_override}{a data frame containing a list of names indices and user specified year ranges for calculating statistical properties}
 #' \item{MinAC}{a minimum value for index lag-1 autocorrelation in residuals}
 #' }
 setClass("Obs",representation(Name="character",
@@ -282,8 +279,6 @@ setClass("Obs",representation(Name="character",
                Recbcv="numeric",IMSYbcv="numeric",                            # Bias in observation of recent recrutiment, target CPUE (CPUE @ MSY)
                MSYbcv="numeric",BMSYbcv="numeric",                            # Bias in observation of target catch and biomass (MSY and BMSY)
                MPind="data.frame",MPind_stats="list",                         # Indices that may be used in MPs
-               SD_override="data.frame",AC_override="data.frame",             # New slots that hard-wire AC and STD values for named indices
-               Yrs_override="data.frame",                                     # calculates statistics based on certain years for named indices
                MinAC="numeric"                                                # Minimum simulated lag-1 autocorrelation in residuals
 
 ))
