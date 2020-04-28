@@ -227,8 +227,8 @@ setMethod("plot",
                 abline(h=0)
                 abline(h=1,lty=2)
 
-                if(!MSY)mtext('SSB relative to 2018',3,adj=-0.8,line=-1,cex=0.7)
-                if(MSY)mtext('SSB relative SSB_MSY',3,adj=-0.8,line=-1,cex=0.7)
+                if(!MSY)mtext('SSB relative to 2018',3,adj=-0.89,line=-1,cex=0.7)
+                if(MSY)mtext('SSB relative SSB_MSY',3,adj=-0.89,line=-1,cex=0.7)
 
               }
             }

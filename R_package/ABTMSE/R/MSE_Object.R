@@ -908,9 +908,6 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   for(pp in 1:npop){
 
     R0<-OM@hR0[,pp,1]
-
-    #SSBpR=apply(surv[,pp,]*Wt_age[,pp,,1]*mat[,pp,,1],1,sum)  # SSBpR both this and SSB0 are now dynamic
-
     SSB_d=R0*SSBpR[,pp]
     dynB0h[,pp,1]<-SSB_d
     N_d<-R0*surv[,pp,]
@@ -967,7 +964,6 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   #  1   2  3   4   5         6
   # Name lnq sd AC1 Ilencat_LB Ilencat_UB
   Iobs<-Isim[,,1:nyears,1]#Itemp1/array(apply(Itemp2,1:2,mean,na.rm=T),dim(Itemp2))                # normalize to mean 1 post residual error
-  # !! CHECK !! These historical indices should be identical among simulations (they are the backward recreation of the statistical fits)
 
   # F distribution code (Allocation sums to 1 in East area, and West area),
   Fdist1<-apply(FM[,,,(nyears-Fdistyrs+1):nyears,,,],c(1,5,6,7),sum)# s m r f  # F is the same for both stocks so summing makes no difference

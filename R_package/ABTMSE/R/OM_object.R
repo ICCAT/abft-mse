@@ -329,9 +329,11 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
   .Object@Recpars<-array(NA,c(nsim,OMI@nSR,2))   #  1 is steepness or hingepoint, 2 is R0
   .Object@Reccv<-array(NA,c(nsim,OMI@nSR))       #  sigma R (sd of lognormal rec devs)
   .Object@AC<-array(NA,c(nsim,OMI@nSR))          #  lag-1 autocorrelation
+  R0adj<-c(1,0) # M3 automatically separates east and west by a scale of 1 for initialization
 
   for(SRno in 1:OMI@nSR){
 
+    pp<-OMI@SRp[SRno]
     type=OMI@SRtype[SRno]
 
     if(type=="BH"){
@@ -340,13 +342,13 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
       recind<-(1:nparams)[paste0("lnRD",SRno)==pnam]
 
       if(MLEonly){
-        .Object@Recpars[,SRno,2]<-exp(vcv$est[SRno]) # R0
-        recs<-vcv$est[recind] # correct rec dev sequence
+        .Object@Recpars[,SRno,2]<-exp(vcv$est[SRno]+R0adj[pp]) # R0
+        recs<-vcv$est[recind]         # correct rec dev sequence
         .Object@Reccv[,SRno]=sd(recs) # by simulation rec cv
         .Object@AC[,SRno]<-stats::acf(recs,plot=F)$acf[2,1,1] # by simulation rec autocorrelation
 
       }else{
-        .Object@Recpars[,SRno,2]<-exp(samps[,SRno])
+        .Object@Recpars[,SRno,2]<-exp(samps[,SRno]+R0adj[pp])
         recs<-samps[,recind] # correct rec dev sequence
         .Object@Reccv[,SRno]=apply(recs,1,sd) # by simulation rec cv
         .Object@AC[,SRno]<-apply(recs,1,FUN=function(x)stats::acf(x,plot=F)$acf[2,1,1]) # by simulation rec autocorrelation
@@ -384,7 +386,6 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
   # ---- Get recruitment deviations -----
   .Object@Recdevs<-array(0,dim=c(nsim,npop,nyears))
   yblock<-2
-  R0adj<-c(1,0) # M3 automatically separates east and west by a scale of 1 for initialization
 
   for(SRno in 1:OMI@nSR){
 
