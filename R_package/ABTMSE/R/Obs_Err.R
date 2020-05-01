@@ -1,6 +1,16 @@
 
 solveforR1<-function(v2,y2){
 
+  # gamma1 = [  -1 + SQRT{ 1 + 8 * max(gamma2, -1/8) }  ] / 2 # From Carmen and Doug
+  y1 = (-1+(1 + 8 * max(y2, -1/8) )^0.5)/2
+  v1 = 2*v2/(1+y1)
+  return(c(v1=v1,y1=y1))
+}
+
+
+
+solveforR1_old<-function(v2,y2){
+
   prop<-function(par,v2,y2){
     v1<-exp(par[1])
     y1<-exp(par[2])

@@ -267,6 +267,18 @@ class(U10)<-"MP"
 U15<-function(x,dset,Urat=0.15)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
 class(U15)<-"MP"
 
+#' Fish at 15harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
+#' @examples
+#' U20(1,dset_example_West)
+#' sapply(1:10,U20,dset_example_West)
+U20<-function(x,dset,Urat=0.20)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+class(U20)<-"MP"
+
 #' A rapid 3 parameter observation error only delay difference model FOR INDEX 4 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
 #'
 #' @param x a simulation number.

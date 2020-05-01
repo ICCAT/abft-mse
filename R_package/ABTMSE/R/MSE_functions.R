@@ -461,7 +461,7 @@ plot_Indices<-function(MSEobj,index=1,MPs=NA){
   for(mm in 1:nMPs){
 
     cols<-c('red','blue','dark green','green','grey','purple','brown','orange','pink','black')
-    matplot(yrs,t(MSEobj@VBi[mm,1:2,index,]),col=cols,lty=1,type='l',lwd=2,yaxs='i',ylim=VBylim)
+    matplot(yrs,t(MSEobj@VBi[mm,1:2,index,]),col=cols,lty=1,type='l',lwd=2,yaxs='i',ylim=Iobsylim)
     matplot(yrs,t(MSEobj@Iobs[mm,1:2,index,]),col=cols,lty=1,add=T,type='l')
     abline(v=2016.5,col='#99999970',lwd=2)
     legend('topright',legend="First two simulations",bty='n')
@@ -481,6 +481,100 @@ plot_Indices<-function(MSEobj,index=1,MPs=NA){
   mtext(paste0("Index: ", MSEobj@Inames[index]," (StDev = ",MSEobj@Istats[sid,3],", AC1 = ",MSEobj@Istats[sid,4],")"),3,line=1.25,outer=T,font=2)
   mtext("Year",1,line=1.3,outer=T)
   mtext("Index (or calibrated vulnerable biomass)",2,line=1.6,outer=T)
+  mtext(deparse(substitute(MSEobj)),3,line=1,at=0.08,font=2,outer=T)
 
 }
+
+
+
+
+#' Plot the unfished recruitment, mean and stochastic recruitment of a projection
+#'
+#' @param MSEobj An object of class 'MSE'
+#' @param MPs A numeric vector of MPs (order is MPs slot of MSE object)
+plot_Recruitment<-function(MSEobj,MPs=1:2){
+
+  startyr=1965
+  par(mfcol=c(3,2),mai=c(0.6,0.7,0.05,0.05),omi=c(0.01,0.01,0.4,0.01))
+  simlines<-c(1,2)
+  simpch<-c(1,4)
+  MPcols<-c('red','blue')
+
+  for(pp in 2:1){
+    yrs<-startyr+(1:(MSEobj@proyears+MSEobj@nyears))-1
+
+    # SSB
+    ylim1<-c(0,1.02*max(MSEobj@SSB_proj[,,pp,],MSEobj@R0_proj[pp,]*MSEobj@SSBpR[1,pp],MSEobj@dynB0[,pp,],na.rm=T))
+    matplot(yrs,rbind(t(MSEobj@dynB0h[,pp,]),t(MSEobj@dynB0[,pp,])),ylim=ylim1,lty=simlines,col="green",type="l",ylab="SSB",yaxs='i',xlab="Year")
+    lines(yrs,MSEobj@R0_proj[pp,]*MSEobj@SSBpR[1,pp],col="black")
+    matplot(yrs,t(MSEobj@SSB_proj[MPs[1],,pp,]),ylim=ylim,lty=simlines,col=MPcols[1],type="l",add=T)
+    matplot(yrs,t(MSEobj@SSB_proj[MPs[2],,pp,]),ylim=ylim,lty=simlines,col=MPcols[2],type="l",add=T)
+    if(pp==2){
+      legend('bottomright',legend=c("Dynamic","Equilibrium",MSEobj@MPs[MPs[1]],MSEobj@MPs[MPs[2]]),text.col=c('green','black','red','blue'),cex=0.9,bty='n')
+      legend('bottomleft',legend=c("Simulation 1","Simulation 2"),lty=c(1,2),bty='n',cex=0.9)
+    }
+
+    # Recruitment
+    ylim2=c(0,1.02*max(MSEobj@R0_proj[pp,],MSEobj@Rec_err[MPs,1,pp,],MSEobj@Rec_mu[MPs,1,pp,],na.rm=T))
+    plot(yrs,MSEobj@R0_proj[pp,],ylim=ylim2,type='l',ylab="Recruitment (with process error)",yaxs='i',xlab="Year")
+    #matplot(yrs,t(MSEobj@Rec_mu[MPs[1],,pp,]),lty=simlines,col=MPcols[1],type="l",add=T)
+    #matplot(yrs,t(MSEobj@Rec_mu[MPs[2],,pp,]),lty=simlines,col=MPcols[2],type="l",add=T)
+    matplot(yrs,MSEobj@Rec_err[MPs[1],1,pp,],lty=simlines,col=MPcols[1],type="l",add=T)
+    matplot(yrs,MSEobj@Rec_err[MPs[2],1,pp,],lty=simlines,col=MPcols[2],type="l",add=T)
+
+    if(dim(MSEobj@AC)[2]>2){
+      ind<-(pp*2)-(1:0)
+    }else{
+      ind<-pp
+    }
+
+    legend('topleft',legend=
+             c(paste0(rep("SD",length(ind))," = ",round(MSEobj@Reccv[1,ind],3)),
+             paste0(rep("AC",length(ind))," = ",round(MSEobj@AC[1,ind],3))),bty='n')
+
+    # S-R
+    ylim3=c(0,1.02*max(MSEobj@Rec_mu[,,pp,],na.rm=T))
+    for(ss in 1:1){
+      for(MP in MPs){
+        if(ss==1&MP==MPs[1]){
+          plot(MSEobj@SSB_proj[MP,ss,pp,],MSEobj@Rec_mu[MP,ss,pp,],col=MPcols[match(MP,MPs)],pch=simpch[ss],ylim=ylim3,
+               xlim=ylim1,xlab="SSB",ylab="Deterministic recruitment",yaxs='i')
+          legend('bottomleft',legend=c("Simulation 1","Simulation 2"),pch=simpch,bty='n',cex=0.9)
+        }else{
+          points(MSEobj@SSB_proj[MP,ss,pp,],MSEobj@Rec_mu[MP,ss,pp,],col=MPcols[match(MP,MPs)],pch=simpch[ss])
+        }
+      }
+    }
+
+  }
+  mtext(c("West Stock","East Stock"),3,line=0.4,at=c(0.3,0.8),outer=T,cex=0.9)
+  mtext(deparse(substitute(MSEobj)),3,line=1,at=0.08,font=2,outer=T)
+
+}
+
+
+
+#' Plot the catch composition during projections r
+#'
+#' @param MSEobj An object of class 'MSE'
+#' @param MPs A numeric vector of MPs (order is MPs slot of MSE object)
+plot_CatchComp<-function(MSEobj){
+  startyr<-2016
+  MP<-2
+  sim<-1
+  cols=c('black','red','green','blue','orange','grey','pink','purple','brown')
+  yrs<-startyr+(1:MSEobj@proyears)
+  yrind<-MSEobj@nyears+(1:MSEobj@proyears)
+  fleets<-apply(MSEobj@Fleet_cat[sim,MP,,yrind],1,sum)>100
+  matplot(yrs,t(MSEobj@Fleet_cat[sim,MP,fleets,yrind])/1000,type='l',col=cols,lty=1,ylab="Catch (t)")
+  legend('right', legend=OM_1@Fleets$name[fleets],text.col=cols,bty='n',cex=0.8)
+}
+
+
+
+
+
+
+
+
 

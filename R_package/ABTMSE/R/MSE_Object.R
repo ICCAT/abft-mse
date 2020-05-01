@@ -50,6 +50,8 @@
 #' \item{Fterr}{currently unused}
 #' \item{hb}{currently unused}
 #' \item{Reccbcv}{currently unused}
+#' \item{Reccv}{a matrix of recruitment lognormal CV [nsim x nSR]}
+#' \item{AC}{a matrix of recruitment lag-1 autocorrelation [nsim x nSR]}
 #' \item{IMSYb}{a vector of biases in the index at MSY by simulation [nsim]}
 #' \item{IMSYb}{a vector of biases in MSY (a reference catch level) by simulation [nsim]}
 #' \item{IMSYb}{a vector of biases in BMSY (a reference biomass level) by simulation [nsim]}
@@ -65,6 +67,10 @@
 #' \item{SSB0}{a 2D array containing unfished spawnign biomass by simulation and stock [nsim x nstocks]}
 #' \item{Iobs}{a 4D array containing Index observations [MP x nsim x nind x allyears]}
 #' \item{VBi}{a 4D array containing Index vulnerable biomass (true without error) [MP x nsim x nind x allyears]}
+#' \item{Rec_mu}{a 4D array containing mean future recruitment (without residual error) [MP x sim x nstocks x proyears]}
+#' \item{Rec_err}{a 4D array containing future recruitment [MP x sim x nstocks x proyears]}
+#' \item{R0_proj}{a matrix containing the future R0 values [nstocks x proyears]}
+#' \item{SSB_proj}{a 4D array containing the future SSB values [MP x sim x nstocks x proyears]}
 #' \item{dynB0}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and projection year [nsim x nstocks x proyears]}
 #' \item{dynB0h}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and historical year [nsim x nstocks x nyears]}
 #' \item{MSY}{a 2D array containing MSY estimates (2016 parameters) [sim x nstocks]}
@@ -80,7 +86,8 @@
 #' \item{areanams}{a character vector of area names}
 #' \item{Istats}{a data.frame of index fit statistics nind x 6 (name, lnq, sd, ac1, lencat LB, lencat UB)}
 #' \item{Inames}{a character vector of index names as they appear in the MPind slot of the obs object}
-#' \item{Fleet_comp}{an array of Fleet composition data nsim x MP x nfleet x proyear x length class}
+#' \item{Fleet_comp}{an array of Fleet catch (numbers) composition data nsim x MP x nfleet x proyear x length class}
+#' \item{Fleet_cat}{an array of fleet catches [nsim x MP x fleet x year ]}
 #' \item{TACtaken}{an array of TAC actually taken nsim x MP x NAss x proyear}
 #' \item{MPs}{a list object containing the names of the MPs [nMPs]}
 #' }
@@ -113,6 +120,8 @@ setClass("MSE",representation(
   hb="numeric",
   Recbcv="numeric",
   IMSYb="numeric", MSYb="numeric", BMSYb="numeric",
+  Reccv="array",
+  AC="array",
 
   # Management quantities
   C="array",
@@ -129,6 +138,10 @@ setClass("MSE",representation(
   SSB0="array",
   VBi="array",
   Iobs="array",
+  Rec_mu="array",
+  Rec_err="array",
+  R0_proj="matrix",
+  SSB_proj="array",
   dynB0="array",
   dynB0h="array",
   TAC="array",
@@ -150,6 +163,7 @@ setClass("MSE",representation(
   Inames="character",
 
   Fleet_comp="array",
+  Fleet_cat="array",
   TACtaken="array",
 
   MPs="list"
@@ -160,7 +174,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                                         TAC2015=c(16142000,2000000),TAC2016=c(19296000,1912000),TAC2017=c(23155000,2000000),
                                         TAC2018=c(28200000,2350000),TAC2019=c(32240000,2350000),TAC2020=c(36000000,2350000),
                                         Allocation=ABTMSE:::Allocation,MPareas=NA,Fdistyrs=3,maxTAC=c(10,10),MSEparallel=F,
-                                        Deterministic=FALSE,check=FALSE){
+                                        Deterministic=FALSE,check=FALSE,Reallocate=FALSE){
 
   # .Object}); .Object<-new('MSE');
   .Object@Snames<-OM@Snames
@@ -366,11 +380,11 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
   # Recruitment calculation ---
 
-  LTyrs<-4 # Lower triangle (recent recruitment years)
+  LTyrs<-4 # Lower triangle (recent recruitment years) #!!! currently disused
 
   nSR<-length(OM@Rectype)
   Reccv<-AC<-array(NA,dim(OM@Reccv))
-  for(s in 1:nrow(OM@Reccv)){
+  for(s in 1:nrow(OM@Reccv)){ # has to be by simulation because these were different in some previous OMs
     for(SR in 1:nSR){
       out<-solveforR1(OM@Reccv[s,SR]^2,OM@AC[s,SR]) # all are currently positive - !!! need to add exception for negative !!!
       Reccv[s,SR]<-out[1]^0.5
@@ -382,6 +396,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     Reccv[]<-0
     AC[]<-0
   }
+
+  .Object@Reccv<-Reccv
+  .Object@AC<-AC
 
   Pe<-Pe_UC<-array(NA,c(nsim,npop,allyears))
   Pe_UC[,,nyears]<-Pe[,,nyears]<-log(OM@Recdevs[,,nyears]) # !!! we are assuming that the 2-block final residual is equivalent to the annual residual
@@ -426,6 +443,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   canspawn<-array(rep(c(0,1,0,1,0,0,0,0,0,0,0,0,1,0),each=nsim),c(nsim,npop,nareas))
   hM<-array(M[,,,1],c(nsim,npop,nages,nareas))
   spawnr<-array(NA,c(nsim,npop,nareas))
+
+  # Preallocated arrays
+  Rec_mu <- Rec_err <- SSB_proj<-array(NA,c(nMPs,nsim,npop,allyears))
+  R0_proj <- array(NA,c(npop,allyears))
 
   for(y in 2:nHyears){
     mi<-movIndex[1]
@@ -478,6 +499,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           SSB0=OM@hR0[,pp,1]*SSBpR[,pp]    #// Unfished Spawning Stock Biomass
           R0=OM@hR0[,pp,1]
+
 
           if(OM@hRectype[pp,1]=="BH"){
 
@@ -602,17 +624,21 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           SSBtemp<-apply(SSB[,pp,,y,m,],c(1,3),sum)*canspawn[,pp,] # viable spawning biomass
           SSBt<-apply(SSB[,pp,,y,m,],1,sum)
+          SSB_proj[1,,pp,y]<-SSBt
           spawnr<-SSBtemp/array(apply(SSBtemp,1,sum),dim(SSBtemp))
           N[,pp,nages,y,m,]<-N[,pp,nages,y,m,]+N[,pp,nages-1,y,m,] # plus group
           N[,pp,2:(nages-1),y,m,]<-N[,pp,1:(nages-2),y,m,]
 
           SSB0=OM@hR0[,pp,y]*SSBpR[,pp]    #// Unfished Spawning Stock Biomass
           R0=OM@hR0[,pp,y]
+          R0_proj[pp,y]<-R0[1]
 
           if(OM@hRectype[pp,y]=="BH"){
 
               h<-OM@hRecpar[,pp,y]
               N[,pp,1,y,m,]<-OM@Recdevs[,pp,y]*spawnr*(    (0.8*R0*h*SSBt) / (0.2*SSBpR[,pp]*R0*(1-h) + (h-0.2)*SSBt))
+              Rec_err[1,,pp,y]<-apply(N[,pp,1,y,m,],1,sum) # Record Stochastic Recruitment
+              Rec_mu[1,,pp,y]<-Rec_err[1,,pp,y]/OM@Recdevs[,pp,y] # Record Mean Recruitment
 
           }else{ # hockey stick
 
@@ -999,7 +1025,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   dset<-new('list')
 
   # Preallocated arrays
-  Itemp<-array(NA,c(nsim,nind,allyears,nareas))
+
+   Itemp<-array(NA,c(nsim,nind,allyears,nareas))
   .Object@TAC<-array(NA,c(nsim,nMPs,nAss,proyears+2))
   .Object@TACtaken<-array(NA,c(nsim,nMPs,nAss,proyears+2))
   .Object@TAC[,,,1]<-rep(TAC2016,each=nsim*nMPs)
@@ -1007,6 +1034,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@TAC[,,,3]<-rep(TAC2018,each=nsim*nMPs)
   .Object@TAC[,,,4]<-rep(TAC2019,each=nsim*nMPs)
   .Object@Fleet_comp<-array(NA,c(nsim,nMPs,nfleets,allyears,nages))
+  .Object@Fleet_cat<-array(NA,c(nsim,nMPs,nfleets,allyears))
 
   for(MP in 1:nMPs){
 
@@ -1050,8 +1078,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           }
         }
 
-        iInd<-as.matrix(expand.grid(1:nsim,1:nind,1:(y-1),2))
+
         Iobs<-array(0,c(nsim,nind,y-1))
+        Iobs[,,1:nyears]<-Isim[,,1:nyears,1] # real observations
+        iInd<-as.matrix(expand.grid(1:nsim,1:nind,(nyears+1):(y-1),2)) # updates
         Iobs[iInd[,c(1,2,3)]]<-exp(log(VBi[iInd[,c(1,3,2)]]*newq[iInd[,2]])+Isim[cbind(iInd[,1:3],rep(2,nrow(iInd)))])
 
         # if additional data are required
@@ -1167,21 +1197,23 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
         Btemp<-apply(Biomass[,,,y,m,],c(1,4),sum)
 
-        for(AS in 1:nAss){ # Max F redistribution at the catch-at-numbers scale
+        if(Reallocate){
+          for(AS in 1:nAss){ # Max F redistribution at the catch-at-numbers scale
 
-          AA<-Assess_data[AS,]
-          testU<-aggC[,m,AA,]/array(Btemp[,AA],dim(aggC[,m,AA,])) # implied harvest rate
-          cond<-testU>0.9
-          cond[is.na(cond)]<-T
-          Cunder<-array(0,c(nsim,sum(AA),nfleets))
-          Cunder[cond]<-aggC[,m,AA,][cond]*(testU[cond]-0.9)/testU[cond]
-          aggC[,m,AA,][cond]<-aggC[,m,AA,][cond]-Cunder[cond]
-          CunderT<-apply(Cunder,1,sum)
-          Cdist<-array(0,c(nsim,sum(AA),nfleets))
-          Cdist[!cond]<-aggC[,m,AA,][!cond]
-          Cdist<-(Cdist/array(apply(Cdist,1,sum,na.rm=T),c(nsim,sum(AA),nfleets)))*array(CunderT,c(nsim,sum(AA),nfleets))
-          aggC[,m,AA,]<-aggC[,m,AA,]+Cdist
+            AA<-Assess_data[AS,]
+            testU<-aggC[,m,AA,]/array(Btemp[,AA],dim(aggC[,m,AA,])) # implied harvest rate
+            cond<-testU>0.9
+            cond[is.na(cond)]<-T
+            Cunder<-array(0,c(nsim,sum(AA),nfleets))
+            Cunder[cond]<-aggC[,m,AA,][cond]*(testU[cond]-0.9)/testU[cond]
+            aggC[,m,AA,][cond]<-aggC[,m,AA,][cond]-Cunder[cond]
+            CunderT<-apply(Cunder,1,sum)
+            Cdist<-array(0,c(nsim,sum(AA),nfleets))
+            Cdist[!cond]<-aggC[,m,AA,][!cond]
+            Cdist<-(Cdist/array(apply(Cdist,1,sum,na.rm=T),c(nsim,sum(AA),nfleets)))*array(CunderT,c(nsim,sum(AA),nfleets))
+            aggC[,m,AA,]<-aggC[,m,AA,]+Cdist
 
+          }
         }
 
         testU<-aggC[,m,,]/array(Btemp,dim(aggC[,m,,])) # implied harvest rate
@@ -1230,7 +1262,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
         for(pp in 1:npop){
 
-          SSB[,pp,,y,m,]<-N[,pp,,y,m,]*array(Wt_age[,pp,,nyears]*mat[,pp,,nyears],dim=c(nsim,nages,nareas))
+          SSB[,pp,,y,m,]<-N[,pp,,y-1,m,]*array(Wt_age[,pp,,nyears]*mat[,pp,,nyears],dim=c(nsim,nages,nareas))
 
           if(Recsubyr[pp]==m){
 
@@ -1242,13 +1274,17 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
             SRno<-OM@Recind[pp,maxind]
             #SSBpR=apply(surv[,pp,]*Wt_age[,pp,,nyears]*mat[,pp,,nyears],1,sum)  # SSBpR both this and SSB0 are now dynamic
             R0<-OM@Recpars[,SRno,2]
+            R0_proj[pp,y]<-R0[1] # record projected R0
             SSB0=R0*SSBpR[,pp]    #// Unfished Spawning Stock Biomass
             SSBt<-apply(SSB[,pp,,y,m,],1,sum)
+            SSB_proj[MP,,pp,y]<-SSBt
 
             if(OM@Rectype[SRno]=="BH"){
 
               h<- OM@Recpars[,SRno,1]
               N[,pp,1,y,m,]<-exp(Pe[,pp,y])*spawnr*((0.8*R0*h*SSBt) / (0.2*SSBpR[,pp]*R0*(1-h) + (h-0.2)*SSBt))
+              Rec_err[MP,,pp,y]<-apply(N[,pp,1,y,m,],1,sum) # Record Stochastic Recruitment
+              Rec_mu[MP,,pp,y]<-Rec_err[MP,,pp,y]/exp(Pe[,pp,y]) # Record Mean Recruitment
 
             }else{ # hockey stick
 
@@ -1324,7 +1360,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     Ctemp2<-apply(Ctemp,c(1,3,4),sum)# SYR
     for(aa in 1:2).Object@C[MP,,aa,]=apply(Ctemp2[,,MPareas==aa],1:2,sum)
 
-    .Object@Fleet_comp[,MP,,,]<-apply(C,c(1,7,4,3),sum) # S,F,P,A from SPAYMRF2
+    .Object@Fleet_comp[,MP,,,]<-apply(C,c(1,7,4,3),sum) # S,F,Y,A from SPAYMRF2
+    .Object@Fleet_cat[,MP,,]<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,7,4),sum)  # SFY
 
     SSB2<-apply(N[,,,1:allyears,4,]*array(mat[,,,nyears]*Wt_age[,,,nyears],c(nsim,npop,nages,allyears,nareas)),c(1,2,4),sum)
     .Object@D[MP,,,]<-SSB2/array(SSB2[,,1],dim(SSB2))
@@ -1350,6 +1387,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   # This is all about calculating the equilibrium unfished SSB0 for the various recruitment types in the future
   .Object@BB<-BB
   .Object@BBa<-BBa
+  .Object@R0_proj<-R0_proj
+  .Object@SSB_proj<-SSB_proj
+  .Object@Rec_mu<-Rec_mu
+  .Object@Rec_err<-Rec_err
 
   .Object@MPs<-MPs
   .Object@area_defs<-OM@area_defs
