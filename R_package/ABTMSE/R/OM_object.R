@@ -76,6 +76,9 @@
 #' \item{Fleets}{list of fleet attributes from OMI}
 #' \item{Istats}{data.frame of Index statistics}
 #' \item{Ires}{array of historical index residuals (sim,index,year)}
+#' \item{Deterministic}{logical, should deterministic recruitment be simulated in projections}
+#' \item{Obs}{character, the type of observation error model assumed for simulating future catch data}
+#' \item{Imp}{character, the implementaiton error model assumed for simulating how well MP advice is adhered to}
 #' \item{checks}{returns m3 matching information}
 #' \item{seed}{a random seed for generation of simulations to ensure reproducibility}
 #' }
@@ -134,12 +137,15 @@ setClass("OM",representation(
   checks='list',
   Istats='data.frame',
   Ires='array',
+  Deterministic="logical",
+  Obs="character",
+  IE="character",
   seed="numeric"                                   # Random seed from which this object was made
 ))
 
 setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=50, seed=1,
                                        Recruitment=NULL, Snames=c("East","West"),
-                                       MLEonly=F, Deterministic=F,
+                                       MLEonly=F, Deterministic=F, Obs = "Good_Obs", IE = "Umax_90",
                                        ploty=F, debug=F, CPUEinds, Iinds, SD_override, AC_override, Yrs_override){
 
   # .Object});   .Object<-new('OM',OMd="C:/M3")
@@ -193,6 +199,8 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
   .Object@nlen<-as.integer(out$nl)
   .Object@nma<-as.integer(out$nma)
   .Object@ma<-ma<-array(rep(c(rep(1,4),rep(2,4),rep(3,na-8)),each=2),c(np,na)) # for some reason this doesn't yet exist.
+
+  .Object@interval<-as.integer(2)   # Management interval
 
   .Object@Wt_age<-out$wt_age
   .Object@Len_age<-out$len_age
@@ -628,6 +636,7 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
   optMSY_eq<-ABTMSE::optMSY_eq
   MSYCalcs<-ABTMSE::MSYCalcs
   meanFs<-ABTMSE::meanFs
+  #meanFs2<-ABTMSE::meanFs2
   MSYMLE_parallel<-ABTMSE::MSYMLE_parallel
   res<-array(NA,c(nsim,np,8)) # MSY, FMSYa, UMSY, BMSY, SSBMSY, BMSY/B0, SSBMSY/SSB0, RMSY/R0
 
@@ -752,6 +761,11 @@ setMethod("initialize", "OM", function(.Object, OMd="C:/M3", nsim=48, proyears=5
   .Object@Istats=as.data.frame(Istats,stringsAsFactors = F)
   names(.Object@Istats)<-c("Name","lnq","SD","AC")
   .Object@Ires<-Ires
+
+  .Object@Deterministic = Deterministic  # defaults to recruitment process error
+  .Object@Obs<-Obs # defaults to Good obs model information
+  .Object@IE<-IE     # defaults to maximum harvest rate of 90%
+
 
   .Object
 

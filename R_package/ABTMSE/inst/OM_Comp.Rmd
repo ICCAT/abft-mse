@@ -70,28 +70,20 @@ kable(T1,format='markdown')
 
 ```
 
-## Factor 3: Stock mixing
 
-```{r OMdesign3, results='asis',echo=FALSE}
+## Factor 3: Scale
+
+```{r OMdesign4, results='asis',echo=FALSE}
 T1<-data.frame(Design$all_lnams[[3]])
 names(T1)<-""
 kable(T1,format='markdown')
 
 ```
 
-## Factor 4: Scale
-
-```{r OMdesign4, results='asis',echo=FALSE}
-T1<-data.frame(Design$all_lnams[[4]])
-names(T1)<-""
-kable(T1,format='markdown')
-
-```
-
-## Factor 5: Length composition weighting
+## Factor 4: Length composition weighting
 
 ```{r OMdesign5, results='asis',echo=FALSE}
-T1<-data.frame(Design$all_lnams[[5]])
+T1<-data.frame(Design$all_lnams[[4]])
 names(T1)<-""
 kable(T1,format='markdown')
 
@@ -104,12 +96,12 @@ Table 1. The subset of wider operating models included in this comparison report
 
 DM<-cbind(OMnames,Design$Design_Ref[OMnos,])
 #DM[,5]<-paste0("\\",DM[,5])
-names(DM)<-c("Code.","Regime shift","Maturity / M","West Stock mixing","Scale","Length Comp wt")
-#if(!exists('FreeComp')){
+names(DM)<-c("Code.","Regime shift","Maturity / M","Scale","Length Comp wt")
+if(!exists('FreeComp')){
   DM%>%
  kable(format = "html", escape = F) %>%
   kable_styling("striped", full_width = T)
-#}
+  }
 ```
 
 
@@ -147,6 +139,15 @@ OMI<-OMIs[[1]]
 SSBstore<-array(0,c(nOMs,out$np,out$ny))
 SSB0store<-array(0,c(nOMs,out$np))
 SSBastore<-array(0,c(nOMs,out$np,out$ny))
+Bmix<-array(0,c(nOMs,out$np,out$nma)) # OM x stock x age class (last 5 years)
+SSBspawn<-array(0,c(nOMs,out$np)) # fraction of stock SSB in the spawnign area (last 5 years)
+BNatal<-array(0,c(nOMs,out$np,out$nma)) # age class in stock natal area
+Natspawn<-OMI@canspawn
+Natspawn[2,2]<-0 # not west Atlantic
+SAtl<-array(0,c(nOMs,out$np,out$nma)) # mean fraction of stock x age class in the south Atlantic (SATL)
+opparea<-matrix(c(T,T,T,F,F,F,F,
+                 F,F,F,T,T,T,T),nrow=2,byrow=T)
+ryind<-out$ny-(4:0)
 ny<-out$ny
 nHy<-out$nHy
 np<-out$np
@@ -176,10 +177,16 @@ for(i in 1:nOMs){
   out<-outs[[i]]
   OMI<-OMIs[[i]]
  
-  SSB<-array(NA,dim(out$N))
+  SSB<-B<-array(NA,dim(out$N))
+  B[Nind]<-out$N[Nind]*out$wt_age[Nind[,c(2,4,1)]]
+  
   SSB[Nind]<-out$N[Nind]*out$mat_age[Nind[,c(1,4)]]*out$wt_age[Nind[,c(2,4,1)]]
   SSBsum<-apply(SSB,c(2,3,5),sum) # SSB by year and area in spawning season
   SSBmu<-apply(SSBsum,c(1,3),mean)
+  for(pp in 1:out$np)for(ac in 1:out$nma)Bmix[i,pp,ac]<-sum(B[pp,ryind,,out$ma[pp,]==ac,opparea[pp,]])/sum(B[pp,ryind,,out$ma[pp,]==ac,])
+  for(pp in 1:out$np)for(ac in 1:out$nma)SAtl[i,pp,ac]<-sum(B[pp,ryind,,out$ma[pp,]==ac,OMI@areanams=="SATL"])/sum(B[pp,ryind,,out$ma[pp,]==ac,])
+  for(pp in 1:out$np)for(ac in 1:out$nma)BNatal[i,pp,ac]<-sum(B[pp,ryind,,out$ma[pp,]==ac,Natspawn[,pp]==1])/sum(B[pp,ryind,,out$ma[pp,]==ac,])
+  for(pp in 1:out$np)SSBspawn[i,pp]<-sum(SSB[pp,ryind,2,,OMI@canspawn[,pp]==1])/sum(SSB[pp,ryind,2,,])
   
   SSBastore[i,1,]<-apply(SSBmu*rep(c(0,0,0,1,1,1,1),each=out$ny),1,sum)
   SSBastore[i,2,]<-apply(SSBmu*rep(c(1,1,1,0,0,0,0),each=out$ny),1,sum)
@@ -289,10 +296,9 @@ LHs%>%
     TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
     
   )%>%
-  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
   kable(format = "html", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
-
+#select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
 
 ```
 Cat = catch data by fleet, quarter and area. CR = the fishery dependent catch rate (CPUE) indices, Surv = fishery-independent survey indices, Comp = length composition data, SOOm = stock of origin microchemistry data, SOOg = stock of origin genetics, Tag = Electronic tagging data, Rec = prior on recruitment deviations, Mov = prior on movement parameters, Sel = prior on size selectivity parameters, SRA = penalty incurred when catches exceed F=1 catches in the stock reduction analysis phase (1864-1964), MI = a prior on similarity to the 'Master Index' that predicts F by year, area, season and fleet, R0diff = a prior on the difference in R0 estimated in two-phase recruitment models (recruitment level 1 and 3), SPr = seasonal distribution prior, TOT_nP = total global objective function without priors, TOT = total global objective function. 
@@ -327,9 +333,9 @@ LHs%>%
     TOT=cell_spec(TOT,"html",color=colr(LHs$TOT),bold=T)
     
   )%>%
-  select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
   kable(format = "html", escape = F) %>%
   kable_styling("striped")#, full_width = T) 
+#select(OM, Code,Cat,CR,Surv,Comp,SOOm,SOOg,Tag,Rec,Mov,Sel,SRA,R0diff,MI,SPr,TOT_nP,TOT) %>%
 
 
 ```
@@ -598,7 +604,85 @@ mtext("Year",1,line=0.5,font=2,outer=T)
 
 ```
 
-Figure 5. Biomass fractions by stock (top row) and area (bottom row).  
+Figure 5a. Biomass fractions by stock (top row) and area (bottom row).  
+
+```{r mxing_Bmix, fig.width=6.5, fig.height=7,echo=FALSE}
+
+par(mfcol=c(3,2),mai=c(0.6,0.3,0.3,0.1),omi=c(0.3,0.4,0.35,0.05))
+Snames<-c("East stock in West area","West stock in East area")
+for(pp in 2:1){
+  for(ac in 1:3){
+   
+    barplot(Bmix[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.75))
+    abline(h=seq(0,0.75,by=0.05),col='lightgrey')
+    barplot(Bmix[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.75),add=T)
+    if(pp==1)mtext(paste("Age class",ac),3,line=0.01,adj=-0.5,font=2)
+    if(ac==1)mtext(Snames[pp],3,line=2,font=2)
+  }}
+mtext("Fraction of stock biomass in opposite area (last 5 years)",2,outer=T,line=0.7)
+mtext("Operating model",1,outer=T,line=0.7)
+```
+
+Figure 5b. Fraction of stock biomass in the opposite ocean area (average over last 5 years)(e.g. a value of 0.05 in the top left plot indicates that 5% of the western stock biomass was located in the east Atlantic area over the last 5 years of the historical model fitting)
+
+
+
+```{r mxing_SSBspawn, fig.width=8.5, fig.height=4.5,echo=FALSE}
+
+par(mfcol=c(1,2),mai=c(0.6,0.3,0.3,0.1),omi=c(0.6,0.6,0.35,0.05))
+Snames<-c("Fraction East SSB","Fraction West SSB")
+for(pp in 2:1){
+
+    barplot(SSBspawn[,pp],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,max(SSBspawn)))
+    abline(h=seq(0,max(SSBspawn),by=0.05),col='lightgrey')
+    barplot(SSBspawn[,pp],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,max(SSBspawn)),add=T)
+    mtext(Snames[pp],3,line=2,font=2)
+}
+mtext("Mean fraction SSB in spawning area(s) and spawning season (last 5 years)",2,outer=T,line=1.3)
+mtext("Operating model",1,outer=T,line=1.7)
+```
+
+Figure 5c.The mean fraction of stock SSB found in the spawning area and spawning season. CAUTION: these fractions can be hard to interpret. For example, lets consider a case where 100% of eastern fish entered the Mediterranean to spawn and then left after a month. In this case the average fraction would be 1/3 (the spawning season is 3 months long in the model). This may explain why it is not straighforward to link model estimated recruitment to these mean fractions whose principal purpose is to model availability of vulnerably biomass to fishing. 
+
+```{r mxing_BNatal, fig.width=6.5, fig.height=7,echo=FALSE}
+
+par(mfcol=c(3,2),mai=c(0.6,0.3,0.3,0.1),omi=c(0.3,0.4,0.35,0.05))
+Snames<-c("East stock in Med","West stock in GOM")
+for(pp in 2:1){
+  for(ac in 1:3){
+   
+    barplot(BNatal[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.6))
+    abline(h=seq(0,0.6,by=0.05),col='lightgrey')
+    barplot(BNatal[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.6),add=T)
+    if(pp==1)mtext(paste("Age class",ac),3,line=0.01,adj=-0.5,font=2)
+    if(ac==1)mtext(Snames[pp],3,line=2,font=2)
+  }}
+mtext("Mean fraction of biomass in natal area (last 5 years)",2,outer=T,line=0.7)
+mtext("Operating model",1,outer=T,line=0.7)
+```
+
+Figure 5d. Fraction of stock biomass in the natal spawning area: Med for the Eastern stock and GOM for the Western stock (average over last 5 years)
+
+
+```{r mxing_SAtl, fig.width=6.5, fig.height=7,echo=FALSE}
+
+par(mfcol=c(3,2),mai=c(0.6,0.3,0.3,0.1),omi=c(0.3,0.4,0.35,0.05))
+Snames<-c("East stock in SATL","West stock in SATL")
+for(pp in 2:1){
+  for(ac in 1:3){
+   
+    barplot(SAtl[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.85))
+    abline(h=seq(0,0.85,by=0.05),col='lightgrey')
+    barplot(SAtl[,pp,ac],names.arg=OMnames,col=custom_cols,border=NA,las=2,ylim=c(0,0.85),add=T)
+    if(pp==1)mtext(paste("Age class",ac),3,line=0.01,adj=-0.5,font=2)
+    if(ac==1)mtext(Snames[pp],3,line=2,font=2)
+  }}
+mtext("Fraction of stock biomass in the 'SATL' area",2,outer=T,line=0.7)
+mtext("Operating model",1,outer=T,line=0.7)
+
+
+```
+Figure 5e. The mean fraction of stock biomass (by age class) that is found in the so called 'SATL' (South Atlantic Area) which includes the East Atlantic waters of southern Spain, Portugal, Gibraltar and Morocco. The model uses these fractions to model availability to fishing so fractions may be estimated to be high if areas are a focal point for feeding or a migration route. 
 
 
 # Fits to stock-specific larval indices 
@@ -614,14 +698,14 @@ par(mfcol=c(1,2),mai=c(0.35,0.35,0.01,0.1),omi=c(0.4,0.4,0.4,0.05))
 
 #GOM
 yrs2<-OMI@years[1]-1+OMI@Iobs[ind,1]
-plot(yrs2,GOM_LAR_obs,yaxs='i',pch=19,col='red')
+plot(yrs2,GOM_LAR_obs,yaxs='i',pch=19,col='red',ylim=c(0,max(GOM_LAR_obs,unlist(GOM_LAR_pred))),yaxs="i")
 matplot(yrs2,matrix(unlist(GOM_LAR_pred),nrow=length(GOM_LAR_obs)),type='l',col=cols,lwd=lwds,lty=ltys,add=T)
 if(!exists("FreeComp")) legend('top',legend=c("Rec 1","Rec 2","Mat/M A","Mat/M B","Mix I","Mix II"),lty=c(1,1,1,2,1,1),lwd=c(1,1,1,1,1,2),col=c("black","blue",rep('black',4)),bty='n',cex=0.9)
 mtext("(A) GOM_LAR_SUV",3,line=1,font=2)
 
 #MED
 yrs2<-OMI@years[1]-1+OMI@Iobs[ind2,1]
-plot(yrs2,MED_LAR_obs,yaxs='i',pch=19,col='red')
+plot(yrs2,MED_LAR_obs,yaxs='i',pch=19,col='red',ylim=c(0,max(MED_LAR_obs,unlist(MED_LAR_pred))),yaxs="i")
 matplot(yrs2,matrix(unlist(MED_LAR_pred),nrow=length(MED_LAR_obs)),type='l',col=cols,lwd=lwds,lty=ltys,add=T)
 legend('topright',legend=LHs[,2],cex=cexs,text.col=cols,lty=ltys,lwd=lwds,col=cols,text.font=2,bty='n')
 mtext("(B) MED_LAR_SUV",3,line=1,font=2)
@@ -918,7 +1002,7 @@ for(pp in np:1){
 #mtext(c("West Stock","East Stock"),side=3,adj=c(0.25,0.8),outer=T)
 #mtext("Frequency (No OMs)",side=2,outer=T,line=1.8)
 
-
+sfStop()
 
 ```
 

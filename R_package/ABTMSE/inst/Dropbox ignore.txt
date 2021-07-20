@@ -1,0 +1,5 @@
+
+Open windows powershell and:
+Set-Content -Path 'C:\Users\tcarruth\Dropbox\abft-mse\R_package\ABTMSE\inst\OMreport.utf8.md' -Stream com.dropbox.ignored -Value 1
+Set-Content -Path 'C:\Users\tcarruth\Dropbox\abft-mse\R_package\ABTMSE\inst\OM_Comp.utf8.md' -Stream com.dropbox.ignored -Value 1
+

@@ -231,6 +231,19 @@ CurC125<-function (x, dset) dset$curTAC[x] * 1.25
 class(CurC125)<-'MP'
 
 
+#' Fish at 3 percent harvest rate given current biomass (a management procedure of class MP).
+#'
+#' @param x a simulation number.
+#' @param dset a list of simulated data for use by management procedures.
+#' @return a TAC recommendation arising from \code{x, dset}.
+#' @export
+#' @examples
+#' U3(1,dset_example_West)
+#' sapply(1:10,U5,dset_example_West)
+U3<-function(x,dset,Urat=0.03)dset$Bt_PI[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+class(U3)<-"MP"
+
+
 #' Fish at 5 percent harvest rate given current biomass (a management procedure of class MP).
 #'
 #' @param x a simulation number.
@@ -240,7 +253,7 @@ class(CurC125)<-'MP'
 #' @examples
 #' U5(1,dset_example_West)
 #' sapply(1:10,U5,dset_example_West)
-U5<-function(x,dset,Urat=0.05)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+U5<-function(x,dset,Urat=0.05)dset$Bt_PI[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
 class(U5)<-"MP"
 
 #' Fish at 10 percent harvest rate  (a management procedure of class MP).
@@ -252,7 +265,7 @@ class(U5)<-"MP"
 #' @examples
 #' U10(1,dset_example_West)
 #' sapply(1:10,U10,dset_example_West)
-U10<-function(x,dset,Urat=0.1)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+U10<-function(x,dset,Urat=0.1)dset$Bt_PI[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
 class(U10)<-"MP"
 
 #' Fish at 15harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
@@ -264,7 +277,7 @@ class(U10)<-"MP"
 #' @examples
 #' U15(1,dset_example_West)
 #' sapply(1:10,U15,dset_example_West)
-U15<-function(x,dset,Urat=0.15)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+U15<-function(x,dset,Urat=0.15)dset$Bt_PI[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
 class(U15)<-"MP"
 
 #' Fish at 15harvest rate with imperfect information regarding UMSY and current biomass (a management procedure of class MP).
@@ -276,7 +289,7 @@ class(U15)<-"MP"
 #' @examples
 #' U20(1,dset_example_West)
 #' sapply(1:10,U20,dset_example_West)
-U20<-function(x,dset,Urat=0.20)dset$Bt[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
+U20<-function(x,dset,Urat=0.20)dset$Bt_PI[x]*Urat# dset$UMSY[x]*dset$Bt[x]*Urat
 class(U20)<-"MP"
 
 #' A rapid 3 parameter observation error only delay difference model FOR INDEX 4 (GOM_LAR_SUV) conditioned on effort and parameterized with UMSY and MSY leading (a management procedure of class MP).
@@ -516,213 +529,6 @@ DD_R<-function(params,opty,So_DD,Alpha_DD,Rho_DD,ny_DD,k_DD,wa_DD,E_hist,C_hist,
     B_DD[tt+1]
   }else{
     cbind(C_hist,Cpred_DD)                           # return observations vs predictions
-  }
-}
-
-#' Extended Survival Analysis MP (currently in development)
-#'
-#' @param x a simulation number.
-#' @param dset a list of simulated data for use by management procedures.
-#' @return a TAC recommendation arising from \code{x, dset}.
-#' @export
-#' @examples
-#' XSA(1,dset_example_East)
-#' sapply(1:10,XSA,dset_example_East)
-XSA<-function(x,dset){
-  #for(x in 1:8){
-  maxage<-dset$nages
-  nyears<-dim(dset$Iobs)[2]
-  Lage<-dset$Linf[x]*(1-exp(-dset$K[x]*((1:maxage)-dset$t0[x])))
-  Wage<-dset$a[x]*Lage^dset$b[x]
-  plusg<-20
-  vpaCAA<-array(NA,c(plusg,nyears))
-  vpaCAA[1:(plusg-1),]<-dset$CAA[x,1:(plusg-1),1:nyears]
-  vpaCAA[plusg,]<-apply(dset$CAA[x,plusg:maxage,1:nyears],2,sum)
-
-  iage<-7
-  Idx<-FLIndex()
-  Idx@index<-FLQuant(dim=c(iage,nyears,1,1,1),
-                   dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age",units="tonnes")
-  Idx@index.var<-FLQuant(dim=c(iage,nyears,1,1,1),
-                       dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
-  Idx@catch.n<-FLQuant(dim=c(iage,nyears,1,1,1),
-                     dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
-  Idx@catch.wt<-FLQuant(dim=c(iage,nyears,1,1,1),
-                      dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
-  Idx@sel.pattern<-FLQuant(dim=c(iage,nyears,1,1,1),
-                         dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
-  Idx@effort<-FLQuant(dim=c(1,nyears,1,1,1),
-                    dimnames = list(age='all',year = as.character(1:nyears)),quant="age")
-  Idx@index.q<-FLQuant(dim=c(iage,nyears,1,1,1),
-                     dimnames = list(age=as.character(1:iage),year = as.character(1:nyears)),quant="age")
-
-  Idx@index.var[]<-0.2
-  Idx@index[]<-rep(dset$Iobs[x,],each=iage)
-  Idx@range[1:7]<-c(1,iage,iage,1,nyears,0,1)
-  Idx@name<-"simulated"
-
-
-  Stk<-FLStock(FLQuant(dim=c(plusg,nyears,1,1,1),dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age"))        # need to edit years
-  Stk@name<-"temp"
-  Stk@catch.n<-FLQuant(vpaCAA,dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age",units="thousands")
-  Stk@catch.n[Stk@catch.n==0] <- 0.0000001
-  #Idx@catch.n<-Stk@catch.n
-  Stk@m<-FLQuant(array(dset$M[x,1:plusg],dim=c(plusg,nyears)),dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
-  Stk@mat<-FLQuant(dset$Mat[x,1:plusg,],dimnames = list(age=as.character(1:plusg),year = as.character(1:nyears)),quant="age")
-  Stk@range[1:7]<-c(1,plusg,plusg,1,nyears,0,1)
-
-  #xsa.control  <- FLXSA.control(tol = 1e-10, maxit = 500,  min.nse = 0.3,  fse  = 2.5,
-  #                            rage = 1,   qage  = 4,   shk.n   = T, shk.f = F,shk.yrs = 5,
-  #                            shk.ages= 3, window  = 100,  tsrange =100,tspower = 0,vpa=FALSE)
-  #xsa.control<- FLXSA.control(tol=1e-10, maxit=500, min.nse=0.3,   	fse=2.5, rage=8, qage=12, shk.n=FALSE, 			shk.f=FALSE,shk.yrs=5, shk.ages=3, window=100, tsrange=100,tspower = 0)
-
- # xsaCtrl <-FLXSA.control(shk.n  = TRUE, shk.yrs  = 5,  rage  = 1, shk.f  = TRUE, shk.ages = 5, fse    = 0.3,  qage   = 6,   window = 100,  tsrange = 20,   tspower = 3,        vpa    = TRUE)
-  xsa.control<- FLXSA.control( tol = 1e-09, maxit = 50, min.nse = 0.5, fse = 0.5,
-    rage = 1, qage = 5, shk.n = TRUE, shk.f = TRUE, shk.yrs = 5,
-    shk.ages = 5, window =100, tsrange = 30, tspower = 3, vpa = TRUE)
-
-  Idl<-FLIndices()
-  Idl[[1]]<-Idx
-  xsa<-FLXSA(Stk,Idl[[1]],xsa.control)                  # Run XSA VPA
-
-  #save(Idl,file="Debugging/Idl")
-  #save(Stk,file="Debugging/Stk")
-  #save(xsa.control,file="Debugging/xsa.control")
-
-  # xsa<-FLXSA_tom(Stk,Idl,xsa.control)                  # Run XSA VPA
-
-  # Calculate some reference points
-  Wta<-Wage[1:plusg]
-  Wta[plusg]<-sum(exp(cumsum(-dset$M[x,plusg:maxage]))*Wage[plusg:maxage])/sum(exp(cumsum(-dset$M[x,plusg:maxage])))
-  SSBnow<-sum(as.vector(xsa@stock.n[,ncol(xsa@stock.n)])*Wta*dset$Mat[x,1:plusg,nyears])
-  SSB0<-sum(as.vector(xsa@stock.n[,1])*Wta*dset$Mat[x,1:plusg,nyears])
-  B0<-sum(as.vector(xsa@stock.n[,1])*Wta)
-
-  refy<-getrefs(xsa,Stk,Wta=Wta,plusg,nyears)                  # Optimize for FMSY reference points
-
-  nyr<-xsa@range[5]-xsa@range[4]+1
-  Fnow<-as.vector(apply(xsa@harvest[,(nyr-8):(nyr-1)],1,mean))    # get selectivity according to mean of last four years
-  Fapical<-max(Fnow)                                              # Maximum F by age
-  sel<-Fnow/Fapical                                               # Derive selectivity
-
-  Bnow<-sum(as.vector(xsa@stock.n[,ncol(xsa@stock.n)])*Wta)
-  VBnow<-sum(as.vector(xsa@stock.n[,ncol(xsa@stock.n)])*Wta*sel)
-  Cnow<-sum(as.vector(Stk@catch.n[,ncol(Stk@catch.n)])*Wta)
-  Unow<-Cnow/(VBnow+Cnow)                                        # Current harvest rate
-  Fnow<--log(1-Unow)                                             # Current fishing mortality rate
-
-  # Refs indexing is:  (1) FMSY  (2) BMSY  (3) MSY   (4) depletion   (5) F/FMSY    (6) B/BMSY
-  refs<-c(round(refy[1],4),round(refy[2]/1000,0),round(refy[3]/1000,0),Bnow/B0,round(Fnow/refy[1],8),round(Bnow/refy[2],8))
-  return(refy[1]*Bnow)
-  #print(c(refy[1],dset$UMSY_PI[x]))
-  #print(c(Bnow,dset$Bt_PI[x]))
-  #}
-}
-#class(XSA)<-"MP"
-
-# internal function for XSA
-getrefs<-function(xsa,Stk,Wta,maxage,nyears){
-
-  nage<-xsa@range["max"]
-  nyr<-xsa@range[5]-xsa@range[4]+1
-
-  N<-xsa@stock.n
-  U<-xsa@harvest
-  C<-Stk@catch.n
-  Wt<-FLQuant(array(Wta,dim=c(nage,nyr)),dimnames = list(age=as.character(1:nage),year = as.character(1:nyr)),quant="age")
-  Mat<-Stk@mat
-  SSB<-as.vector(apply(N*Mat*Wt,2,sum,na.rm=T)[,1:(ncol(N)-1)] )
-  SSB[SSB==Inf]<-NA
-  rec<-as.vector(N[1,2:ncol(N)])
-  opt<-optim(c(0,log(rec[1])),getBHmp,lower=c(-15, log(rec[1]/50)), upper=c(15, log(rec[1]*10)), method = "L-BFGS-B",SSB=SSB,rec=rec)
-  #getBH(opt$par,SSB,rec,opty=F,namey=Stk@name)
-  hh<-0.2+(exp(opt$par[1])/(1+exp(opt$par[1])))*0.8
-  R0<-exp(opt$par[2])
-
-  mfrac<-cumsum(as.vector(Stk@m[,nyr]))
-  SSB0<-sum(R0*exp(-mfrac)*Wta*Mat[,nyr])
-
-  SSBpR<-SSB0/R0
-  Nna<-as.vector(N[,1]/2)
-  Fnow<-as.vector(apply(xsa@harvest[,(nyr-8):(nyr-1)],1,mean))
-  Fapical<-max(Fnow)
-  sel<-Fnow/Fapical
-  Wt<-Wta
-  M<-as.vector(Stk@m[,1])
-  mature<-as.vector(Mat[,1])
-
-  #plot(Nna,type='l',lwd=2,col="#ff000040")
-
-  opt2<-optimize(getMSYrefs2,log(c(0.00001,100000)),Nna,Wt,sel,Fapical,M,mature,hh,R0,SSBpR,tol=1E-2)
-
-  getMSYrefs2(opt2$minimum,Nna,Wt,sel,Fapical,M,mature,hh,R0,SSBpR,opty=FALSE)
-
-  #plot(0:11,sel,col="blue",type="l",xlab="Age class",ylab="Vuln / M / Mat / Weight",ylim=c(0,1))
-  #lines(0:11,M,col="red")
-  #lines(0:11,mature,col="green")
-  #lines(0:11,Wt/max(Wt),col="grey")
-  #legend("top",legend=paste("steepness = 0.245"),bty='n')
-  #legend("right",legend=c('Vulnerability','M',"% Mature","Weight"),text.col=c('blue','red','green','grey'),bty='n')
-
-}
-
-# internal function for XSA
-getMSYrefs2<-function(Fmult,Nna,Wt,sel,Fapical,M,mature,hh,R0,SSBpR,nprojy=50,opty=T){
-  nage<-length(Nna)
-  Ctot<-0
-  Nnow<-Nna
-
-  for(y in 1:nprojy){
-
-    Nstore<-Nnow
-    FF<-sel*exp(Fmult)*Fapical
-    Z<-M+FF
-    C<-sum(Wt*Nnow*(1-exp(-Z))*(FF/Z))
-    Ctot<-Ctot+C
-    SSB<-sum(Nnow*mature*Wt)
-    Nnow[2:nage]<-Nnow[1:(nage-1)]*exp(-Z[1:(nage-1)])
-    Nnow[1]<-(0.8*R0*hh*SSB)/(0.2*SSBpR*R0*(1-hh)+(hh-0.2)*SSB)
-
-  }
-
-  #if(opty){
-  # Bstore<-sum(Nstore*Wt)
-  # lines(Nnow,type='l',lwd=2,col="#ff000040")
-  # legend('topright',legend=round(C/1000,0),bg='white')
-  # legend('right',legend=round(-log(1-(C/Bstore)),4),bg='white')
-  # Sys.sleep(0.35)
-  #}
-
-  if(opty){return(-C)
-  }else{
-    Bstore<-sum(Nstore*Wt*sel)
-    return(c(-log(1-(C/(Bstore+C))),Bstore,C))
-  }
-}
-
-# internal function for XSA
-getBHmp<-function(parm,SSB,rec,opty=T,namey=""){
-  hh<-0.2+(exp(parm[1])/(1+exp(parm[1])))*0.8
-  R0<-exp(parm[2])
-  SSBpR<-SSB[1]/R0
-  SSBt<-SSB
-  SSBt[SSBt==Inf]<-NA
-  SSBp<-seq(0,max(SSBt,na.rm=T),length.out=100)
-  pred<-(0.8*R0*hh*SSB)/(0.2*SSBpR*R0*(1-hh)+(hh-0.2)*SSB)
-  predp<-(0.8*R0*hh*SSBp)/(0.2*SSBpR*R0*(1-hh)+(hh-0.2)*SSBp)
-  if(opty){
-
-    #return(((log(pred)-log(rec))^2))
-    return(-sum(dnorm(log(pred),log(rec),0.6,log=T),na.rm=T)-dnorm(log(hh),log(0.3),1,log=T))   # weak lognormal prior for h with mean = 0.4  cv = 20%
-  }
-  if(!opty){
-    plot(SSB,rec,xlim=c(0,max(SSB)),ylim=c(0,max(c(rec,pred))),main="",axes=F,pch=19,cex=0.8,col="#0000ff60")
-    axis(1,c(-1E100,1E100),c(-1E100,1E100))
-    axis(2,c(-1E100,1E100),c(-1E100,1E100))
-    legend('topleft',legend=namey,bty='n')
-    legend('bottomright',legend=round(hh,2),bty='n')
-    lines(SSBp,predp,col="#ff000070")
-    abline(v=0.2*max(SSB),col="green")
   }
 }
 

@@ -330,6 +330,12 @@ M3write<-function(OMI,OMdir="C:/M3"){
   write("# SpatPr, Spatial prior y s r i index CV wt",datfile,1,append=T)
   write(t(OMI@SpatPr),datfile,ncol(OMI@SpatPr),append=T)
 
+  write("# nSpatFrac, the length bin indexing of new indices",datfile,1,append=T)
+  write(nrow(OMI@SpatFrac),datfile,1,append=T)
+
+  write("# SpatFram, Spatial prior stock ac sy ey rref, logit frac, cv, wt",datfile,1,append=T)
+  write(t(OMI@SpatFrac),datfile,ncol(OMI@SpatFrac),append=T)
+
 
   # -- Likelihood weights
 
@@ -365,6 +371,9 @@ M3write<-function(OMI,OMdir="C:/M3"){
 
   write("# LC_LHF 1= lognormal 2=lognormal no constant",datfile,1,append=T)
   write(OMI@LC_LHF,datfile,1,append=T) # debug switch
+
+  write("# beta, the index hyperstability parameter for robustness tests",datfile,1,append=T)
+  write(OMI@beta,datfile,1,append=T) # debug switch
 
   write("# debug 1= run with initial values",datfile,1,append=T)
   write(OMI@debug,datfile,1,append=T) # debug switch
@@ -458,7 +467,7 @@ runM3<-function(OMdir='C:/ABT-MSE/M3',hess=F,mcmc=F, nits=10000,thin=40){
 #' @export
 #' @examples
 #' M3read("C:/ABT-MSE/M3")
-M3read<-function(OMDir="C:/M3",quiet=T){
+M3read<-function(OMDir="C:/M3",quiet=T){  # OMDir = "C:/Users/tcar_/dropbox/abft-mse/objects/OMs/1"
 
   out<-list()
 

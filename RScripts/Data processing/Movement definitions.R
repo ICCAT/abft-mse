@@ -1,31 +1,29 @@
 
 # Movement definitions.r
-# August 2016
+# April 2021
 
-np<-Base@np
-nareas<-Base@nr
-ns<-Base@ns
-nma<-Base@nma
+np<-Base@np  # East / West
+nareas<-Base@nr # areas
+ns<-Base@ns # quarters
+nma<-Base@nma # movement age classes
 
-
+# A matrix of possible movements (excluding movement to opposing natal areas)
 can<-matrix(1,nrow=Base@np,ncol=Base@nr)
-can[1,match("GOM",Base@areanams)]<-0
-can[1,match("CAR",Base@areanams)]<-0
-can[2,match("MED",Base@areanams)]<-0
-#can[2,match("SEATL",Base@areanams)]<-0
+can[1,match("GOM",Base@areanams)]<-0 # eastern can't got to GOM
+can[2,match("MED",Base@areanams)]<-0 # western can't go to MED
 
-
+# Examine all the electronic tag tracks (even those without ID) and remove any movements that have never been observed
 Tagg2<-aggregate(rep(1,nrow(Tracks)),by=list(Tracks$p,Tracks$a,Tracks$s,Tracks$fr,Tracks$tr),sum)
 tmov<-array(NA,c(Base@np,Base@nma,Base@ns,Base@nr,Base@nr))
 tmov[as.matrix(Tagg2[,1:5])]<-Tagg2[,6]
 
 movind<-mov1<-c(1,1,1,1,1)
-mov<-priormov<-priormov2<-array(NA,c(np,nma,ns,nareas,nareas))
+mov<-array(NA,c(np,nma,ns,nareas,nareas)) # stock, movement age class, season, from-area, to-area
 ind<-TEG(dim(mov))
-mov[ind]<-can[ind[,c(1,5)]]
-mov[ind]<-mov[ind]*can[ind[,c(1,4)]]
+mov[ind]<-can[ind[,c(1,5)]] # only values for to-area movements that work with can matrix
+mov[ind]<-mov[ind]*can[ind[,c(1,4)]]  # only values for from-area movements that work with can matrix
 
-# for assigning a prior
+# Records when a movement from-area to-area, has be observed previously
 
 for(pp in 1:np){
   for(aa in 1:nma){
@@ -39,7 +37,7 @@ for(pp in 1:np){
             oR<-grep(1,mov[pp,aa,ss,rr,])
             oR<-oR[oR!=fR]
             for(i in 1:length(oR)){
-              movind<-rbind(movind,c(pp,aa,ss,rr,oR[i]))
+              movind<-rbind(movind,c(pp,aa,ss,rr,oR[i])) # sorry, wasteful rbinding hack
             }
           }
         }
@@ -51,7 +49,8 @@ for(pp in 1:np){
 movind<-movind[2:nrow(movind),]
 mov1<-mov1[2:nrow(mov1),]
 
-if(Base@movtype==1){ # if a gravity formulation these indices are for the to area that should be estimated by season
+# need different indexing for a gravity model that just needs to know the parameters that need estimating following the tracks that have been observed
+if(Base@movtype==1){ # if a gravity formulation these indices are for the first 'to area' that should be estimated by season
 
   firstr<-apply(can,1,which.max)
   ind<-expand.grid(1:ns,1:nma,1:np)[,3:1]

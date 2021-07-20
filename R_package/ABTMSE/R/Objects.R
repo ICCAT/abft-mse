@@ -132,6 +132,7 @@
 #' \item{MIinv}{a 1 or 0 determining whether the fit should attempt to be MI invariant}
 #' \item{MICV}{numerical value of the CV in additional to regional FMod deviations}
 #' \item{SpatPr}{matrix of Spatial priors}
+#' \item{SpatFrac}{matrix of spatial priors}
 #' \item{debug}{a logical (0 or 1) value determing whether the model should be run for a single iteration to check for errors}
 #' \item{verbose}{a logical (0 or 1) value determing whether more complete information should be provided in each iteration of the model estimation}
 #' \item{datacheck}{a unique number for checking that data were read into the model correctly}
@@ -142,6 +143,7 @@
 #' \item{Phases}{the phases of the various parameter estimates (1,2,3)}
 #' \item{ET_LHF}{the type of likelihood function used for electronic tagging data (1,2: zero intercept)}
 #' \item{LC_LHF}{the type of likelihood function used for length composition data (1,2: zero intercept)}
+#' \item{beta}{numerical value, the hyperstability parameter assumed for all indices (e.g. 0.9 = hyperstable, 1.1 = hyperdeplete)}
 #' }
 setClass("OMI",representation(
   # Description
@@ -211,7 +213,7 @@ setClass("OMI",representation(
   MPind="data.frame",# the MP indices
   MIinv="integer",# Master index - independent mode?
   MICV="numeric",# Master index CV around FMod
-  SpatPr="matrix",
+  SpatPr="matrix", SpatFrac="matrix",
   debug='integer',verbose='integer',datacheck='integer',
 
   # Misc
@@ -221,7 +223,8 @@ setClass("OMI",representation(
   MovExc="data.frame",
   Phases="numeric",
   ET_LHF="numeric",
-  LC_LHF="numeric"
+  LC_LHF="numeric",
+  beta="numeric"
 
 ))
 

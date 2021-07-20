@@ -33,6 +33,7 @@ doMSY<-function(out,OMI,dynB0,refyr){
 
   res<-MSYMLE(out,OMI)
 
+
   Fap<-meanFs(FML=out$FL[refyr,,,,], iALK=out$iALK[,refyr,,], N=out$N[,refyr,,,],
               wt_age=t(out$wt_age[refyr,,]))
 
@@ -44,13 +45,14 @@ doMSY<-function(out,OMI,dynB0,refyr){
   res2<-cbind(res,F_FMSY,SSB_SSB0)
   res2[,c(2,3,6,7,8,9,10)]<-round(res2[,c(2,3,6,7,8,9,10)],3)
   res2[,c(1,4,5)]<-round(res2[,c(1,4,5)]/1000,0)
-  res2[res2[,2]==5,2]<-"5 (hit max bound)"
+  #res2[res2[,2]==5,2]<-"5 (hit max bound)"
 
-  BMSY<-round(res2[,7]*dynB0[,nHy+ny]/1000,0)
-  B_BMSY<-round(apply(out$SSB,1:2,mean)[,out$ny]/(BMSY*1000),3)
-  Dep_dyn<-round(apply(out$SSB,1:2,mean)[,out$ny]/dynB0[,nHy+ny],3)
+  BMSY<-round(res2[,7]*dynB0[,out$nHy+refyr]/1000,0)
+  B_BMSY<-round(apply(out$SSB,1:2,mean)[,refyr]/(BMSY*1000),3)
+  Dep_dyn<-round(apply(out$SSB,1:2,mean)[,refyr]/dynB0[,out$nHy+refyr],3)
   res2<-cbind(res2[,c(1,2)],BMSY,res2[,c(7,9)],B_BMSY,Dep_dyn)
   names(res2)<-c("MSY","FMSY","BMSY","BMSY_B0","F_FMSY","B_BMSY","Dep")
+
   res2
 
 }
@@ -251,11 +253,12 @@ MSYMLE<-function(out,OMI,yr=NA,useF01=F){
                hs=hs,SRrel=1)
    }
 
-   # 1      2  3   4       5     6  7   8       9       10   11  12
-   # Yield, F, SB, SB/SB0, B/B0, B, VB, VB_VB0, RelRec, SB0, B0, ApicalF
+
+   # 1      2  3   4       5     6  7   8       9       10   11
+   # Yield, F, SB, SB/SB0, B/B0, B, VB, VB_VB0, RelRec, SB0, B0
    MSY<-res[1]
-   FMSYap<-res[12]
-   UMSY<-res[1]/(res[7]+res[1])
+   FMSYap<-res[2]
+   UMSY<-res[1]/(res[7]+res[1]) # may be necessary to do this in terms of Biomass (usually vulnerable biomass) due to the difficulty in characterizing vulnerable biomass over seasons and areas
    BMSY<-res[7]
    SSBMSY<-res[3]
    BMSY_B0<-res[5]
@@ -281,9 +284,11 @@ MSYMLE_parallel<-function(i,FMLs,iALK,N,wt_age,M_age,mat_age,R0_arr,fixpar_arr,S
   FML<-FMLs[i,,,,]
   R0=R0_arr[i,]
   hs=fixpar_arr[i,]
+  #Fprof<-meanFs2(FML, iALK, N, wt_age, M_age)
   Fprof<-meanFs(FML, iALK, N, wt_age)
-  V=Fprof/apply(Fprof,1,max)
 
+  V=Fprof/apply(Fprof,1,max)
+  # V2 = Fprof2/apply(Fprof2,1,max)
   # get steepness of most recent SR relationship (even if HS)
   SSB0<-rep(NA,2)
   for(pp in 1:2){

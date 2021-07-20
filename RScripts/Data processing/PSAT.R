@@ -1,20 +1,15 @@
 # PSAT.r
-# April 2019
+# Apr 2021
 # R Script for formatting PSAT data
 
 # --- Matt Lauretta --- GBYP - DFO - NOAA - WWF - Unimar - FCP - CB - IEO - AZTI - UCA
-dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_12FEB2019.csv",sep=""))
-#dat<-read.csv(paste(getwd(),"/Data/Raw/PSAT/BFT_etags_13NOV2018.csv",sep=""))
-#dat<-read.csv(paste(getwd(),"/Data/Testing/Matt test.csv",sep="")); dat<-dat[dat$Tag_ID==1|dat$Tag_ID==2,]
-
+dat<-read.csv(paste(getwd(),"/Data/Other_2021_1/BFT_etags_12FEB2019.csv",sep=""))
 
 
 # Exceptions ---------
-# Matt erroneous Med fish
+# Matt Lauretta erroneous fish
 cond<-dat$Tag_ID=="519703100" & dat$Stock_Area=="GOM"
 dat$Stock_Area[cond]<-"W_ATL"
-#cond<-dat$Tag_ID=="2010_55308" & dat$Stock_Area=="W_MED"
-#dat$Stock_Area[cond]<-"SE_ATL"
 cond<-dat$Tag_ID=="2010_55308" & dat$Stock_Area=="GOM"
 dat$Stock_Area[cond]<-"CAR"
 
@@ -34,6 +29,7 @@ if(metadata){
 
 }
 
+# This code assigns the correct areas and processes tag tracks into single seasonal transitions
 # set up cluster for parallel computing (now 20x faster!)
 sfInit(cpus=detectCores(),parallel=T)
 days<-lubridate::days
@@ -111,9 +107,9 @@ nTags<-length(TagIDs)
 Tracks<-NULL
 Tracks2<-NULL
 
-defosEAST<-unique(dat$Tag_ID[dat$Stock_Area==6 & dat$Investigator=="AZTI"]) # Haritz' stipulated 'certain Eastern fish'
+defosEAST<-unique(dat$Tag_ID[dat$Stock_Area==6 & dat$Investigator=="AZTI"]) # Dr Haritz Arrizabalaga stipulated 'certain Eastern fish'
 
-simp_tracks<-function(i,All,TagIDs,byyear=F,defosEAST,NatalIDs,StYear=1965){
+simp_tracks<-function(i,All,TagIDs,byyear=F,defosEAST,NatalIDs,StYear=1965){ # simplify tracks to quarterly transitions
   #for(i in 1:nTags){
   #i<-658
   outtrack=NULL
@@ -149,39 +145,36 @@ simp_tracks<-function(i,All,TagIDs,byyear=F,defosEAST,NatalIDs,StYear=1965){
 
 }
 
-#test<-lapply(1:nTags,simp_tracks,All=All,TagIDs=TagIDs,byyear=T,defosEAST=defosEAST,ExSpawn=ExSpawn,StYear=Base@years[1])
 sfExport(list=c("mostfreq"))
 Track_L<-sfLapply(1:nTags,simp_tracks,All=All,TagIDs=TagIDs,byyear=T,defosEAST=defosEAST,NatalIDs=NatalIDs,StYear=Base@years[1])
 Tracks2<-bind_rows(Track_L)
 Tracks<-Tracks2[,c(1,2,4,5,6,7,8)]
-#write.csv(NatalIDs,"C:/Users/tcar_/Dropbox/BFT MSE/Communications/MattTag/tagvalidation2.csv")
 
 if(Impute){ # This does the movement pattern matching of Carruthers 2017 to assign stock of origin to fish not of a natal area
   source("Rscripts/Data processing/impSOO.r")
 }
 
+# remove tags of uncertain stock of origin (do not enter a natal area)
 anyna<-function(x)sum(is.na(x))==0
 complete<-apply(Tracks,1,anyna)
 print(paste(round(sum(complete)/nrow(Tracks)*100,1),"% of tags are of known stock of origin. Removing ",nrow(Tracks)-sum(complete)," tracks."))
 Tracks<-Tracks[complete,1:6] # remove any line with unknown stock, subyear, or area
 
-
+# Aggregate tracks into total numbers of tags for any unique transition
 PSAT<-aggregate(rep(1,nrow(Tracks)),by=list(Tracks$p,Tracks$a,Tracks$s,Tracks$t,Tracks$fr,Tracks$tr),sum)
 names(PSAT)<-c("p","a","s","t","fr","tr","N")
 sumfrom<-aggregate(PSAT$N,by=list(PSAT$p,PSAT$a,PSAT$s,PSAT$fr),sum)
 totmov<-array(NA,c(Base@np,Base@nma,Base@ns,Base@nr))
 totmov[as.matrix(sumfrom[,1:4])]<-sumfrom[,5]
-FR<-PSAT$N/totmov[as.matrix(PSAT[,c(1,2,3,5)])]
+Nfr<-totmov[as.matrix(PSAT[,c(1,2,3,5)])]
+FR<-PSAT$N/Nfr
 PSAT<-cbind(PSAT,FR)
 PSAT$s<-c(2,3,4,1)[PSAT$s] # transcode to season moving into area
 
 
 
 
-
-
 # =============================================================================================================================
-
 
 
 fortrialspec=F

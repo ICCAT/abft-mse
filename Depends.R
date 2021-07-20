@@ -2,9 +2,11 @@
 # Installation script for ABTMSE dependencies
 
 packages<-c("roxygen2","snowfall","maps","mapdata",
-  "wordcloud","abind","SDMTools","PBSmapping","MASS",
+  "wordcloud","abind","PBSmapping","MASS",
   "shiny","parallel","lubridate","rmarkdown","knitr",
-  "mvtnorm","ggplot2","kableExtra","DT")
+  "mvtnorm","ggplot2","kableExtra","DT","geoR",
+  "shinyBS","shinyWidgets","fmsb","viridis",
+  "reldist")
 
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]

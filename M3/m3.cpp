@@ -99,7 +99,7 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   nDepprior.allocate("nDepprior");
   Depprior.allocate(1,nDepprior,1,3,"Depprior");
   DepCV.allocate("DepCV");
-  BSfrac.allocate(1,np,1,ns,"BSfrac");
+  BSfrac.allocate("BSfrac");
   FCV.allocate("FCV");
   movCV.allocate("movCV");
   selCV.allocate("selCV");
@@ -108,6 +108,8 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   nSpatPrq.allocate("nSpatPrq");
   nSpatPr.allocate("nSpatPr");
   SpatPr.allocate(1,nSpatPr,1,10,"SpatPr");
+  nSpatFrac.allocate("nSpatFrac");
+  SpatFrac.allocate(1,nSpatFrac,1,8,"SpatFrac");
   nLHw.allocate("nLHw");
   LHw.allocate(1,nLHw,"LHw");
   nF.allocate("nF");
@@ -118,6 +120,7 @@ model_data::model_data(int argc,char * argv[]) : ad_comm(argc,argv)
   Phase4.allocate("Phase4");
   ET_LHF.allocate("ET_LHF");
   LC_LHF.allocate("LC_LHF");
+  betad.allocate("betad");
   debug.allocate("debug");
   verbose.allocate("verbose");
   datacheck.allocate("datacheck");
@@ -127,7 +130,7 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
  model_data(argc,argv) , function_minimizer(sz)
 {
   initializationfunction();
-  lnR0.allocate(1,nSR,12,14.5,Phase1,"lnR0");
+  lnR0.allocate(1,nSR,11,15.5,Phase1,"lnR0");
   selpar.allocate(1,nsel,1,seltype,-5.,5.,Phase2,"selpar");
   movest_p1_a1.allocate(1,ns,1,nr-2,-8.,8.,Phase3,"movest_p1_a1");
   movest_p2_a1.allocate(1,ns,1,nr-2,-8.,8.,Phase3,"movest_p2_a1");
@@ -321,6 +324,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     SSBi.initialize();
   #endif
+  SSBmu.allocate(1,np,1,3,"SSBmu");
+  #ifndef NO_AD_INITIALIZE
+    SSBmu.initialize();
+  #endif
   SSBdist.allocate(1,np,1,nr,"SSBdist");
   #ifndef NO_AD_INITIALIZE
     SSBdist.initialize();
@@ -348,6 +355,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   BL.allocate(1,ny,1,ns,1,nr,1,nl,"BL");
   #ifndef NO_AD_INITIALIZE
     BL.initialize();
+  #endif
+  WB.allocate(1,2,"WB");
+  #ifndef NO_AD_INITIALIZE
+    WB.initialize();
   #endif
   SSB0.allocate(1,np,"SSB0");
   #ifndef NO_AD_INITIALIZE
@@ -518,9 +529,17 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   #ifndef NO_AD_INITIALIZE
     NLtemp.initialize();
   #endif
+  BLtemp.allocate(1,nl,"BLtemp");
+  #ifndef NO_AD_INITIALIZE
+    BLtemp.initialize();
+  #endif
   Ntemp.allocate("Ntemp");
   #ifndef NO_AD_INITIALIZE
   Ntemp.initialize();
+  #endif
+  SpatFracPred.allocate("SpatFracPred");
+  #ifndef NO_AD_INITIALIZE
+  SpatFracPred.initialize();
   #endif
 	  if(debug)cout<<"here6"<<endl;
   CWpred.allocate(1,np,1,ny,1,ns,1,nr,1,nf,"CWpred");
@@ -554,6 +573,10 @@ model_parameters::model_parameters(int sz,int argc,char * argv[]) :
   PSAT2pred.allocate(1,nPSAT2,"PSAT2pred");
   #ifndef NO_AD_INITIALIZE
     PSAT2pred.initialize();
+  #endif
+  beta.allocate("beta");
+  #ifndef NO_AD_INITIALIZE
+  beta.initialize();
   #endif
 	  if(debug)cout<<"here7"<<endl;
   temp.allocate("temp");
@@ -625,6 +648,8 @@ void model_parameters::assignPars(void)
 	for(int pp=1;pp<=np;pp++){          // Loop over stocks
 	  wl(pp)=lwa(pp)*pow(ml,lwb(pp));   // Calcualte weight at length
 	}                                   // End of stocks
+	//cout<<R0<<endl;
+	//exit(1); 
 	if(debug)cout<<"--- Finished assignPars ---"<<endl;
   }
 }
@@ -841,6 +866,8 @@ void model_parameters::initModel(void)
 	N.initialize();                // Stock numbers = 0
 	B.initialize();                // Stock biomass = 0
 	BL.initialize();               // Biomass at length = 0
+	BLtemp.initialize();
+	WB.initialize();               // Western biomass in/out of western area = 0
 	hZ.initialize();               // Historical Z = 0
 	SSB.initialize();              // Spawning stock biomass = 0
 	hSSB.initialize();             // historical Spawning stock biomass = 0
@@ -994,11 +1021,12 @@ void model_parameters::initModel(void)
 	        NLA(aa)=N(pp)(1)(ss)(aa)(rr)*ALK(pp)(1)(aa);  // Temporarily store numbers at length
 	      }                                               // End of age class
 	      NLtemp=colsum(NLA);                             // Numbers at length (sum over age classes)
-	      BL(1)(ss)(rr)+=elem_prod(NLtemp,wl(pp));
-	      B(1,ss,rr)+=sum(elem_prod(NLtemp,wl(pp)));      // Biomass summed over stocks	
+	      BLtemp=elem_prod(NLtemp,wl(pp)); 
+	      BL(1)(ss)(rr)+=BLtemp;
+	      B(1,ss,rr)+=sum(BLtemp);      // Biomass summed over stocks	
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleet types
-		VB(1,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));   // Vulnerable biomass summed over stocks
-		VBL(1)(ss)(rr)(ff)+=elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff));    // Vulnerable biomass at length
+		VB(1,ss,rr,ff)+=sum(elem_prod(BLtemp,sel(ff)));   // Vulnerable biomass summed over stocks
+		VBL(1)(ss)(rr)(ff)+=elem_prod(BLtemp,sel(ff));    // Vulnerable biomass at length
 		VL(1)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff));  
 	      }                                               // End of fleets
 	      for(int ff=1;ff<=nf;ff++){                      // Loop over fleets
@@ -1095,12 +1123,15 @@ void model_parameters::calcTransitions(void)
 		  NLA(aa)=N(pp)(yy)(ss)(aa)(rr)*ALK(pp)(yy)(aa);      // Temporarily store numbers at length
 		}                                                     // End of age classes
 	        NLtemp=colsum(NLA);                                   // Calculate numbers by length class (sum over ages)
-	        BL(yy)(ss)(rr)+=elem_prod(NLtemp,wl(pp));             // Biomass at length summed over stocks
-		B(yy,ss,rr)+=sum(elem_prod(NLtemp,wl(pp)));           // Biomass summed over stocks				  
+	        BLtemp=elem_prod(NLtemp,wl(pp));
+	        BL(yy)(ss)(rr)+=BLtemp;             // Biomass at length summed over stocks
+		B(yy,ss,rr)+=sum(BLtemp);           // Biomass summed over stocks	
+	        if(pp==2&rr<4)WB(1)+=sum(BLtemp)/ns;// West area West stock biomass
+	        if(pp==2&rr>3)WB(2)+=sum(BLtemp)/ns;// East area West stock biomass 
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
-		  VB(yy,ss,rr,ff)+=sum(elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff)));    // Vulnerable biomass summed over stocks
+		  VB(yy,ss,rr,ff)+=sum(elem_prod(BLtemp,sel(ff)));    // Vulnerable biomass summed over stocks
 		  VL(yy)(ss)(rr)(ff)+=elem_prod(NLtemp,sel(ff)); 
-		  VBL(yy)(ss)(rr)(ff)+=elem_prod(elem_prod(NLtemp,wl(pp)),sel(ff));    // Vulnerable biomass at length 
+		  VBL(yy)(ss)(rr)(ff)+=elem_prod(BLtemp,sel(ff));    // Vulnerable biomass at length 
 		}                                                     // End of fleets
 		for(int ff=1;ff<=nf;ff++){                            // Loop over fleets
 		  for(int ll=1;ll<=nl;ll++){                          // Loop over length classes
@@ -1181,8 +1212,10 @@ void model_parameters::calcObjective(void)
 	SPpred_vec.initialize();                // Paired spatial seasonal prior predictions               
 	Ipred.initialize();                     // Predicted fishery-independent index
 	CLprop.initialize();                    // Catch at length composition predicted proportions
+	SSBmu.initialize();                     // np x SSB observed, predicted and n obs
 	dvariable LHtemp;                       // Temporary store of the calculated likelihood values
 	double tiny=1E-10;                      // Create a small constant to avoid log(0) error
+	beta = betad; 
 	// -- Catch observations --
 	for(int i=1;i<=nCobs;i++){              // Loop over catch observations
 	  int yy=Cobs(i,1); // Year
@@ -1215,9 +1248,9 @@ void model_parameters::calcObjective(void)
 	    //cout<<yy<<"-"<<ss<<"-"<<rr<<"-"<<ii<<"-"<<ff<<"-"<<CPUEobs(i,5)<<endl;
 	    LHtemp=0.; 
 	    if(lt<1){ // vulnerable biomass
-	      CPUEpred(i)=VB(yy,ss,rr,ff);                                       // Calculate vulnerable biomass
+	      CPUEpred(i)=pow(VB(yy,ss,rr,ff),beta);                                       // Calculate vulnerable biomass
 	    }else{// 
-	      CPUEpred(i)=sum(VBL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2))); // the prediced index
+	      CPUEpred(i)=pow(sum(VBL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2))),beta); // the prediced index
 	    }
 	    CPUEpredtot(1,ii)+=CPUEpred(i);
 	    CPUEpredtot(2,ii)+=CPUEobs(i,6);
@@ -1253,22 +1286,22 @@ void model_parameters::calcObjective(void)
 	  int lt=Iobs(i,11);  // length category
 	  switch(tt){
 	    case 1:  // Biomass
-	      Ipred(i)=B(yy,ss,rr);
+	      Ipred(i)=pow(B(yy,ss,rr),beta);
 	      break;
 	    case 2:  // SSB
 	      Ipred(i)=0.;
 	      for(int aa=1;aa<=na;aa++){
-	        Ipred(i)+=N(pp,yy,ss,aa,rr)*Fec(pp,aa); //SSB(pp,yy,ss);   // Predicted index 
+	        Ipred(i)+=pow((N(pp,yy,ss,aa,rr)*Fec(pp,aa)),beta); //SSB(pp,yy,ss);   // Predicted index 
 	      }  
 	      break;
 	    case 3:  // Biomass first two stocks
-	      Ipred(i)=B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
+	      Ipred(i)=pow((B(yy,1,rr)+B(yy,2,rr)),beta);  // Predicted index 
 	      break;
 	    case 4:  // Biomass first two stocks
-	      Ipred(i)= VB(yy,ss,rr,ff); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
+	      Ipred(i)= pow(VB(yy,ss,rr,ff),beta); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
 	      break;  
-	    case 5:  // Biomass first two stocks
-	      Ipred(i)= sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2))); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
+	    case 5:  // Numbers first two stocks
+	      Ipred(i)= pow(sum(VL(yy)(ss)(rr)(ff)(Ilencat(lt,1),Ilencat(lt,2))),beta); // CPUEpred(i)=sum(VL(yy)(ss)(rr)(ff));//(Ilencat(lt,1),Ilencat(lt,2)));B(yy,1,rr)+B(yy,2,rr);  // Predicted index 
 	      break;  
 	  }
 	  Ipredtot(1,ii)+=Ipred(i);
@@ -1305,7 +1338,7 @@ void model_parameters::calcObjective(void)
 	      LHtemp=CLobs(i,6) * square(log(CLobs(i,6)+tiny) - log(CLprop(i)+tiny));
 	    break;
 	    case 3: // Sqrt difference 
-	      //LHtemp= square(pow(CLobs(i,6)+tiny,0.5)-pow(CLprop(i)+tiny,0.5)); //sqrt multinomial is approximately normal 
+	      LHtemp= square(pow(CLobs(i,6)+tiny,0.5)-pow(CLprop(i)+tiny,0.5)); //sqrt multinomial is approximately normal 
 	    break;
 	  }
 	  objCL+=LHtemp*LHw(4)*CLobs(i,7);                                     // Weighted likelihood contribution
@@ -1350,6 +1383,7 @@ void model_parameters::calcObjective(void)
 	  int tt=PSAT(i,4);   // Time at liberty (subyears)
 	  int rr=PSAT(i,5);   // Region from
 	  int r2=PSAT(i,6);   // Region to
+	  PSATpred(i)=movm(pp,ss,aa,rr,r2); 
 	  switch(ET_LHF){       // Cases match number of estimated parameters for simplicity
 	    case 1:  // multinomial
 	   	LHtemp=(-PSAT(i,7)*log(movm(pp,ss,aa,rr,r2)+tiny)); // Multinomial LHF
@@ -1358,10 +1392,9 @@ void model_parameters::calcObjective(void)
 	        LHtemp=( PSAT(i,7)*log(PSAT(i,8)) - PSAT(i,7)*log(movm(pp,ss,aa,rr,r2)+tiny) ); // Multinomial LHF
 	    break;
 	    case 3: // sqrt difference
-	    	//LHtemp=square(pow(PSAT(i,8)+tiny,0.5)-pow(movm(pp,ss,aa,rr,r2)+tiny,0.5)); // multinomial approximation
+	    	LHtemp=square(pow(PSAT(i,8)+tiny,0.5)-pow(PSATpred(i)+tiny,0.5)); // multinomial approximation
 	    break; 
 	  }
-	  PSATpred(i)=movm(pp,ss,aa,rr,r2);
 	  objPSAT+=LHtemp*LHw(6);                               // Weighted likelihood contribution
 	  objG+=LHtemp*LHw(6);                                  // weighted likelihood contribution
 	}
@@ -1370,25 +1403,32 @@ void model_parameters::calcObjective(void)
 	for(int i=1;i<=nSSBprior;i++){ 
 	  int pp=SSBprior(i,1);
 	  int yy=SSBprior(i,2);
+	  SSBmu(pp,1)+=SSBprior(i,3);   // 'observed' - assessed
+	  SSBmu(pp,2)+=SSB_EW(pp,yy)/1000.; // model predicted 
+	  SSBmu(pp,3)+=1.0; // not really necessary - could do comparison off totals
+	}
+	for(int pp=1; pp<=np; pp++){
 	  if(last_phase()){
-	    LHtemp=dnorm(log(SSB_EW(pp,yy)/1000.+tiny),log(SSBprior(i,3)),SSBCV);
+	    LHtemp=dnorm(log(SSBmu(pp,2)/SSBmu(pp,3)),log(SSBmu(pp,1)/SSBmu(pp,3)),SSBCV);// could just do this off the totals
 	  }else{
-	    LHtemp=dnorm(log(SSB_EW(pp,yy)/1000.+tiny),log(SSBprior(i,3)),SSBCV*4.);
+	    LHtemp=dnorm(log(SSBmu(pp,2)/SSBmu(pp,3)),log(SSBmu(pp,1)/SSBmu(pp,3)),SSBCV*2); // could just do this off the totals
 	  }
-	  objSSB+=LHtemp*LHw(12);
+          objSSB+=LHtemp*LHw(12);
 	  objG+=LHtemp*LHw(12);
 	}
-	for(int i=1;i<=nDepprior;i++){ 
-	  int pp=Depprior(i,1);
-	  int yy=Depprior(i,2);
-	  if(last_phase()){
-	    LHtemp=dnorm(log(SSB_EW(pp,yy)/SSB_EW(pp,2)+tiny),log(Depprior(i,3)),DepCV);
-	  }else{
-	    LHtemp=dnorm(log(SSB_EW(pp,yy)/SSB_EW(pp,2)+tiny),log(Depprior(i,3)),DepCV*4);
+	if(nDepprior>1){ // only do if more than 1 datum
+	  for(int i=1;i<=nDepprior;i++){ 
+	    int pp=Depprior(i,1);
+	    int yy=Depprior(i,2);
+	    if(last_phase()){
+	      LHtemp=dnorm(log(SSB_EW(pp,yy)/SSB_EW(pp,2)+tiny),log(Depprior(i,3)),DepCV);
+	    }else{
+	      LHtemp=dnorm(log(SSB_EW(pp,yy)/SSB_EW(pp,2)+tiny),log(Depprior(i,3)),DepCV*4);
+	    }
+	    objDep+=LHtemp*LHw(13);
+	    objG+=LHtemp*LHw(13);
 	  }
-	  objDep+=LHtemp*LHw(13);
-	  objG+=LHtemp*LHw(13);
-	}	
+	}
 	// -- Recruitment deviations --
 	temp=(ny+na)/nRD;
 	for(int sr=1; sr<=nSR; sr++){
@@ -1414,7 +1454,7 @@ void model_parameters::calcObjective(void)
        } // subyear
        objmov+=LHtemp*LHw(9);               // Weighted likelihood contribution
        objG+=LHtemp*LHw(9);                 // Weighted likelihood contribution 
-       // -- Spatial priors -----------
+       // -- Spatial - Seasonal priors -----------
        for(int ii=1; ii<=nSpatPrq;ii++){
           qSP(ii)=1.0; // new derivation is a product so requires initialization at 1
        }
@@ -1430,7 +1470,7 @@ void model_parameters::calcObjective(void)
        	  SPpredtot(2,ii)+=SpatPr(i,5);
        	  qSP(ii)*= pow((SpatPr(i,5)/SPpred(i)),SpatPr(i,10)); //Iobs(i,12)= w_i = (1/sigma_i^2) / SUM_i{ (1/sigma_i^2) }
        }
-       for(int i=1; i<=nSpatPr;i++){   // Loop over fishery - independent indices PRECALCULATION for normalization
+       for(int i=1; i<=nSpatPr;i++){   // 
        	   int yy=SpatPr(i,1);       // Year
 	   int ss=SpatPr(i,2);       // Subyear
 	   int rr=SpatPr(i,3);       // Region
@@ -1440,6 +1480,40 @@ void model_parameters::calcObjective(void)
        	   objSP+=LHtemp*SpatPr(i,7)*LHw(18);                                       // Weighted likelihood contribution
        	   objG+= LHtemp*SpatPr(i,7)*LHw(18);                                       // Weighted likelihood contribution
        }
+       // -- Spatial Fractions ----- just for sensitivity testing
+       if(nSpatFrac>0){
+       for(int i=1; i<=nSpatFrac;i++){
+         int pp = SpatFrac(i,1);
+         int ac = SpatFrac(i,2);
+         int sy = SpatFrac(i,3);
+         int ey = SpatFrac(i,4);
+         int rref = SpatFrac(i,5);
+         int sac = macat(ac,1);
+         int eac = macat(ac,2);
+         //cout<<"pp ="<<pp<<" ac="<<ac<<" sy="<<sy<<" ey="<<ey<<" rref="<<rref<<" sac="<<sac<<" eac="<<eac<<endl;
+         //cout<<SpatFrac(i)<<endl;
+         Ntemp=0.; 
+         SpatFracPred=0.;
+         for(int yy=sy; yy<=ey; yy++){
+           for(int aa=sac; aa<=eac; aa++){
+             for(int ss=1; ss<=ns; ss++){
+               for(int rr=1; rr<=nr; rr++){
+                 Ntemp+=N(pp,yy,ss,aa,rr);
+               }
+               SpatFracPred+=N(pp,yy,ss,aa,rref);
+             }
+           }
+         }
+         SpatFracPred/=Ntemp;
+         Ntemp=log(SpatFracPred/(1-SpatFracPred)); // Logit fraction
+         if(last_phase()){ // reduced precision in early phases
+            LHtemp=dnorm(Ntemp,SpatFrac(i,6),SpatFrac(i,7)); // Log-normal LHF
+         }else{
+            LHtemp=dnorm(Ntemp,SpatFrac(i,6),SpatFrac(i,7)*10); // Log-normal LHF
+         }
+         objSP+=LHtemp*SpatFrac(i,8);              //Weighted likelihood contribution
+       	 objG+= LHtemp*SpatFrac(i,8);
+       }} // if spatial fractions are greater than 1
        // -- Selectivity parameters ---
        for(int i=1;i<=nsel;i++){ 
 	  objsel+=dnorm(selpar(i),0,selCV)*LHw(10);  
@@ -1463,12 +1537,16 @@ void model_parameters::calcObjective(void)
 	objFmod=LHtemp*LHw(14);
 	objG+=LHtemp*LHw(14);
 	// BSfrac prior
-	for(int ss=1; ss<=ns;ss++){
-	  BSfrac_pred(1,ss)=sum(stemp(1)(ss)(1,3))/sum(stemp(1)(ss)); // East stock (1) in western areas (1-3)
-	  BSfrac_pred(2,ss)=sum(stemp(2)(ss)(4,nr))/sum(stemp(2)(ss)); // West stock (2) in eastern areas (4-7)
-	  objBSfrac+=dnorm(log(BSfrac_pred(1,ss)+tiny),log(BSfrac(1,ss)+tiny),BSfracCV)*LHw(16);
-	  objBSfrac+=dnorm(log(BSfrac_pred(2,ss)+tiny),log(BSfrac(2,ss)+tiny),BSfracCV)*LHw(16);
-	}  
+	//for(int ss=1; ss<=ns;ss++){
+	  //BSfrac_pred(1,ss)=sum(stemp(1)(ss)(1,3))/sum(stemp(1)(ss)); // East stock (1) in western areas (1-3)
+	  //BSfrac_pred(2,ss)=sum(stemp(2)(ss)(4,nr))/sum(stemp(2)(ss)); // West stock (2) in eastern areas (4-7)
+	  //Ntemp+=sum(stemp(2)(ss)(4,nr))/sum(stemp(2)(ss)); // West stock (2) in eastern areas (4-7)
+	  //objBSfrac+=dnorm(log(BSfrac_pred(1,ss)+tiny),log(BSfrac(1,ss)+tiny),BSfracCV)*LHw(16);
+	  //objBSfrac+=dnorm(log(BSfrac_pred(2,ss)+tiny),log(BSfrac(2,ss)+tiny),BSfracCV)*LHw(16);
+	//}  
+	//objBSfrac+=dnorm(log(Ntemp/ns),log(BSfrac),BSfracCV)*LHw(16);  // now just the western mean fraction
+	Ntemp=WB(2)/sum(WB); // fraction of west stock in the east area (mean 1965-2016)
+	objBSfrac+=dnorm(log(Ntemp),log(BSfrac),BSfracCV)*LHw(16);  // now just the western stock fraction in east area
 	objG+=objBSfrac;
 	// Master index invariant calculations
 	LHtemp=0.;	  
@@ -1510,7 +1588,7 @@ void model_parameters::simsam(void)
   {
         // If working with simulated data do some printing
         cout<<"log R0 = " <<lnR0<<endl;                    // Estimated R0 
-        cout<<"selpar = "<<selpar<<endl;                     // Estimated R0
+        cout<<"selpar = " <<selpar<<endl;                     // Estimated R0
         for(int ff=1;ff<=nf;ff++){
            cout<<"sel sam "<<ff<<" "<<sel(ff)<<endl;            // Estimated selectivity fleet 1
         }

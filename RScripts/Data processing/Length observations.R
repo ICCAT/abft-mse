@@ -1,93 +1,47 @@
 # Length observations.r
-# August 2016
-# R Script for formatting the length observations by fleet
+# April 2021
+# R Script for formatting the ICCAT reported length observations by fleet
 
-dat<-read.csv(paste(getwd(),"/Data/Raw/Task2/t2szBFT-all_v1.csv",sep=""))
-
-# Temporary fix for new data of wrong format
-IDgrep<-c("JP","US","CA")
-Fleetcody<-c("JPN","USA","CAN")
-FleetCode<-rep("UKN",nrow(dat))
-for(ff in 1:length(IDgrep))FleetCode[grepl(IDgrep[ff],dat$FleetID)]<-Fleetcody[ff]
-                 
-dat<-dat[dat$YearC>(Base@years[1]-1)&dat$YearC<(Base@years[2]+1),]
-#dat$FleetCode[dat$FleetCode%in%c("USA-Rec" ,"USA-Com")]<-"USA"
-#dat$GearCode[dat$GearCode%in%c("RRFB","RRFS")]<-"RR"
-# temp<-dat[dat$FleetCode=="USA",] unique(temp$FleetCode) unique(dat$GearGrp)
-#dat<-dat[dat$FleetCode=="USA"&dat$GearGrp=="RR",]
-#cond<-dat$SampAreaCode%in%c("BF55","BF61","BF51","BF56","BF67")#dat$FleetCode=="USA"&dat$GearGrpCode=="RR"&
-#dat$Lat[cond]<-35
-#dat$Lon[cond]<-70
-#dat$QuadID[cond]<-4
-#dat$GeoStrata[cond]<-"5x5"
-
-# Standardization of names
-names(dat)[names(dat)=="YearC"]<-"Year"
-names(dat)[names(dat)=="TimePeriodCatch"]<-"TimePeriodID"
-names(dat)[names(dat)=="GearGrpCode"]<-"GearGrp"
-names(dat)[names(dat)=="SquareTypeCode"]<-"GeoStrata"
-
-# sum(dat$GeoStrata%in%c("1x1","5x5"))/nrow(dat)*100 # percentage reduction due to 1x1 5x5 stipulation
-dat<-dat[dat$GeoStrata%in%c("1x1","5x5"),]
-dat<-ICCATtoGEO2(dat)
-dat<-assign_area(dat,Base@area_defs)
-
-dat<-assign_quarter(dat)
-names(dat)[names(dat)=="Subyear"]<-"Quarter"
-
-dat<-AssignFleet(dat,Base@Fleets)
-
-#test<-aggregate(rep(1,nrow(dat)),by=list(dat$Fleet),sum)
-#cbind(Base@Fleets$name[test[,1]],test)
-#test<-aggregate(rep(1,nrow(dat)),by=list(dat$FleetCode,dat$GearGrp),sum)
-#test[order(test$x,decreasing=T),]
-
-dat$Year<-dat$Year-Base@years[1]+1
-
-Lencat<-rep(NA,nrow(dat))
-for(i in 1:Base@nl){
-  Lencat[dat$ClassFrq>(Base@lenbins[i]-0.01)&dat$ClassFrq<Base@lenbins[i+1]]<-i
-}
-cond<-!is.na(Lencat)
-Lencat<-Lencat[cond]
-dat<-dat[cond,]
-
-
-CLobs<-aggregate(dat$Nr,by=list(dat$Year,dat$Quarter,dat$Area,dat$Fleet,Lencat),sum)
-CLtot<-aggregate(dat$Nr,by=list(dat$Year,dat$Fleet),sum)
-CLtot2<-aggregate(dat$Nr,by=list(dat$Year,dat$Quarter,dat$Area,dat$Fleet),sum)
-
-CLtota<-array(NA,c(Base@ny,Base@nf))
-CLtota[as.matrix(CLtot[,1:2])]<-CLtot[,3]
-
-CLtota2<-array(NA,c(Base@ny,Base@ns, Base@nr, Base@nf))
-CLtota2[as.matrix(CLtot2[,1:4])]<-CLtot2[,5]
-
-
+CL25<-read.csv(paste(getwd(),"/data/ICCAT_2021_3/CLobs_25cm_2021Apr19.csv",sep=""))
+hist(CL25$Length_category,breaks=c(0,Base@lenbins))
+CL25<-CL25[CL25$Length_category>0,] # ignore compositions for fish length 25cm or less
+CL25$Length_category<-ceiling(CL25$Length_category/25) # minus 1 because the length bins start at 25-50 (mulen 37.5)
+CLobs<-aggregate(CL25$N,by=list(CL25$Year,CL25$Subyear, CL25$Area, CL25$Fleet, CL25$Length_category),sum)
 names(CLobs)<-c("Year","Subyear","Area","Fleet","Length_category","N")
-#CLobs$N<-(CLobs$N/CLtota[as.matrix(CLobs[,c(1,4)])])*log(CLtota[as.matrix(CLobs[,c(1,4)])])
-CLobs$N<-CLobs$N/CLtota2[as.matrix(CLobs[,c(1:4)])]
+#CLobs<-CLobs[CLobs$Year>=Base@years[1]&CLobs$Year<=Base@years[2],] # Truncate to model years
+CLobs<-CLobs[CLobs$Year>=Base@years[1]&CLobs$Year<=2016,] # !! WG decided not to fit to length comps after 2016
+CLobs$Year<-CLobs$Year-Base@years[1]+1
 
-CLobs<-subset(CLobs,CLobs$N>0)
+test<-aggregate(CLobs$N,by=list(CLobs$Year,CLobs$Subyear, CLobs$Area, CLobs$Fleet),sum) # get totals per strata for calculation of fractions
+names(test)<-c("Year","Subyear","Area","Fleet","N")
+
+for(i in 1:nrow(test)){ # divide by totals to get fractions
+  cond<-CLobs$Year==test$Year[i] & CLobs$Subyear==test$Subyear[i] & CLobs$Area == test$Area[i] & CLobs$Fleet == test$Fleet[i]
+  CLobs$N[cond]<-CLobs$N[cond]/test$N[i]
+}
+
+# Remove compositions that are not accompanied by catches (supposed to be 'complete' catches and model doesn't predict compositions for zero catch observations)
+Catcode<-paste(Cobs[,1],Cobs[,2],Cobs[,3],Cobs[,4],sep="-")
+CLcode<-paste(CLobs[,1],CLobs[,2],CLobs[,3],CLobs[,4],sep="-")
+keep<-CLcode%in%Catcode
+CLobs<-CLobs[keep,]
 
 save(CLobs,file=paste(getwd(),"/Data/Processed/Conditioning/CLobs",sep=""))
 
 diag<-F
 if(diag){
 
-  Fnams<-c(Fleets$name,"OTH")
+  Fnams<-Fleets$name
   Flabs<-Fnams[CLobs[,4]]
   CLobs_lab<-cbind(CLobs,Flabs)
-  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_wrap(~Year , ncol=10)
-  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_grid(~Flabs)
-  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_grid(~Subyear)
-  #ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_grid(~Area,~Subyear)
-  
-  
-}  
-  
-  
-  
+  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_wrap(~Year , ncol=10) # comps by year
+  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_wrap(~Flabs,ncol=5) # comps by fleet
+  ggplot(CLobs_lab, aes(x=Length_category)) + geom_histogram() + facet_grid(~Subyear) # comps by quarter
+
+}
+
+
+
 
 
 

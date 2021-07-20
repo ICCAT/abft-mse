@@ -1,7 +1,10 @@
 # SOO.r
-# July 2018
+# April 2021
 # R Script for formatting Stock of Origin data
+# !TSD Tables 2.6A, 2.6B, 2.6C, 2.6D
+# SCRS/2018/133 Carruthers & Butterworth for the mixture model method
 
+# A linear interpolation function
 LinInterp<-function(x,y,xlev,ascending=FALSE,zeroint=FALSE){
 
   if(zeroint){
@@ -28,14 +31,12 @@ LinInterp<-function(x,y,xlev,ascending=FALSE,zeroint=FALSE){
 
 }
 
-load(paste0(getwd(),"/Data/Raw/SOO/SooN.Rdata"))
-load(paste0(getwd(),"/Data/Raw/SOO/pE.Rdata"))
-SOOg<-pE
 
-SOO<-read.csv(paste0(getwd(),"/Data/Raw/SOO/Joint East West mixing data updated 06072018 with geneticID.csv"),header=T,sep=";")[,c(5,6,10,11,13,15,16)]
-SOOcan<-read.csv(paste0(getwd(),"/Data/Raw/SOO/SOO_data_Can.csv"),header=T,sep=",")[,1+c(5,6,10,11,13,15,16)]
-SOOcan$Method<-"Otolith Chemistry"
-SOO<-rbind(SOO,SOOcan)
+load(paste0(getwd(),"/Data/Other_2021_1/SooN.Rdata"))
+load(paste0(getwd(),"/Data/Other_2021_1/pE.Rdata"))
+SOOg<-pE
+SOO<-read.csv(paste0(getwd(),"/Data/Other_2021_1/Joint East West Mixing Data 15042019.csv"),header=T)[,c(5,6,10,11,13,15,16)]
+SOO_old<-read.csv(paste0(getwd(),"/Data/Other_2021_1/Joint East West mixing data updated 06072018 with geneticID.csv"),header=T,sep=";")[,c(5,6,10,11,13,15,16)]
 names(SOO)<-c("Year","Length","age","Prob.East","BFT_Area","Quarter","Method")
 
 SOO<-subset(SOO,SOO$Year>(Base@years[1]-1)&SOO$Year<(Base@years[2]+1))
@@ -44,8 +45,6 @@ SOO$Year<-SOO$Year-Base@years[1]+1
 print(paste("Total SOO assigments:",nrow(SOO)))
 print(paste("SOO assignments missing age:",sum(is.na(SOO$age))))
 print(paste("SOO assignments missing age and length:",sum(is.na(SOO$age)&is.na(SOO$Length))))
-
-#nrow(subset(SOO,SOO$Method=="Genetics"))
 
 meths<-unique(SOO$Method)
 org<-c("CAR", "E_ATL","E_MED",  "GOM","GSL","NC_ATL", "NE_ATL", "SC_ATL", "SE_ATL", "W_ATL",  "W_MED")
@@ -67,7 +66,7 @@ print(paste("SOO assignments missing age after imputation:",sum(is.na(SOO$age)))
 SOO<-SOO[,c(1,3,4,5,6,7)] # lose the length data
 anyna<-function(x)sum(is.na(x))==0
 keep<-apply(SOO,1,anyna)
-print(paste("SOO assignments will all required covariates:",sum(keep)))
+print(paste("SOO assignments with all required covariates:",sum(keep)))
 SOO<-SOO[keep,]
 
 # Convert to age class
@@ -119,8 +118,8 @@ getSOO<-function(x,strata,SOO,pE,pW,breaks,plot=F,type='Otolith Chemistry'){
   #pu = (sqrt(probE) + sig)^2
   #pl = (sqrt(probE) - sig)^2
   #SE<-(pu-pl)/2
-
-  if(plot){
+  ploty=F
+  if(ploty){
     #legend('topleft',legend=c(paste0("y=",strata[x,1]),paste0("age=",strata[x,2])),cex=0.8,bty='n')
     #legend('top',legend=c(paste0("ar=",strata[x,3]),paste0("q=",strata[x,4])),cex=0.8,bty='n')
 
@@ -153,7 +152,7 @@ SOOopt<-function(par,pM,pE,pW){
 
 }
 
-
+# Otolith Microchem data
 SOO_OC<-SOO[SOO$Method=='Otolith Chemistry' & !(SOO$BFT_Area%in%c(1,7)),]
 strata1<-aggregate(rep(1,nrow(SOO_OC)),by=list(SOO_OC$Year,SOO_OC$age,SOO_OC$BFT_Area,SOO_OC$Quarter),FUN=sum)
 strata<-strata1[strata1$x>5,]
@@ -175,8 +174,8 @@ suppressWarnings({
 })
 
 
-
-SOO_G<-SOO[SOO$Method=='Genetics' & !(SOO$BFT_Area%in%c(1,7)),]
+# Genetics data
+SOO_G<-SOO[SOO$Method=='Genetics' & !(SOO$BFT_Area%in%c(1,7)),]# SOO_G<-SOO[SOO$Method=='Genetics',]
 strata1<-aggregate(rep(1,nrow(SOO_G)),by=list(SOO_G$Year,SOO_G$age,SOO_G$BFT_Area,SOO_G$Quarter),FUN=sum)
 strata_g<-strata1[strata1$x>5,]
 
@@ -197,9 +196,6 @@ suppressWarnings({
 })
 
 
-cond<-(out[1,]^0.5-out[2,])<0
-redface=sum(cond)
-
 SOOobs_o<-cbind(strata[,c(2,1,4,3,5)],t(out[3:4,]),rep(1,nrow(strata)))
 SOOobs_g<-cbind(strata_g[,c(2,1,4,3,5)],t(out_g[3:4,]),rep(2,nrow(strata_g)))
 names(SOOobs_o)<-names(SOOobs_g)<-c("a","y","s","r","N","probE","SE","Type")
@@ -214,17 +210,8 @@ if(add_Genetics){
 plot(SOOobs[,5],SOOobs[,7])
 plot(SOOobs[,4],SOOobs[,6])
 
-# Add the missing genetic signature for the GOM
-if(add_Genetics){
-  gom_g_sig<-SOOg$probMED[SOOg$origin=="GOM"]/100
-  ng<-length(gom_g_sig)
-  gsig<-as.data.frame(cbind(rep(1,ng),rep(1,ng),gom_g_sig,rep(1,ng),rep(1,ng),rep("Genetics")))
-  for(x in 1:5)gsig[,x]<-as.numeric(as.character(gsig[,x]))
-  names(gsig)<-names(SOO)
-  SOO<-rbind(SOO,gsig)
-}
 
-if(summary){
+if(summary){ # if summary diagnostics and plots are wanted
 
 # ----- SOO summary by Area  --------------
 
@@ -234,7 +221,7 @@ if(summary){
              as.numeric(match(SOO_AM$Group.1,meths)),
              as.numeric(SOO_AM$Group.2))] <- SOO_AM$x
   SOO_AM_mat<-data.frame(SOO_AM_mat,row.names = meths)
-  names(SOO_AM_mat)<-nu_nam
+  names(SOO_AM_mat)<-nu_nam # !TSD check against table 2.6B
   write.csv(SOO_AM_mat,"data/Raw/SOO/Summaries/SOO_AM.csv")
 
   jpeg("data/Raw/SOO/Summaries/SOObyarea_2.jpg",width=6,height=7,res=400,units='in')
@@ -260,7 +247,7 @@ if(summary){
   SOO_QR_mat<-matrix(0,nrow=4,ncol=7)
   SOO_QR_mat[cbind(SOO_QR$Group.1,SOO_QR$Group.2)] <- SOO_QR$x
   SOO_QR_mat<-data.frame(SOO_QR_mat,row.names =paste0("Q",1:4))
-  names(SOO_QR_mat)<-nu_nam
+  names(SOO_QR_mat)<-nu_nam # !TSD check against Table 2.6C
   write.csv(SOO_QR_mat,"data/Raw/SOO/Summaries/SOO_QR_otolith.csv")
 
   # quarter and area
@@ -269,7 +256,7 @@ if(summary){
   SOO_QR_mat<-matrix(0,nrow=4,ncol=7)
   SOO_QR_mat[cbind(SOO_QR$Group.1,SOO_QR$Group.2)] <- SOO_QR$x
   SOO_QR_mat<-data.frame(SOO_QR_mat,row.names =paste0("Q",1:4))
-  names(SOO_QR_mat)<-nu_nam
+  names(SOO_QR_mat)<-nu_nam # !TSD check against Table 2.6D
   write.csv(SOO_QR_mat,"data/Raw/SOO/Summaries/SOO_QR_genetics.csv")
 
 
@@ -408,50 +395,24 @@ if(summary){
    mtext("Assignment score",1,line=0.1,outer=T)
    mtext("Rel. Freq.",2,line=0.1,outer=T)
 
-
   dev.off()
-
-  ylim=mean(pM)
-
-
-
-
 
 }
 
 if(testSOO){
   yrs=c(5,10,20,30,40,50)
   SOOmat<-array(5,c(Base@nma,6,Base@ns,Base@nr-2))
-  #SOOmat<-array(1:1000,c(Base@nma,Base@ny,Base@ns,Base@nr))
   SOOmat[,,,1:2]<-(-5)
   ind<-expand.grid(1:Base@nma,yrs,1:Base@ns,2:6)
   SOOobs<-cbind(ind,rep(9999,nrow(ind)),as.vector(SOOmat),rep(0.5,nrow(ind)))
   names(SOOobs)<-c("a","y","s","r","N","probE","SE")
-
-
 }
 
 
+#wt<-1/(SOOobs[,7]^2) # inverse variance weighting is the default
+wt<-rep(1,nrow(SOOobs)) # constant weighting per observation
 
-#SOO$Prob.East[SOO$BFT_Area==1]<-0
-#SOO$Prob.East[SOO$BFT_Area==7]<-1
-
-#SOO1<-aggregate(SOO$Prob.East,by=list(SOO$age,SOO$Year,SOO$Quarter,SOO$BFT_Area),sum)
-#SOO2<-aggregate(1-SOO$Prob.East,by=list(SOO$age,SOO$Year,SOO$Quarter,SOO$BFT_Area),sum)
-
-#SOO1<-cbind(rep(1,nrow(SOO1)),SOO1)
-#SOO2<-cbind(rep(2,nrow(SOO2)),SOO2)
-
-#SOOtempGOM<-expand.grid(2,1:3,1,1:4,1,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-#SOOtempMed<-expand.grid(1,1:3,1,1:4,10,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-#SOOtempSEATL<-expand.grid(1,1:3,1,1:4,9,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-#SOOtempCAR<-expand.grid(2,1:3,1,1:4,2,1000) #  !!!!!!!! temporary fix until we sort out SOO for GOM
-
-#names(SOO1)<-names(SOO2)<-names(SOOtempGOM)<-names(SOOtempMed)<-names(SOOtempSEATL)<-names(SOOtempCAR)<-c("p","aa","y","s","r","N")
-#names(SOO1)<-names(SOO2)<-c("p","aa","y","s","r","N")
-
-#SOOobs<-rbind(SOO1,SOO2)#,SOOtempGOM,SOOtempMed,SOOtempSEATL,SOOtempGSL)
-#SOOobs<-SOOobs[SOOobs$N>0,]
+SOOobs<-cbind(SOOobs,wt)
 SOOobs<-as.matrix(SOOobs)
 
 save(SOOobs,file=paste(getwd(),"/Data/Processed/Conditioning/SOOobs",sep=""))

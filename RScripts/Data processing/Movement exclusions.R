@@ -7,31 +7,23 @@
 #               stock   age class season   from area   to area
 MEM<-array(NA,c(Base@np,Base@nma,  Base@ns, Base@nr,    Base@nr))
 ER<-(-20)
-#No eastern fish in the GOM in Quarter 3
+
+# Get Natal area indices
 GOM<-match('GOM',Base@areanams)
-if(GOM_EXC){
-  MEM[2,,3,,GOM]<-ER
-}
+MED<-match('MED',Base@areanams)
 
-
-#No fish in the GSL in Quarter 1
-#GSL<-match('GSL',Base@areanams)
-#MEM[,,1,,GSL]<-ER
-
-#No fish in the SATL in Quarter 4
-#SATL<-match('SATL',Base@areanams)
-#MEM[,,4,,SATL]<-ER
+#No eastern fish in the GOM in Quarter 3
+if(GOM_EXC)  MEM[2,,3,,GOM]<-ER
 
 #No Western fish in the MED
-MED<-match('MED',Base@areanams)
-MEM[2,,,,MED]<-ER
+MEM[2,,,,MED]<-ER  # !TSD paragraph before Eqn 3.22
 
 #No Eastern fish in the GOM
-MEM[1,,,,GOM]<-ER
+MEM[1,,,,GOM]<-ER # !TSD paragraph before Eqn 3.22
 
 
 
-if(use_tag_exclusions){
+if(use_tag_exclusions){ # if movement should be limited to only those transitions observed
 
   convnames<-function(x){
 
@@ -45,7 +37,7 @@ if(use_tag_exclusions){
 
   nMEM<-array(TRUE,c(Base@np,Base@nma,  Base@ns, Base@nr,    Base@nr))
 
-  tagex<-read.csv(paste0(getwd(),"/data/Processed/Priors/Valid Tag transitions_V2.csv"),header=T,stringsAsFactors=F)
+  tagex<-read.csv(paste0(getwd(),"/data/Other_2021_1/Valid Tag transitions_V2.csv"),header=T,stringsAsFactors=F)
 
   ind<-expand.grid(1:Base@np,1:Base@nma,1:Base@ns,1:Base@nr)
   ind<-as.matrix(cbind(ind,ind[,4]))
@@ -61,10 +53,10 @@ if(use_tag_exclusions){
   }
 
   MEM[nMEM]<-ER
- 
+
   GOM<-match('GOM',Base@areanams)
   SATL<-match('SATL',Base@areanams)
-  
+
   #No Fish moving from GOM to SATL
   MEM[,,3,GOM,SATL]<-ER
 

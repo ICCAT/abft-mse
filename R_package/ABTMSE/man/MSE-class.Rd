@@ -55,6 +55,8 @@
 \item{Fterr}{currently unused}
 \item{hb}{currently unused}
 \item{Reccbcv}{currently unused}
+\item{Reccv}{a matrix of recruitment lognormal CV [nsim x nSR]}
+\item{AC}{a matrix of recruitment lag-1 autocorrelation [nsim x nSR]}
 \item{IMSYb}{a vector of biases in the index at MSY by simulation [nsim]}
 \item{IMSYb}{a vector of biases in MSY (a reference catch level) by simulation [nsim]}
 \item{IMSYb}{a vector of biases in BMSY (a reference biomass level) by simulation [nsim]}
@@ -62,29 +64,35 @@
 \item{CW}{a 4D array containing true simulated catches by east-west area [MP x nsim x 2 x nyears]}
 \item{CWa}{a 4D array containing true simulated catches by east-west area [MP x nsim x 2 x nyears]}
 \item{D}{a 4D array containing true simulated stock depletion (SSB/SSB0) [MP x nsim x nstocks x nyears]}
-\item{B_BMSY}{a 4D array containing true simulated biomass relative to BMSY [MP x nsim x nstocks x nyears]}
-\item{F_FMSY}{a 4D array containing true simulated fishing mortality rate relative to FMSY [MP x nsim x nstocks x nyears]}
+\item{B_BMSY}{a 4D array containing true simulated SSB relative to dynamic SSBMSY (dynamic SSB0 x 2016 SSBMSY/SSB0) [MP x nsim x nstocks x nyears]}
+\item{F_FMSY}{a 4D array containing true simulated fishing mortality rate relative to FMSY (actually U / UMSY) [MP x nsim x nstocks x nyears]}
 \item{BB}{currently unused}
 \item{BBa}{currently unused}
 \item{SSB}{a 4D array containing true simulated spawning biomass [MP x nsim x nstocks x nyears]}
 \item{SSB0}{a 2D array containing unfished spawnign biomass by simulation and stock [nsim x nstocks]}
 \item{Iobs}{a 4D array containing Index observations [MP x nsim x nind x allyears]}
 \item{VBi}{a 4D array containing Index vulnerable biomass (true without error) [MP x nsim x nind x allyears]}
+\item{Rec_mu}{a 4D array containing mean future recruitment (without residual error) [MP x sim x nstocks x proyears]}
+\item{Rec_err}{a 4D array containing future recruitment [MP x sim x nstocks x proyears]}
+\item{R0_proj}{a matrix containing the future R0 values [nstocks x proyears]}
+\item{SSB_proj}{a 4D array containing the future SSB values [MP x sim x nstocks x proyears]}
 \item{dynB0}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and projection year [nsim x nstocks x proyears]}
 \item{dynB0h}{a 3D array containing dynamic unfished spawning biomass by simulation, stock and historical year [nsim x nstocks x nyears]}
-\item{MSY}{a 2D array containing MSY estimates (2018 parameters) [sim x nstocks]}
-\item{BMSY}{a 2D array containing BMSY estimates (2018 parameters) [sim x nstocks]}
-\item{SSBMSY}{a 2D array containing SSBMSY estimates (2018 parameters) [sim x nstocks]}
-\item{UMSY}{a 2D array containing UMSY estimates (2018 parameters) [sim x nstocks]}
-\item{FMSYa}{a 2D array containing apical FMSY estimates (2018 parameters) [sim x nstocks]}
-\item{SSBMSY_SSB0}{a 2D array containing MSY estimates (2018 parameters) [sim x nstocks]}
+\item{MSY}{a 2D array containing MSY estimates (2016 parameters) [sim x nstocks]}
+\item{BMSY}{a 2D array containing BMSY (vulnerable biomass) estimates (2016 parameters) [sim x nstocks]}
+\item{SSBMSY}{a 2D array containing SSBMSY estimates (2016 parameters) [sim x nstocks]}
+\item{UMSY}{a 2D array containing UMSY estimates (2016 parameters) [sim x nstocks]}
+\item{FMSYa}{a 2D array containing apical FMSY estimates (2016 parameters) [sim x nstocks]}
+\item{SSBMSY_SSB0}{a 2D array containing MSY estimates (2016 parameters) [sim x nstocks]}
 \item{TAC}{a 4D array containing the TAC recommendations [nsim x MP x stock x proyear]}
 \item{nMPs}{an integer number representing the number of MPs in the MSE}
 \item{Snames}{a character vector naming the stocks [nstocks]}
 \item{area_defs}{a list of area definitions for graphing (lons and lats describing the polygon)}
 \item{areanams}{a character vector of area names}
 \item{Istats}{a data.frame of index fit statistics nind x 6 (name, lnq, sd, ac1, lencat LB, lencat UB)}
-\item{Fleet_comp}{an array of Fleet composition data nsim x MP x nfleet x proyear x length class}
+\item{Inames}{a character vector of index names as they appear in the MPind slot of the obs object}
+\item{Fleet_comp}{an array of Fleet catch (numbers) composition data nsim x MP x nfleet x proyear x length class}
+\item{Fleet_cat}{an array of fleet catches [nsim x MP x fleet x year ]}
 \item{TACtaken}{an array of TAC actually taken nsim x MP x NAss x proyear}
 \item{MPs}{a list object containing the names of the MPs [nMPs]}
 }

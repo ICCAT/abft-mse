@@ -1,3 +1,14 @@
+rnorm_T95<-function(n=1,mean=0,sd=1){
+  ntrial=n*ceiling(48*(1/n)^0.5+2)  #prevents over sampling at high n; 0.05^50 = 1E-65 chance of not sampling in the interval given n=1
+  trial<-rnorm(ntrial,mean,sd)
+  bound<-sd*1.959964
+  if(sd==0){
+    return(rep(mean,n)) # exception for sd=0 (Deterministic == T)
+  }else{
+    return(trial[trial>(mean-bound) & trial < (mean+bound)][1:n])
+  }
+}
+
 
 solveforR1<-function(v2,y2){
 
@@ -6,8 +17,6 @@ solveforR1<-function(v2,y2){
   v1 = 2*v2/(1+y1)
   return(c(v1=v1,y1=y1))
 }
-
-
 
 solveforR1_old<-function(v2,y2){
 
@@ -44,7 +53,7 @@ testsolveR2<-function(){
 
 lnormdev<-function(ny,STD,AC1){
   procmu <- -0.5*STD^2 #*(1 - AC1)/sqrt(1 - AC1^2) # adjusted log normal mean
-  err<-rnorm(ny,procmu, STD)
+  err<-rnorm_T95(ny,procmu, STD)
   for (y in 2:ny) err[y]<-AC1*err[y-1]+err[y]*(1-AC1*AC1)^0.5
   exp(err)
 }
@@ -52,7 +61,7 @@ lnormdev<-function(ny,STD,AC1){
 
 lndev<-function(ny,STD){
   procmu <- -0.5*STD^2 #*(1 - AC1)/sqrt(1 - AC1^2) # adjusted log normal mean
-  err<-rnorm(ny,procmu, STD)
+  err<-rnorm_T95(ny,procmu, STD)
   err
 }
 

@@ -20,9 +20,9 @@ getperf(MSE, rnd = 3, outdir = NA, quantiles = c(0.05, 0.95), quantile = F)
 \value{
 a list n stocks long each with a data frame of performance metrics (columns) by management procedure (row) \code{MSE}.
 \itemize{
-  \item Y10. Mean yield over the first 10 years of the projection
-  \item Y20. Mean yield over years 11-20 of the projection
-  \item Y30. Mean yield over years 21-30 of the projection
+  \item C10. Mean yield over the first 10 years of the projection
+  \item C20. Mean yield over years 11-20 of the projection
+  \item C30. Mean yield over years 21-30 of the projection
   \item PGK. Probability of Green Kobe (F<FMSY AND B>BMSY) region over all years of the projection
   \item POF. Probability of Over-Fishing (F>FMSY) over all years of the projection
   \item POS. Probability of Over-Fished status (B<BMSY) over all years of the projection

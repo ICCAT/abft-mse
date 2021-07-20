@@ -28,9 +28,11 @@ export(
     "EMP1e",
     "EMP2w",
     "EMP2e",
-    "UMSY",
-    "UMSY_PI",
-    "XSA",
+    "U3",
+    "U5",
+    "U10",
+    "U15",
+    "U20",
     "SPslope_i4",
     "SPslope_i4",
     "Fadapt_i4",
@@ -69,6 +71,8 @@ export(
     "tradeoff",
     "areaplot",
     "plot_Indices",
+    "plot_Recruitment",
+    "plot_CatchComp",
     "Umax_30",
     "Umax_50",
     "Umax_90",
@@ -95,6 +99,10 @@ export(
     "Br30",
 
     "RD30",
+
+    "AvgBr",
+    "AvC10",
+    "OFT",
 
     "tomt",
     "TEG",
@@ -165,16 +173,10 @@ export(
 
     "sourceall",
 
-    "MatM_Ref2",
     "Rec_Ref",
-    "SSB_Dep_Ref",
-    "Mat_Ref",
-    "Steep_Ref",
-    "SSBref",
-    "Mig_Ref",
+    "MatM_Ref",
     "Bmu_Ref",
     "Lcomp_Ref",
-
 
     "MSYMLE",
     "optMSY_eq",
@@ -203,12 +205,17 @@ export(
     "MPlag",
 
     "solveforR1",
+    "rnorm_T95",
     "lnormdev",
     "lndev",
     "apply_AC1_vec",
     "apply_AC1",
 
-    "Shiny"
+    "Sub_Results",
+    "Join_Results",
+    "Results_compiler",
+    "Shiny",
+    "Br30_Wt"
 )
 exportClasses(
     "OMI",
@@ -224,7 +231,6 @@ import(
     "mapdata",
     "wordcloud",
     "abind",
-    "SDMTools",
     "PBSmapping",
     "shiny",
     "parallel",

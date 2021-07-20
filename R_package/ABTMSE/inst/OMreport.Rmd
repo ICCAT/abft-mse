@@ -172,7 +172,7 @@ for(i in 1:OMI@nI){
   obs<-as.numeric(tempdat[,7])
   pred<-out$Ipred_vec[ind]
   yrs<-as.numeric(tempdat[,1]+OMI@years[1]-1)
-  plot(yrs,obs,pch=19,ylim=c(0,max(obs,pred)),ylab="",xlab="",yaxs='i')
+  plot(yrs,obs,pch=19,ylim=c(0,max(obs,pred,na.rm=T)),ylab="",xlab="",yaxs='i')
   lines(yrs,pred,lwd=1.5,col="#0000ff95")
   legend('topleft',legend=OMI@Inames[i],bty='n')
   legend('topright',legend=c(paste0("Quarter: ",Seasons[i]),
@@ -455,8 +455,6 @@ Figure 6c. Recruitment deviations (log) for each stock-recruitment curve. Recrui
 
 # MSY reference points 
 
-Table 3a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
-
 ```{r refpoints_2016, results='asis',echo=FALSE,fig.width=5}
 
 Wareas<-1:3
@@ -522,17 +520,18 @@ BMSY_B0<-round(BMSY_B0,3)
 B_BMSY<-round(B_BMSY,3)
 Dep<-round(Dep,3)
 
-res_area<-data.frame(MSY,BMSY,BMSY_B0,B_BMSY,Dep)
-row.names(res_area)<-c("East area","West area")
+#res_area<-data.frame(MSY,BMSY,BMSY_B0,B_BMSY,Dep)
+#row.names(res_area)<-c("East area","West area")
 
-res_area %>%
-kable(format = "html", escape = F) %>%
-  kable_styling("striped")#, full_width = T)
+#res_area %>%
+#kable(format = "html", escape = F) %>%
+#  kable_styling("striped")#, full_width = T)
 
+#Table 3a. 2016 Reference points by area. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning #Stock Biomass. Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of #unfished stock size accounting for shifts in recruitment). Similarly, BMSY is calculated as a dynamic quantity relating to #'dynamic B0'. 
 
 ```
 
-Table 3b. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
+Table 3. 2016 Reference points by stock. MSY and BMSY numbers are in tons. Biomass figures (BMSY, B0) refer to Spawning Stock Biomass. Fishing rate figures (FMSY, F) are phrased as apical Fs (F on the most selected length class). Stock depletion refers to spawning stock biomass relative to 'dynamic B0' (a running calculation of unfished stock size accounting for shifts in recruitment). Similarly BMSY is calculated as a dynamic quantity relating to 'dynamic B0'. 
 
 ```{r refpoints_2016_area, results='asis',echo=FALSE,fig.width=5}
 res2 %>%

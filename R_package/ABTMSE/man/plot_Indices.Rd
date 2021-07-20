@@ -4,12 +4,14 @@
 \alias{plot_Indices}
 \title{Plot the true and simulated indices for an MSE run}
 \usage{
-plot_Indices(MSEobj, index = 1)
+plot_Indices(MSEobj, index = 1, MPs = NA)
 }
 \arguments{
 \item{MSEobj}{An object of class 'MSE'}
 
-\item{index}{An integer number of the index to be plotted}
+\item{index}{An integer number of the index to be plotted or its name (order is Inames slot of MSE object)}
+
+\item{MPs}{A numeric vector or vector of names of MPs (order is MPs slot of MSE object)}
 }
 \description{
 Plot the true and simulated indices for an MSE run

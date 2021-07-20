@@ -1,11 +1,13 @@
-# ===================================================================================================================
-# ==== MSE operating model modification functions ===================================================================
-# ===================================================================================================================
+# ===============================================================================================================================
+# ==== MSE operating model modification functions ===============================================================================
+# ===============================================================================================================================
 
 # These functions represent modifications to a Base OMI (operating model input) object.
 
+# ===== SECTION A - THE OMI MODIFIERS USED IN CREATING THE REFERENCE SET OPERATING MODELS =================================
 
-# Factor 1 Recruitment scenario
+
+# Factor 1 - Recruitment scenario -------------------------------------------------------
 
 Rec_Ref<-function(OMI,lev=NA){
 
@@ -25,14 +27,13 @@ Rec_Ref<-function(OMI,lev=NA){
 
   }else{
 
-
     if(lev==1|lev==3){# East,  West
       OMI@nSR=4
       OMI@SRpar<-c(0.98,0.98,0.6,0.9)
       OMI@SRp<-c(1,1,2,2)
       OMI@SRtype<-c("BH","BH","BH","BH")
       OMI@SRminyr<-c(1,24,1,11)
-      OMI@SRmaxyr<-c(23,52,10,52)
+      OMI@SRmaxyr<-c(23,55,10,55)
 
       OMI@nRDs<-rep(1,4)
 
@@ -56,7 +57,7 @@ Rec_Ref<-function(OMI,lev=NA){
       OMI@SRp<-c(1,2)
       OMI@SRtype<-c("BH","BH")
       OMI@SRminyr<-c(1,1)
-      OMI@SRmaxyr<-c(52,52)
+      OMI@SRmaxyr<-c(55,55)
       OMI@nRDs<-rep(1,4)
 
       RDts<-array(4,c(OMI@np,OMI@ny))
@@ -80,79 +81,9 @@ Rec_Ref<-function(OMI,lev=NA){
 
 }
 
-# Factor 2 Abundance fitting -----------------------------------
+# Factor 2 - Natural mortality rate / M ----------------------------------------------------------------------------
 
-SSB_Dep_Ref<-function(OMI,lev=NA){
-
-  load(system.file("ts2017.Rdata", package="ABTMSE"))
-  dat<-ts2017
-
-  if(is.na(lev)){
-
-    return(3)
-
-  }else if(lev=='Names'){
-
-    return(c("Best estimate","As 2017 assessments", "Matches perception of heavy depletion"))
-
-  }else if(lev=='LongNames'){
-
-    return(c("Level 1: Best estimates of the M3 model",
-             "Level 2: Strong priors on east-west area SSB from 2017 assessments",
-             "Level 3: Prior on depletion to match perception of heavy exploitation"))
-
-  }else{
-
-    if(lev==1){# East,  West
-
-      OMI@nSSBprior=1
-      OMI@SSBprior<-matrix(c(1,1,20000),nrow=1)
-      OMI@SSBCV<-10
-      OMI@nDepprior=1
-      OMI@Depprior<-matrix(c(1,1,0.5),nrow=1)
-      OMI@DepCV<-10
-      OMI@LHw[12:13]<-0
-      #OMI@LHw[14]<-25 # the Fmod prior
-
-    }else if(lev==2){      # East,  West
-
-      tempdat<-dat[dat$assessment=="VPA",c(1,3,4)]
-      tempdat[,1]<-match(tempdat[,1],c("East","West"))
-      tempdat[,2]<-tempdat[,2]-OMI@years[1]+1
-
-      OMI@nSSBprior=nrow(tempdat)
-      OMI@SSBprior<-as.matrix(tempdat)
-      OMI@SSBCV<-0.1
-      OMI@nDepprior=1
-      OMI@Depprior<-matrix(c(1,1,0.5),nrow=1)
-      OMI@DepCV<-10
-      OMI@LHw[12:13]<-c(0.5,0)
-      #OMI@LHw[14]<-5 # 2 x base - the Fmod prior
-
-    } else{
-
-      OMI@nSSBprior=1
-      OMI@SSBprior<-matrix(c(1,1,20000),nrow=1)
-      OMI@SSBCV<-10
-      OMI@nDepprior=20
-      OMI@Depprior<-cbind(rep(1:2,each=10),rep(41:50,2),rep(0.25,20))
-      OMI@DepCV<-0.05
-      OMI@LHw[12:13]<-c(0,0.05)
-      OMI@LHw[14]<-5 # 5 x base - the Fmod prior
-    }
-
-    return(OMI)
-
-  }
-
-}
-
-
-
-
-# Factor 3 Natural mortality rate / M --------------------------
-
-MatM_Ref2<-function(OMI,lev=NA){
+MatM_Ref<-function(OMI,lev=NA){
 
   if(is.na(lev)){
 
@@ -171,9 +102,9 @@ MatM_Ref2<-function(OMI,lev=NA){
 
   }else{
 
-    matlow<- c(0, 0, 0.25, 0.5, rep(1,OMI@na-4)) # both stocks
-    mathighW<-c(0, 0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-13)) #both stocks
-    mathighE<-c(0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-8)) #both stocks
+    matlow<- array(c( 0, 0, 0.25, 0.5, rep(1,OMI@na-4)),c(OMI@na,OMI@np)) #!TSD Table 8.2
+    mathighW<-c( 0, 0, 0, 0, 0, 0, 0.01, 0.04, 0.19, 0.56, 0.88, 0.98, 1, rep(1,OMI@na-13)) #both stocks
+    mathighE<-c( 0, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, rep(1,OMI@na-8)) #both stocks
 
 
     if(lev==1){# East,  West
@@ -181,27 +112,28 @@ MatM_Ref2<-function(OMI,lev=NA){
       tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
       OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
-
+      OMI@Ma<-t(array(c(0.38, 0.30, 0.24, 0.20, 0.18, 0.16, 0.14, 0.13, 0.12, 0.12, 0.11, 0.11, 0.11, 0.1, 0.1, rep(0.1,OMI@na-15)),c(OMI@na,OMI@np))) # !TSD Table 8.2.
 
     }else if(lev==2){      # East,  West
 
       tmat<-array(c(matlow,matlow),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
       OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
-      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07, 0.07, 0.07,rep(0.07,OMI@na-18)),c(OMI@na,OMI@np)))
+      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, rep(0.07,11), rep(0.47,OMI@na-25)),c(OMI@na,OMI@np)))
 
     }else if(lev==3){
 
       tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
       OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
+      OMI@Ma<-t(array(c(0.38, 0.30, 0.24, 0.20, 0.18, 0.16, 0.14, 0.13, 0.12, 0.12, 0.11, 0.11, 0.11, 0.1, 0.1, rep(0.1,OMI@na-15)),c(OMI@na,OMI@np))) # !TSD Table 8.2.
 
     }else{ # East,  West
 
       tmat<-array(c(mathighE,mathighW),c(OMI@na,OMI@np))
       OMI@mat<-array(t(tmat),c(OMI@np,OMI@na,OMI@ny))
       OMI@Fec<-OMI@wt_age[,,1]*OMI@mat[,,1]
-      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07, 0.07, 0.07,rep(0.07,OMI@na-18)),c(OMI@na,OMI@np)))
+      OMI@Ma<-t(array(c(0.36, 0.27, 0.21, 0.17, 0.14, 0.12, 0.11, 0.10, 0.09, 0.09, 0.08, 0.08, 0.08, 0.08, rep(0.07,11), rep(0.47,OMI@na-25)),c(OMI@na,OMI@np)))
 
     }
 
@@ -214,6 +146,74 @@ MatM_Ref2<-function(OMI,lev=NA){
 
 }
 
+
+# Factor 3 - scale ----------------------------------------------------------------------------------------
+
+Bmu_Ref<-function(OMI,lev){
+
+  if(is.na(lev)){
+
+    return(4)
+
+  }else if(lev=='Names'){
+
+    return(c("--","-+","+-","++"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Mean biomass of 15kt and 200kt (1965-2016) for the west and east areas",
+             "Mean biomass of 15kt and 400kt (1965-2016) for the west and east areas",
+             "Mean biomass of 50kt and 200kt (1965-2016) for the west and east areas",
+             "Mean biomass of 50kt and 400kt (1965-2016) for the west and east areas"))
+
+  }else{
+
+    SSBmus<-cbind(c(200,400,200,400,700),c(15,15,50,50,90))*1000
+    OMI@SSBprior[OMI@SSBprior[,1]==1,3] <- SSBmus[lev,1]
+    OMI@SSBprior[OMI@SSBprior[,1]==2,3] <- SSBmus[lev,2]
+    return(OMI)
+
+  }
+}
+
+
+# Factor 4 - Length comp weight ---------------------------------------------------------------------------
+
+Lcomp_Ref<-function(OMI,lev){
+
+  if(is.na(lev)){
+
+    return(5)
+
+  }else if(lev=='Names'){
+
+    return(c("LowLcomp","HighLcomp"))
+
+  }else if(lev=='LongNames'){
+
+    return(c("Low log-likelihood weight on length composition data of 1/20",
+             "High log-likelihood weight on length composition data of 1/20"))
+
+  }else{
+
+    if(lev==1){      # East,  West
+      OMI@LHw[4]<-1/20
+    }else{
+      OMI@LHw[4]<-1
+    }
+    return(OMI)
+
+  }
+
+}
+
+
+
+
+
+# ===== SECTION B - OTHER OMI MODIFIERS NOT USED IN CREATING THE REFERENCE SET OPERATING MODELS =================================
+
+# These are from old sensitivity analyses etc
 
 SSBref<-function(OMI,lev=NA){
 
@@ -372,7 +372,7 @@ Dep_Ref<-function(OMI,lev=NA){
 
 
 
-Mat_Ref<-function(OMI,lev=NA){
+Mat_Ref_old<-function(OMI,lev=NA){
 
   if(is.na(lev)){
 
@@ -419,32 +419,6 @@ Mat_Ref<-function(OMI,lev=NA){
 }
 
 
-Bmu_Ref<-function(OMI,lev){
-
-  if(is.na(lev)){
-
-    return(4)
-
-  }else if(lev=='Names'){
-
-    return(c("--","-+","+-","++"))
-
-  }else if(lev=='LongNames'){
-
-    return(c("Mean biomass of 15kt and 200kt (1965-2016) for the west and east areas",
-             "Mean biomass of 15kt and 400kt (1965-2016) for the west and east areas",
-             "Mean biomass of 50kt and 200kt (1965-2016) for the west and east areas",
-             "Mean biomass of 50kt and 400kt (1965-2016) for the west and east areas"))
-
-  }else{
-
-    SSBmus<-cbind(c(200,400,200,400,700),c(15,15,50,50,90))*1000
-    OMI@SSBprior[OMI@SSBprior[,1]==1,3] <- SSBmus[lev,1]
-    OMI@SSBprior[OMI@SSBprior[,1]==2,3] <- SSBmus[lev,2]
-    return(OMI)
-
-  }
-}
 
 
 Mig_Ref<-function(OMI,lev){
@@ -472,31 +446,71 @@ Mig_Ref<-function(OMI,lev){
 
 }
 
+# Factor 2 Abundance fitting -----------------------------------
 
-Lcomp_Ref<-function(OMI,lev){
+SSB_Dep_Ref<-function(OMI,lev=NA){
+
+  load(system.file("ts2017.Rdata", package="ABTMSE"))
+  dat<-ts2017
 
   if(is.na(lev)){
 
-    return(5)
+    return(3)
 
   }else if(lev=='Names'){
 
-    return(c("LowLcomp","HighLcomp"))
+    return(c("Best estimate","As 2017 assessments", "Matches perception of heavy depletion"))
 
   }else if(lev=='LongNames'){
 
-    return(c("Low log-likelihood weight on length composition data of 1/20",
-             "High log-likelihood weight on length composition data of 1/20"))
+    return(c("Level 1: Best estimates of the M3 model",
+             "Level 2: Strong priors on east-west area SSB from 2017 assessments",
+             "Level 3: Prior on depletion to match perception of heavy exploitation"))
 
   }else{
 
-    if(lev==1){      # East,  West
-      OMI@LHw[4]<-1/20
-    }else{
-      OMI@LHw[4]<-1
+    if(lev==1){# East,  West
+
+      OMI@nSSBprior=1
+      OMI@SSBprior<-matrix(c(1,1,20000),nrow=1)
+      OMI@SSBCV<-10
+      OMI@nDepprior=1
+      OMI@Depprior<-matrix(c(1,1,0.5),nrow=1)
+      OMI@DepCV<-10
+      OMI@LHw[12:13]<-0
+      #OMI@LHw[14]<-25 # the Fmod prior
+
+    }else if(lev==2){      # East,  West
+
+      tempdat<-dat[dat$assessment=="VPA",c(1,3,4)]
+      tempdat[,1]<-match(tempdat[,1],c("East","West"))
+      tempdat[,2]<-tempdat[,2]-OMI@years[1]+1
+
+      OMI@nSSBprior=nrow(tempdat)
+      OMI@SSBprior<-as.matrix(tempdat)
+      OMI@SSBCV<-0.1
+      OMI@nDepprior=1
+      OMI@Depprior<-matrix(c(1,1,0.5),nrow=1)
+      OMI@DepCV<-10
+      OMI@LHw[12:13]<-c(0.5,0)
+      #OMI@LHw[14]<-5 # 2 x base - the Fmod prior
+
+    } else{
+
+      OMI@nSSBprior=1
+      OMI@SSBprior<-matrix(c(1,1,20000),nrow=1)
+      OMI@SSBCV<-10
+      OMI@nDepprior=20
+      OMI@Depprior<-cbind(rep(1:2,each=10),rep(41:50,2),rep(0.25,20))
+      OMI@DepCV<-0.05
+      OMI@LHw[12:13]<-c(0,0.05)
+      OMI@LHw[14]<-5 # 5 x base - the Fmod prior
     }
+
     return(OMI)
 
   }
 
 }
+
+

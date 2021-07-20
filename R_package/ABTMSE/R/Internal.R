@@ -573,6 +573,49 @@ meanFs<-function(FML,iALK,N,wt_age,rnams=c("East","West")){
 }
 
 
+meanFs2<-function(FML,iALK,N,wt_age,M_age,rnams=c("East","West")){
+  # FML                                    # s, r, f, l
+  # iALK                                   # p, a, l
+
+  np<-dim(wt_age)[1]
+  nr<-dim(N)[4]
+  Ftot<-array(NA,c(dim(iALK)[1],dim(FML),dim(iALK)[2])) # p, s, r, f, l, a
+  Find<-TEG(dim(Ftot))
+  Ftot[Find]<-FML[Find[,2:5]]*iALK[Find[,c(1,6,5)]] # p s r f a x p a l
+  #FM<-apply(Ftot,c(1,2,3,6), sum) # p, s, r, a    (sum over lengths and fleets)
+  #wFM2<-apply(Ftot,c(1,6),sum)/nr
+  #wFM2
+
+  np<-dim(iALK)[1]
+  na<-dim(iALK)[2] # number of ages
+  nl<-dim(iALK)[3] # number of length classes
+  ns<-dim(FML)[1] # number of seasons
+  nr<-dim(FML)[2] # number of areas
+  nf<-dim(FML)[3] # number of fleets
+  WFM2<-array(NA,c(np,na))
+
+  for(pp in 1:np){
+
+    iALKp<-iALK[pp,,]
+    Np<-N[pp,,,]
+
+    FMLA<-array(NA,c(ns,nr,nf,nl,na))
+    FMLAind<-TEG(dim(FMLA))
+    FMLind<-FMLAind[,1:4]  # ns, nr, nf, nl
+    iALKind<-FMLAind[,5:4] # na, nl
+    FMLA[FMLAind]<-FML[FMLind]*iALKp[iALKind]
+    FMA<-apply(FMLA,c(1,5,2),sum) # sum over fleets and lengths  ns, na, nr
+    ZA<-FMA+array(rep(M_age[pp,],each=ns),dim(FMA))/ns
+    Ca<-apply(Np*exp(ZA)*(1-exp(-ZA))*(FMA/ZA),2,sum) # all catches over whole season
+    N0<-apply(Np[1,,]*exp(ZA[1,,]),1,sum) # Jan 1 numbers at age all areas
+   # N0<-apply(Np[4,,],1,sum)+Ca
+
+    WFM2[pp,]<-Ca/N0 # relative selectivity at age is U at age
+
+  }
+  WFM2
+}
+
 Fageprof<-function(FML,iALK,N,wt_age){
 
   np<-dim(wt_age)[1]

@@ -7,9 +7,9 @@
 #' @param quantile logical: should quantiles be calculated and included in the table
 #' @return a list n stocks long each with a data frame of performance metrics (columns) by management procedure (row) \code{MSE}.
 #' \itemize{
-#'   \item Y10. Mean yield over the first 10 years of the projection
-#'   \item Y20. Mean yield over years 11-20 of the projection
-#'   \item Y30. Mean yield over years 21-30 of the projection
+#'   \item C10. Mean yield over the first 10 years of the projection
+#'   \item C20. Mean yield over years 11-20 of the projection
+#'   \item C30. Mean yield over years 21-30 of the projection
 #'   \item PGK. Probability of Green Kobe (F<FMSY AND B>BMSY) region over all years of the projection
 #'   \item POF. Probability of Over-Fishing (F>FMSY) over all years of the projection
 #'   \item POS. Probability of Over-Fished status (B<BMSY) over all years of the projection
@@ -39,11 +39,12 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
   for(pp in 1:MSE@npop){
 
-    AvC30a<-AvC30(MSE,pp=pp)/1E6
+    AvC10a<-AvC10(MSE,pp=pp)
+    AvC30a<-AvC30(MSE,pp=pp)
 
-    C10a<-C10(MSE,pp=pp)/1E6 # thousand tonnes
-    C20a<-C20(MSE,pp=pp)/1E6
-    C30a<-C30(MSE,pp=pp)/1E6
+    C10a<-C10(MSE,pp=pp)
+    C20a<-C20(MSE,pp=pp)
+    C30a<-C30(MSE,pp=pp)
 
     D10a<-D10(MSE,pp=pp)
     D20a<-D20(MSE,pp=pp)
@@ -59,10 +60,14 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
     AAVCa<-AAVC(MSE,pp)
 
+    AvgBra<-AvgBr(MSE,pp)
     Br30a<-Br30(MSE,pp)
 
+    PGTa<-PGT(MSE,pp)
+
     if(!quantile){
-    out[[pp]]<-data.frame("AvC30"=apply(AvC30a,1,quantile,p),
+    out[[pp]]<-data.frame("AvC10"=apply(AvC10a,1,quantile,p),
+                          "AvC30"=apply(AvC30a,1,quantile,p),
 
                           "C10"=apply(C10a,1,quantile,p),
                           "C20"=apply(C20a,1,quantile,p),
@@ -81,13 +86,18 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
                           "PGK"=apply(PGKa,1,quantile,p),
 
                           "AAVC"=apply(AAVCa,1,quantile,p),
+                          "AvgBr"=apply(AvgBra,1,quantile,p),
                           "Br30"=apply(Br30a,1,quantile,p),
+                          "PGT"=apply(PGTa,1,quantile,p),
                           row.names=MPnams)
     }else{
       ptext<-c(p[1]*100,"Med",p[3]*100)
       metrics<-c("AvC30","C10","C20","C30","D10","D20","D30","LD","DNC","LDNC","POF","POS","PGK","AAVC","Br30")
       pnams<-paste(rep(metrics,each=3),rep(ptext,length(metrics)),sep="_")
-     dat<-cbind(t(apply(AvC30a,1,quantile,p)),
+     dat<-cbind(
+
+       t(apply(AvC10a,1,quantile,p)),
+       t(apply(AvC30a,1,quantile,p)),
            t(apply(C10a,1,quantile,p)),
              t(apply(C20a,1,quantile,p)),
                t(apply(C30a,1,quantile,p)),
@@ -105,7 +115,9 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
                                  t(apply(PGKa,1,quantile,p)),
 
                            t(apply(AAVCa,1,quantile,p)),
-                              t(apply(Br30a,1,quantile,p)))
+                            t(apply(AvgBra,1,quantile,p)),
+                              t(apply(Br30a,1,quantile,p)),
+                              t(apply(PGTa,1,quantile,p)))
 
      out[[pp]]<-as.data.frame(dat,row.names=MPnams,names=pnams)
      names(out[[pp]])<-pnams
@@ -465,7 +477,7 @@ plot_Indices<-function(MSEobj,index=1,MPs=NA){
     matplot(yrs,t(MSEobj@Iobs[mm,1:2,index,]),col=cols,lty=1,add=T,type='l')
     abline(v=2016.5,col='#99999970',lwd=2)
     legend('topright',legend="First two simulations",bty='n')
-    if(mm==1)legend('topleft',legend=c("True Vuln Bio","Index"),lwd=c(2,1),bty='n')
+    if(mm==1)legend('left',legend=c("True Vuln Bio","Index"),lwd=c(2,1),bty='n')
     mtext(MSEobj@MPs[mm],3,line=0.5,cex=0.9)
 
 
@@ -505,12 +517,13 @@ plot_Recruitment<-function(MSEobj,MPs=1:2){
 
     # SSB
     ylim1<-c(0,1.02*max(MSEobj@SSB_proj[,,pp,],MSEobj@R0_proj[pp,]*MSEobj@SSBpR[1,pp],MSEobj@dynB0[,pp,],na.rm=T))
-    matplot(yrs,rbind(t(MSEobj@dynB0h[,pp,]),t(MSEobj@dynB0[,pp,])),ylim=ylim1,lty=simlines,col="green",type="l",ylab="SSB",yaxs='i',xlab="Year")
+    plot(yrs,c(MSEobj@dynB0h[1,pp,],MSEobj@dynB0[1,pp,]),ylim=ylim1,lty=1,col="green",type="l",ylab="SSB",yaxs='i',xlab="Year")
+    lines(yrs,c(MSEobj@dynB0h[1,pp,]*MSEobj@SSBMSY_SSB0[1,pp],MSEobj@dynB0[1,pp,]*MSEobj@SSBMSY_SSB0[1,pp]),ylim=ylim1,col="green",lty=2)
     lines(yrs,MSEobj@R0_proj[pp,]*MSEobj@SSBpR[1,pp],col="black")
     matplot(yrs,t(MSEobj@SSB_proj[MPs[1],,pp,]),ylim=ylim,lty=simlines,col=MPcols[1],type="l",add=T)
     matplot(yrs,t(MSEobj@SSB_proj[MPs[2],,pp,]),ylim=ylim,lty=simlines,col=MPcols[2],type="l",add=T)
     if(pp==2){
-      legend('bottomright',legend=c("Dynamic","Equilibrium",MSEobj@MPs[MPs[1]],MSEobj@MPs[MPs[2]]),text.col=c('green','black','red','blue'),cex=0.9,bty='n')
+      legend('bottomright',legend=c("Dynamic SSB0 (SSBMSY)","Equilibrium SSB0",MSEobj@MPs[MPs[1]],MSEobj@MPs[MPs[2]]),text.col=c('green','black','red','blue'),cex=0.9,bty='n')
       legend('bottomleft',legend=c("Simulation 1","Simulation 2"),lty=c(1,2),bty='n',cex=0.9)
     }
 
@@ -573,8 +586,219 @@ plot_CatchComp<-function(MSEobj){
 
 
 
+#' Compile the performance results for a complete set of MSE runs (all reference and robustness operating models)
+#'
+#' @param dir Character string, a directory where the MSE objects are saved (e.g. MSE_1.rda, MSE_2.rda, ... MSE_R_1.rda). Defaults to the current working directory
+#' @param name character string, the name of your set of MSE runs. Defaults to NULL
+#' @param CMPdesc A vector of character strings. These describe the CMPs tested in the MSE runs (not including the zero catch CMP that is run by default). Defaults to NULL.
+#' @param CMPcode A vector of 3 character strings that identify your CMP for presentation purposes (e.g. c("TC1","TC2","TC3","TC4"))
+Results_compiler<-function(dir=NULL,name=NULL, CMPdesc=NULL, CMPcode=NULL){
+
+  if(!is.null(dir)) setwd(dir)
+
+  files<-list.files()
+  isMSE<-grepl("MSE_",files)
+  MSEref<-c(paste0("MSE_",1:48),paste0("MSE_R_",1:44))
+  nOMs<-length(MSEref)
+  fileref<-paste0(MSEref,".rda")
+  MSEtab<-data.frame(MSE=MSEref,Available=fileref%in%files)
+
+  if(sum(isMSE)!=92){ # Check 1 - are there enough files?
+    message("You currently have ",sum(isMSE), " MSE objects in this folder. You should have ", nOMs, " including all reference OMs and robustness OMs:")
+    return(MSEtab)
+  }
+
+  if(sum(MSEtab$Available)!=nrow(MSEtab)){ # Check 2 - do they match the required naming convention?
+    message("You do not have all the required MSE objects:")
+    print(MSEtab)
+    return(MSEtab)
+  }
+
+
+  MSEobj<-readRDS(fileref[1])
+  MSEnames<-rep(NA,nOMs)
+  perf<-getperf(MSEobj)
+  pnames<-names(perf[[1]])
+  pnames<-pnames[!pnames%in%c("POF","PGK")]
+  nmet<-length(pnames)
+  nMPs<-MSEobj@nMPs
+  nsim<-MSEobj@nsim
+  nyears<-MSEobj@nyears+MSEobj@proyears
+
+  message("MSE_1.rda has ",nsim," simulations and ",nMPs, " candidate management procedures (including the Zero catch reference CMP)")
+
+  MET<-array(NA,c(nsim,nOMs,2, nMPs, nmet))
+  dynSSB0 <- dynSSBMSY <- array(NA,c(nsim,nOMs,2,nyears))
+  R0 <- SSB0 <- array(NA,c(nOMs,2,nyears))
+  Rec <-  CW <- CWa <- B_BMSY <- F_FMSY <- array(NA,c(nsim,nOMs,2,nMPs,nyears))
+
+  #system.time({
+
+  for(OM in 1:nOMs){
+
+    MSEobj<-readRDS(fileref[OM])
+    test<-strsplit(MSEobj@Name,"/")[[1]]
+    #MSEnames[OM]<-paste0(test[length(test)-(1:0)],collapse="")
+
+    for(pp in 1:2){
+      for(mt in 1:nmet){
+        MET[,OM,pp,,mt]<-t(do.call(pnames[mt], list(MSE=MSEobj,pp=pp)))
+      }
+    }
+
+    dynSSB0[,OM,,] <-   abind(MSEobj@dynB0h,MSEobj@dynB0) # dynamic SSB0 stored
+    dynSSBMSY[,OM,,] <- abind(MSEobj@dynB0h*array(MSEobj@SSBMSY_SSB0,dim(MSEobj@dynB0h)),
+                              MSEobj@dynB0*array(MSEobj@SSBMSY_SSB0,dim(MSEobj@dynB0)) ) # SSBmsy dynamic
+
+    SSB0[OM,,] <- MSEobj@R0_proj*MSEobj@SSBpR[1,]
+    R0[OM,,] <-   MSEobj@R0_proj
+    Rec[,OM,,,] <- aperm(MSEobj@Rec_mu,c(2,3,1,4))
+
+    CW[,OM,,,] <- aperm(MSEobj@CW,c(2,3,1,4))
+    CWa[,OM,,,] <- aperm(MSEobj@CWa,c(2,3,1,4))
+    B_BMSY[,OM,,,] <- aperm(MSEobj@B_BMSY,c(2,3,1,4))
+    F_FMSY[,OM,,,] <- aperm(MSEobj@F_FMSY,c(2,3,1,4))
+    print(paste(OM,"/",nOMs,"MSE objects (OMs)"))
+
+  }
+
+  #})
+
+  #OMcheck<-c(paste0("OMs",1:48),paste0("ROMs",1:44))
+  #if(sum(MSEnames%in%OMcheck)!=nOMs){
+   # message("The names of the MSE objects should correspond with the reference OMs and robustness OMs in the ABTMSE package. Currently they do not match:")
+    #diag<-data.frame(Needed = OMcheck, Available = MSEnames%in%OMcheck)
+    #print(diag)
+    #return(diag)
+  #}
+
+  if(any(is.na(MET))){
+    message("Warning: there are NA values in the summary performance metrics")
+  }
+
+  # performance metrics descriptions
+  Rd2list <- function(Rd){
+    names(Rd) <- substring(sapply(Rd, attr, "Rd_tag"),2);
+    temp_args <- Rd$arguments;
+
+    Rd$arguments <- NULL;
+    myrd <- lapply(Rd, unlist);
+    myrd <- lapply(myrd, paste, collapse="");
+
+    temp_args <- temp_args[sapply(temp_args , attr, "Rd_tag") == "\\item"];
+    temp_args <- lapply(temp_args, lapply, paste, collapse="");
+    temp_args <- lapply(temp_args, "names<-", c("arg", "description"));
+    myrd$arguments <- temp_args;
+    return(myrd);
+  }
+
+  getHelpList <- function(...){
+    thefile <- help(...)
+    myrd <- utils:::.getHelpFile(thefile);
+    Rd2list(myrd);
+  }
+
+  pdesc<-rep(NA,length(pnames))
+  for(pp in 1:length(pnames)){
+    x <- getHelpList(pnames[pp])
+    pdesc[pp]<-strsplit(strsplit(x$description,"\n")[[1]][2],' \\(a')[[1]][1]
+  }
+
+  #getROMnam<-function(x)get(x)@Name
+  #ROMcode<- sapply(paste0("ROM_",1:44,"d"),getROMnam)# run a get of the ROM@names c(paste0("Sen_",c(55,56,58,59)),paste0("WGr_",c(55,56,58,59)),paste0("BrC_",c(55,56,58,59)))
+  ROMlevs<-c("WstGw","Qinc","CatOver","HiWmix","BrzCt","TVmix","NLindex","PChgMix","TVregime","IntPar","ZeroEmix")
+  ROMcode<-paste(rep(ROMlevs,each=4),rep(c(1:4),length(ROMlevs)),sep="_")
+
+  if(is.null(CMPcode)|length(CMPcode)!=(nMPs-1)){
+    MPnames<-unlist(lapply(MSEobj@MPs,FUN=function(X)paste0(unlist(X),collapse="-")))
+  }else{
+    MPnames<-c("ZeroC",CMPcode)
+  }
+
+
+  return(list(MET=MET, dynSSB0=dynSSB0, dynSSBMSY = dynSSBMSY,
+              R0 = R0, SSB0 = SSB0,
+              Rec = Rec, CW = CW, CWa = CWa,
+              B_BMSY = B_BMSY, F_FMSY = F_FMSY,
+              name=name, CMPdesc=c("Zero catches",CMPdesc), pdesc=pdesc, ROMcode = ROMcode,
+              pnames=pnames, MPnames=MPnames,
+              OMnames=c(as.character(1:48),paste0("R",1:44)),
+              Design=Design))
+
+
+}
 
 
 
+
+#' Compile the performance results for a complete set of MSE runs (all reference and robustness operating models)
+#'
+#' @param ResList A list of results objects compiled by the function Results_compiler()
+Join_Results<-function(ResList){
+  Res<-ResList[[1]]
+  Res$name <- paste("Joined results including:", paste(unlist(lapply(ResList,function(x)x$name)),collapse=", "))
+
+  for(i in 2:length(ResList)){
+    print(paste0("-----",i,"------"))
+    ResT<-ResList[[i]]
+    MPind<-2:dim(ResT$MET)[4]
+    Res$MET<-abind(Res$MET,ResT$MET[,,,MPind,,drop=F],along=4)
+    Res$Rec<-abind(Res$Rec,ResT$Rec[,,,MPind,,drop=F],along=4)
+    Res$CW<-abind(Res$CW,ResT$CW[,,,MPind,,drop=F],along=4)
+    Res$CWa<-abind(Res$CWa,ResT$CWa[,,,MPind,,drop=F],along=4)
+    Res$B_BMSY<-abind(Res$B_BMSY,ResT$B_BMSY[,,,MPind,,drop=F],along=4)
+    Res$F_FMSY<-abind(Res$F_FMSY,ResT$F_FMSY[,,,MPind,,drop=F],along=4)
+    Res$CMPdesc<-c(unlist(Res$CMPdesc),unlist(ResT$CMPdesc[MPind]))
+    Res$MPnames<-c(Res$MPnames,ResT$MPnames[MPind])
+    print(ResT$CMPdesc)
+  }
+
+  for(i in 1:length(Res$MPnames))Res$MPnames[i]<-substr(Res$MPnames[i],1,12)
+  #for(i in 1:length(Res$CMPdesc))Res$CMPdesc[i]<-substr(Res$CMPdesc[i],1,12)
+  names(Res$MPnames)<-rep(NULL,length(Res$MPnames)) # get rid of any vector labels
+  Res
+}
+
+#' Compile the performance results for a complete set of MSE runs (all reference and robustness operating models)
+#'
+#' @param ResAll A compiled results object created by Results_compiler() or Join_Results()
+#' @param ind A vector as long as the MPs (e.g. length(ResAll$MPnames)) or an integer vector (indicating the MPs to keep)
+Sub_Results<-function(ResAll,ind){
+  ResNew<-ResAll
+  ResNew$MET <- ResAll$MET[,,,ind,]
+  ResNew$Rec <- ResAll$Rec[,,,ind,]
+  ResNew$CW <- ResAll$CW[,,,ind,]
+  ResNew$CWa <- ResAll$CWa[,,,ind,]
+  ResNew$B_BMSY <- ResAll$B_BMSY[,,,ind,]
+  ResNew$F_FMSY <- ResAll$F_FMSY[,,,ind,]
+  ResNew$CMPdesc <- ResAll$CMPdesc[ind]
+  ResNew$MPnames <- ResAll$MPnames[ind]
+  ResNew
+}
+
+#' Get Br30 results accounting for OM weights
+#'
+#' @param MSElist A list of the deterministic reference set MSE objects
+#' @param q The percentile of the weighted distribution
+Br30_Wt<-function(MSElist,q=0.5){
+
+  dims<-dim(MSElist[[1]]@SSB)
+  nOMs<-length(MSElist)
+  nMPs<-dims[1]
+
+  getEB<-function(X)Br30(X,1)[,1]
+  getWB<-function(X)Br30(X,2)[,1]
+
+  EBa<-matrix(unlist(lapply(MSElist,getEB)),ncol=nOMs)
+  WBa<-matrix(unlist(lapply(MSElist,getWB)),ncol=nOMs)
+
+  E_Br30<-apply(EBa,1,wtd.quantile,q=q,weight=OM_wt[1:nOMs])
+  W_Br30<-apply(WBa,1,wtd.quantile,q=q,weight=OM_wt[1:nOMs])
+
+  dat<-data.frame(Western=W_Br30,Eastern=E_Br30)
+  row.names(dat)<-unlist(lapply(MSElist[[1]]@MPs,function(X)X[1]))
+  dat
+
+}
 
 

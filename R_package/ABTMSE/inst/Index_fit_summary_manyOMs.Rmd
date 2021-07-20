@@ -228,7 +228,7 @@ for(i in 1:n_ind){
   labs<-c("Min AC","Max AC","Min SD","Max SD")
   
   par(mai=c(0.3,0.15,0.25,0.01),omi=c(0.3,0.3,1.2,0.05))
-  layout(t(matrix(c(rep(c(1,2),each=4),rep(c(3,4,5,6),each=2),6+(1:nOMs)),nrow=8)))
+  layout(t(matrix(c(rep(c(1,2),each=4),rep(c(3,4,5,6),each=2),6+(1:nOMs),rep(7+nOMs,1000)),nrow=8,ncol=ceiling((nOMs+16)/8))))
   cols<-c('green','orange','green','orange')
   
   hist(acs,breaks=10,col='grey',border='white',main="Lag-1 autocorrelation (all OMs)")
@@ -284,7 +284,7 @@ Table 1. Standard deviation in log residuals
   
   dropspace<-function(x,y)paste0(strsplit(y[x]," ")[[1]],collapse="")
   replacewspace<-function(x,y)paste0(strsplit(y[x],"_")[[1]],collapse=" ")
-  colnams<-c("OM","R","P","M","S","L",sapply(1:n_ind,replacewspace,y=Ilabs))
+  colnams<-c("OM","R","P","S","L",sapply(1:n_ind,replacewspace,y=Ilabs))
   DTab<-as.data.frame(round(statmat[,,coly],roundy))
   
   breakdown<-sapply(1:nOMs,function(x,y)strsplit(y[x]," ")[[1]],y=OMnames)
@@ -294,9 +294,8 @@ Table 1. Standard deviation in log residuals
   names(DTab)<-colnams
   divs<-quantile(statmat[,,1],c(0.33,0.66))
   
-  
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -305,7 +304,7 @@ Table 1. Standard deviation in log residuals
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   )
   
@@ -339,7 +338,7 @@ Table 2. Standard error in log residuals (St.Dev/(n)^0.5)
   divs<-quantile(stat,c(0.33,0.66))
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -348,7 +347,7 @@ Table 2. Standard error in log residuals (St.Dev/(n)^0.5)
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   )
 
@@ -372,7 +371,7 @@ Table 3. Lag-1 autocorrelation in log residuals
   divs<-c(-0.2,0.2,0.5)
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('white','lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -381,7 +380,7 @@ Table 3. Lag-1 autocorrelation in log residuals
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('white','lightgreen', 'yellow','orange'))
   )
   
@@ -412,7 +411,7 @@ Table 4. Proportion crosses (crosses / (n-1))
   divs<-quantile(statmat[,,coly],c(0.33,0.66))
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -421,7 +420,7 @@ Table 4. Proportion crosses (crosses / (n-1))
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
   )
 
@@ -451,7 +450,7 @@ Table 5. Runs statistic (p-value)
   divs<-c(0.05,0.1)
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -460,7 +459,7 @@ Table 5. Runs statistic (p-value)
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('orange', 'yellow','lightgreen'))
   )
 
@@ -491,7 +490,7 @@ Table 6. Maximum run (positive or negative residuals) in last 10 years
   divs<-quantile(statmat[,,coly],c(0.33,0.66))
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -500,7 +499,7 @@ Table 6. Maximum run (positive or negative residuals) in last 10 years
   mutab<-cbind(" "," "," "," "," "," ",round(mus,roundy))
   names(mutab)<-colnams
   datatable(mutab,rownames = FALSE,options=list(dom = 't',pageLength=1)) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   )
   
@@ -577,6 +576,7 @@ Table 7b. As Table 7a but for the East area indices.
   formatStyle(labs[ord[4]], backgroundColor = styleInterval(divslist[[ord[4]]], colslist[[ord[4]]]))
 
 ```
+
 ```{r ind_remindE, fig.width=10, fig.height=4.5,echo=FALSE,warning=F,error=F,message=F}
 
  inds<-match(row.names(mutabE),Ilabs)
@@ -649,7 +649,7 @@ Table 9a. The 25th percentile of the sampled St.Dev by index and operating model
   divs<-quantile(dats,p=c(0.33,0.66))
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 
@@ -670,7 +670,7 @@ Table 9b. The 75th percentile of the sampled St.Dev by index and operating model
   divs<-quantile(dats2,p=c(0.33,0.66))
   
   datatable(DTab,rownames = FALSE,options=list(dom = 'Bt',pageLength=100,buttons = c('csv', 'excel'))) %>% 
-  formatStyle(colnams[6+(1:n_ind)],
+  formatStyle(colnams[5+(1:n_ind)],
      backgroundColor = styleInterval(divs, c('lightgreen', 'yellow','orange'))
   ) %>% 
   formatStyle(columns = 1:length(colnams), width='10px',scrollX=TRUE) 

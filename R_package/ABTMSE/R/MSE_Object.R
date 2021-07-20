@@ -127,6 +127,7 @@ setClass("MSE",representation(
   C="array",
   CW="array",
   CWa="array",
+  CN="array",
   BB="array",
   BBa="array",
   D="array",
@@ -170,14 +171,19 @@ setClass("MSE",representation(
 
 ))
 
-setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=list(c("U5","U5")),interval=2,IE="Umax_90",
-                                        TAC2015=c(16142000,2000000),TAC2016=c(19296000,1912000),TAC2017=c(23155000,2000000),
-                                        TAC2018=c(28200000,2350000),TAC2019=c(32240000,2350000),TAC2020=c(36000000,2350000),
+setMethod("initialize", "MSE", function(.Object,OM=OM_example,MPs=list(c("U5","U5")),
+                                        TAC2019=c(32240000,2350000),TAC2020=c(36000000,2179000),
+                                        TAC2021=c(36000000,2350000),TAC2022=c(36000000,2350000),
                                         Allocation=ABTMSE:::Allocation,MPareas=NA,Fdistyrs=3,maxTAC=c(10,10),MSEparallel=F,
-                                        Deterministic=FALSE,check=FALSE,Reallocate=FALSE){
+                                        check=FALSE,Reallocate=TRUE){
 
   # .Object}); .Object<-new('MSE');
   .Object@Snames<-OM@Snames
+
+  IE<-OM@IE
+  Obs<-get(OM@Obs)
+  interval=OM@interval
+  Deterministic=OM@Deterministic
 
   # Auto-correlation in recrutiment deviations is currently disabled
   set.seed(OM@seed)
@@ -198,7 +204,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     stop()
   }
 
-  MPs<-append(list(c("ZeroC","ZeroC")),MPs) # make sure a zeroC reference MP is included
+  MPsa<-append(list(c("ZeroC","ZeroC")),MPs) # make sure a zeroC reference MP is included
+
+
+
 
   # copy over dimensions ------
   dimslots<-slotNames(OM)[1:18]
@@ -229,7 +238,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   nareas<-OM@nareas
   nfleets<-OM@nfleets
   allyears<-nyears+proyears
-  nMPs<-length(MPs)
+  nMPs<-length(MPsa)
   .Object@nMPs<-nMPs
   nlen<-OM@nlen
   lenbins<-OM@lenbins
@@ -400,14 +409,18 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@Reccv<-Reccv
   .Object@AC<-AC
 
-  Pe<-Pe_UC<-array(NA,c(nsim,npop,allyears))
-  Pe_UC[,,nyears]<-Pe[,,nyears]<-log(OM@Recdevs[,,nyears]) # !!! we are assuming that the 2-block final residual is equivalent to the annual residual
+  Pe<-array(NA,c(nsim,npop,allyears))
+  Pe[,,nyears]<-log(OM@Recdevs[,,nyears]) # !!! we are assuming that the 2-block final residual is equivalent to the annual residual
   for(s in 1:nsim){
     for(pp in 1:2){
       for(y in (nyears+1):allyears){
         SR<-OM@Recind[pp,y-nyears] # has to be able to deal with AC and SD switching!
-        Pe_UC[s,pp,y]<-lndev(1,Reccv[s,SR]) # uncorrelated log normal deviation
-        Pe[s,pp,y]<-apply_AC1_vec(Pe_UC[s,pp,(y-1):y],AC[s,SR])[2] #
+        #Pe_UC[s,pp,y]<-lndev(1,Reccv[s,SR]) # uncorrelated log normal deviation (currently now just for monitoring)
+        #Pe[s,pp,y]<-apply_AC1_vec(Pe_UC[s,pp,(y-1):y],AC[s,SR])[2] #
+        autocor <- AC[s,SR]
+        #if(SR!=SRprevious){ autocor <- 0 ; SRprevious <- SR }  ### If there is a regime shift in Rec, you may also want to break the autocorrelation between the Rec residuals at that point; if you don't want to break the autocorrelation in Rec  residuals, then don't include this line
+        Pe[s,pp,y] <- autocor*Pe[s,pp,y-1] + ((1-autocor^2)^0.5)* rnorm_T95(n=1, mean=0, sd=Reccv[s,SR]) - (1-autocor)* (Reccv[s,SR]^2)/2
+
       }
     }
   }
@@ -499,7 +512,6 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           SSB0=OM@hR0[,pp,1]*SSBpR[,pp]    #// Unfished Spawning Stock Biomass
           R0=OM@hR0[,pp,1]
-
 
           if(OM@hRectype[pp,1]=="BH"){
 
@@ -685,7 +697,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     lastobs[i]<-max(yrs) # record last year of observations
     histyrs[[i]]<-yrs[yrs<=nyears] # index years for conditioning
     histyrs[[i]]<-histyrs[[i]][!is.na(Ires[sid[i],histyrs[[i]]])]# needed due to the GOM_LAR_SUV that only uses residuals for last 5 years
-    resyrs[[i]]<-yrs[yrs>nyears] # years for which new residuals need to be calcualted
+    resyrs[[i]]<-yrs[yrs>nyears] # years for which new residuals need to be calculated
     Isim[,i,histyrs[[i]],2]<-rep(Ires[sid[i],histyrs[[i]]],each=nsim) # copy and fixed residuals (estimated)
 
     if(VB_index[i]){ #need to look up fleet selectivity
@@ -866,7 +878,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     .Object@BB<-BB
     .Object@Ftb<-F_mu
     return(.Object)
-  }
+  } # end of check
 
   SSB0=array(OM@hR0[,,1],dim(surv))*apply(surv*Wt_age[,,,1]*mat[,,,1],1,sum)     #// Unfished Spawning Stock Biomass
 
@@ -891,7 +903,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@Cb<-rep(Obs@Cbias,nsim)#trlnorm(nsim,1,Obs@Cbcv)
 
   .Object@Cerr<-array(trlnorm(nsim*allyears,rep(.Object@Cb,allyears),rep(.Object@Cimp,allyears)),c(nsim,allyears))
-  .Object@Cerr[,nyears+(1:MPlag)]<-1 # TACs from 2017-2020 for example, are known perfectly
+  .Object@Cerr[,nyears+(1:MPlag)]<-1 # TACs from 2017-2021 for example, are known perfectly
 
   .Object@Iimp<-runif(nsim,Obs@Icv[1],Obs@Icv[2])
   .Object@Ierr<-array(trlnorm(nsim*allyears,1,rep(.Object@Iimp,allyears)),c(nsim,allyears))
@@ -917,6 +929,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@C<-array(NA,c(nMPs,nsim,npop,allyears))
   .Object@CW<-array(NA,c(nMPs,nsim,npop,allyears))
   .Object@CWa<-array(NA,c(nMPs,nsim,2,allyears))
+  .Object@CN<-array(NA,c(nMPs,nsim,npop,nareas,allyears)) #s p r y
   .Object@B_BMSY<-array(NA,c(nMPs,nsim,npop,allyears))
   .Object@F_FMSY<-array(NA,c(nMPs,nsim,npop,allyears))
   .Object@D<-array(NA,c(nMPs,nsim,npop,allyears))
@@ -967,7 +980,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                   "DD_i4_4010","CDD_i4","SPslope","DD",
                   "DD_R","CDD","Fadapt","MeanC","tiny"),  namespace="ABTMSE")
 
-  upyrs<-(nyears+MPlag+1)+(0:(floor((OM@proyears-2)/interval)-1))*interval  # the years in which there are updates (every three years)
+  upyrs<-(nyears+MPlag)+(0:(floor((OM@proyears-2)/interval)-1))*interval  # the years in which there are updates (every interval years)
 
   CAdist<-array(NA,c(nsim,npop,nareas,nfleets,nages))
 
@@ -1022,6 +1035,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   TACdist_adj<-1/apply(TACdist,c(1,5),sum) # summa
   TACdist[testCind]<-TACdist[testCind]*TACdist_adj[testCind[,c(1,5)]]
 
+  MPdset<-new('list') # dataset by MP
   dset<-new('list')
 
   # Preallocated arrays
@@ -1029,35 +1043,40 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
    Itemp<-array(NA,c(nsim,nind,allyears,nareas))
   .Object@TAC<-array(NA,c(nsim,nMPs,nAss,proyears+2))
   .Object@TACtaken<-array(NA,c(nsim,nMPs,nAss,proyears+2))
-  .Object@TAC[,,,1]<-rep(TAC2016,each=nsim*nMPs)
-  .Object@TAC[,,,2]<-rep(TAC2017,each=nsim*nMPs)
-  .Object@TAC[,,,3]<-rep(TAC2018,each=nsim*nMPs)
-  .Object@TAC[,,,4]<-rep(TAC2019,each=nsim*nMPs)
+  .Object@TAC[,,,1]<-rep(TAC2019,each=nsim*nMPs)
+  .Object@TAC[,,,2]<-rep(TAC2020,each=nsim*nMPs)
+  .Object@TAC[,,,3]<-rep(TAC2021,each=nsim*nMPs)
+  .Object@TAC[,,,4]<-rep(TAC2022,each=nsim*nMPs) # MP lag =4
+
+
   .Object@Fleet_comp<-array(NA,c(nsim,nMPs,nfleets,allyears,nages))
   .Object@Fleet_cat<-array(NA,c(nsim,nMPs,nfleets,allyears))
 
+
+  # =========================================================================================================================================================================
+
+  # =========================================================================================================================================================================
+
   for(MP in 1:nMPs){
 
-    cat(paste0(paste0(MP,"/",nMPs," Running MSE for: "),paste0(MPs[[MP]]," (",.Object@Snames,")",collapse="  ")))  # print a progress report
+    cat(paste0(paste0(MP,"/",nMPs," Running MSE for: "),paste0(MPsa[[MP]]," (",.Object@Snames,")",collapse="  ")))  # print a progress report
     cat("\n")
     flush.console()                                                  # update the console
 
     for(y in nyears:(nyears+proyears)){ # for(y in nyears:(upyrs[1]-1)){
 
-      # y<-y+1
-      if(y==nyears){ # 2016 # 52
-        TAC<-TACtrial<-array(rep(TAC2016,each=nsim),c(nsim,nAss))
-      } else if (y==nyears+1){ # 2017 # 53
-        TAC<-TACtrial<-array(rep(TAC2017,each=nsim),c(nsim,nAss))
-      } else if (y==nyears+2){ # 2018 # 54
-        TAC<-TACtrial<-array(rep(TAC2018,each=nsim),c(nsim,nAss))
-      } else if(y==nyears+3){ # 2019 # 55
+      # y<-y+1; print(y)
+      if(y==nyears){           # 2019 # 55
         TAC<-TACtrial<-array(rep(TAC2019,each=nsim),c(nsim,nAss))
-      } else if(y==y+4){ # 2020 # 56
+      } else if (y==nyears+1){ # 2020 # 56
         TAC<-TACtrial<-array(rep(TAC2020,each=nsim),c(nsim,nAss))
+      } else if (y==nyears+2){ # 2021 # 57
+        TAC<-TACtrial<-array(rep(TAC2021,each=nsim),c(nsim,nAss))
+      } else if (y==nyears+3){ # 2022 # 58
+        TAC<-TACtrial<-array(rep(TAC2022,each=nsim),c(nsim,nAss))
       }
 
-      if(y>=nyears & y<=nyears+4){
+      if(y>=nyears & y<nyears+MPlag){
         testC[testCind]<-TAC[testCind[,c(1,5)]]*TACdist[testCind] # predicted catch by TAC
         aggC<-apply(testC,1:4,sum)
         #TESTS: all.equal(apply(testC,c(1,5),sum),TAC); apply(testC[1,,,,],c(2,4),sum)
@@ -1071,22 +1090,23 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           for(i in 1:nind){
 
-            Isim[,i,nyears+(1:proyears),2]<-rnorm(proyears*nsim,0, as.numeric(Istats[sid[i],3]))#lndev(proyears*nsim,as.numeric(Istats[sid[i],3]))         # matplot(t(Isim[,i,,2]),type='l')
-            Isim[,i,resyrs[[i]],2]<-log(Isim[,i,resyrs[[i]],1])-log(VBi[,resyrs[[i]],i]*newq[i]) # matplot(t(Isim[,i,,2]),type='l')
-            Isim[,i,max(resyrs[[i]]):(nyears+proyears),2]<- apply_AC1(Isim[,i,max(resyrs[[i]]):(nyears+proyears),2],as.numeric(Istats[sid[i],4]))           # matplot(t(Isim[,i,,2]),type='l')
-
+            Isim[,i,nyears+(1:proyears),2]<-rnorm_T95(proyears*nsim,0, as.numeric(Istats[sid[i],3]))#lndev(proyears*nsim,as.numeric(Istats[sid[i],3]))         # matplot(t(Isim[,i,,2]),type='l')
+            if(length(resyrs[[i]])>0){
+              Isim[,i,resyrs[[i]],2]<-log(Isim[,i,resyrs[[i]],1])-log(VBi[,resyrs[[i]],i]*newq[i]) # matplot(t(Isim[,i,,2]),type='l')
+              Isim[,i,max(resyrs[[i]]):(nyears+proyears),2]<- apply_AC1(Isim[,i,max(resyrs[[i]]):(nyears+proyears),2],as.numeric(Istats[sid[i],4]))           # matplot(t(Isim[,i,,2]),type='l')
+            }
           }
         }
 
-
+        qmult=(1+OM@qinc/100)^(1:(y-nyears-1)) # accounting for q increases or decreases begining after nyears
         Iobs<-array(0,c(nsim,nind,y-1))
         Iobs[,,1:nyears]<-Isim[,,1:nyears,1] # real observations
         iInd<-as.matrix(expand.grid(1:nsim,1:nind,(nyears+1):(y-1),2)) # updates
-        Iobs[iInd[,c(1,2,3)]]<-exp(log(VBi[iInd[,c(1,3,2)]]*newq[iInd[,2]])+Isim[cbind(iInd[,1:3],rep(2,nrow(iInd)))])
+        Iobs[iInd[,c(1,2,3)]]<-exp(log(VBi[iInd[,c(1,3,2)]]*newq[iInd[,2]])+Isim[cbind(iInd[,1:3],rep(2,nrow(iInd)))])*rep(qmult,each=nsim*nind)
 
         # if additional data are required
-        if(y==nyears+MPlag+1){
-          nuy<-nyears:(y-MPlag)
+        if(y==nyears+MPlag){
+          nuy<-nyears+1
         }else{
           nuy<-(upyrs[match(y,upyrs)-1]):(y-1)
         }
@@ -1100,7 +1120,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
           Cobs[,1:nyears]<-Cobs_hist[,AS,] # copy over all catch before projection
           upind<-(nyears+1):(y-3) # copy over all catch since projection
 
-          if(length(upind>0)){
+          if(length(upind)>0){
             Cobs[,upind]<-apply(array(C[,,,upind,,AA,],c(nsim,npop,nages,length(upind),nsubyears,nA,nfleets))*array(Wt_age[,,,nyears],c(nsim,npop,nages,length(upind),nsubyears,nA,nfleets)),c(1,4),sum,na.rm=T)*.Object@Cerr[,upind]
           }
 
@@ -1116,12 +1136,18 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
                            "ageM"=OM@ageM[,AS]*.Object@ageMb,
                            "Mat"=OM@mat[,AS,,nyears],
                            "Bt_PI"=apply(N[,,,y-1,nsubyears,AA]*
-                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA)),1,sum),
+                                        array(Wt_age[,,,nyears],c(nsim,npop,nages,nA)),1,sum,na.rm=T),
+                           "Bty_PI"=apply(N[,,,1:(y-1),nsubyears,AA]*
+                                           array(Wt_age[,,,nyears],c(nsim,npop,nages,y-1,nA)),c(1,4),sum,na.rm=T),
+                           "VBty_PI"=apply(N[,,4:nages,1:(y-1),nsubyears,AA]*
+                                           array(Wt_age[,,4:nages,nyears],c(nsim,npop,nages-3,y-1,nA)),c(1,4),sum,na.rm=T),
                            "MPrec"=TAC[,AS],
                            "TAC"=matrix(.Object@TAC[,MP,AS,1:(y-nyears)],ncol=(y-nyears),nrow=nsim),
                            "curTAC"=rep(TAC2020[AS],nsim)
                            )
-        }
+        } # end of assessment area
+
+        TACtrial<-array(NA,c(nsim,nAss))
 
         for(AS in 1:nAss){
           #SPAYMRF
@@ -1129,21 +1155,21 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
 
           assign("dset",dset,envir=globalenv()) # debugging
           if(sfIsRunning())sfExport("dset")
-          if(class(get(MPs[[MP]][AS]))=="MP"){
+          if(class(get(MPsa[[MP]][AS]))=="MP"){
             if(sfIsRunning()&!MSEparallel){
-              TACtrial[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
+              TACtrial[,AS]<-sfSapply(1:nsim,get(MPsa[[MP]][AS]),dset[[AS]])
             }else{
-              TACtrial[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset[[AS]])
+              TACtrial[,AS]<-sapply(1:nsim,get(MPsa[[MP]][AS]),dset[[AS]])
             }
-          }else if(class(get(MPs[[MP]][AS]))=="MSMP"){
+          }else if(class(get(MPsa[[MP]][AS]))=="MSMP"){
             if(sfIsRunning()&!MSEparallel){
-              TACtrial[,AS]<-sfSapply(1:nsim,get(MPs[[MP]][AS]),dset,AS=AS)
+              TACtrial[,AS]<-sfSapply(1:nsim,get(MPsa[[MP]][AS]),dset,AS=AS)
             }else{
-              TACtrial[,AS]<-sapply(1:nsim,get(MPs[[MP]][AS]),dset,AS=AS)
+              TACtrial[,AS]<-sapply(1:nsim,get(MPsa[[MP]][AS]),dset,AS=AS)
             }
           }
 
-          if(MPs[[MP]][AS]!="ZeroC"){
+          if(MPsa[[MP]][AS]!="ZeroC"){
             TACmax=(1+maxTAC[AS])*TAC[,AS]
             TACmin=(max(0.01,1-maxTAC[AS]))*TAC[,AS]
             cond=TACtrial[,AS]<TACmin
@@ -1162,9 +1188,9 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
         # round(apply(aggC,3,sum)/sum(aggC)*100,1)
         # apply(aggC,1,sum)==apply(TAC,1,sum) # simulation totals match?
 
-      }else{
+      }else{ # if !(y%in$upyrs)
 
-        if(y>(nyears+3)).Object@TAC[,MP,,y-nyears+1]<-.Object@TAC[,MP,,y-nyears] # TAC for next year
+        if(y>(nyears+MPlag)).Object@TAC[,MP,,y-nyears+1]<-.Object@TAC[,MP,,y-nyears] # TAC for next year
 
       } # end of upyrs
 
@@ -1350,6 +1376,8 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     rm(SSBmu)
 
     Ctemp<-apply(C[,,,1:allyears,,,]*array(Wt_age[,,,nyears],dim(C[,,,1:allyears,,,])),c(1,2,4,6),sum) # s p y a
+
+    .Object@CN[MP,,,,]<-apply(C[,,,1:allyears,,,],c(1,2,6,4),sum)  # PM s p r y
     .Object@CW[MP,,,]<-apply(Ctemp,1:3,sum) # s p y
     for(aa in 1:2){
       #.Object@CWa[MP,,aa,1:nHyears]=rep(apply(HCobs[,,,MPareas==aa],1,sum),each=nsim)
@@ -1379,8 +1407,10 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
     .Object@Iobs[MP,,,1:dim(Iobs)[3]]<-Iobs # this can be irregular in year length due to upyrs
 
     cat("\n")
-
+    MPdset[[MP]]<-dset # dataset by MP
   } # end of MP
+
+  assign("MPdset",MPdset,envir=globalenv()) # debugging
 
   #.Object@SSB0<-apply(array(OM@Recpars[,OM@Recind[,1],2],dim(surv))*surv*Wt_age[,,,nyears]*mat[,,,nyears],1:2,sum)
   .Object@SSB0<-.Object@SSBMSY/.Object@SSBMSY_SSB0
@@ -1392,7 +1422,7 @@ setMethod("initialize", "MSE", function(.Object,OM=OM_example,Obs=Good_Obs,MPs=l
   .Object@Rec_mu<-Rec_mu
   .Object@Rec_err<-Rec_err
 
-  .Object@MPs<-MPs
+  .Object@MPs<-MPsa
   .Object@area_defs<-OM@area_defs
   .Object@areanams<-OM@areanams
   invisible(gc()) # garbage collection is automatic in R, I'm doing this mannual to test memory requirements for computers with less RAM

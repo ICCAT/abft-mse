@@ -38,9 +38,6 @@
 \item{BMSYbcv}{a 2 item vector specifying the maximum extend of bias in simulated BMSY (a target biomass level) as a lognormal sd}
 \item{MPind}{a data frame containing the indices that may be used by MPs in closed loop simulation [year, index number, index name, index, CV, stock, type (1: vulnerable biomass, 2: ssb), source, applies to model areas]}
 \item{MPind_stats}{a list containing the statistical properties of model fits (currently unused)}
-\item{SD_override}{a data frame containing a list of names indices and user specified standard deviations}
-\item{AC_override}{a data frame containing a list of names indices and user specified lag-1 autocorrelation values}
-\item{Yrs_override}{a data frame containing a list of names indices and user specified year ranges for calculating statistical properties}
 \item{MinAC}{a minimum value for index lag-1 autocorrelation in residuals}
 }
 }
