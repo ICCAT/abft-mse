@@ -329,6 +329,7 @@ OFT<-function(MSE,pp=1){
   Brs[ind]<-SSB[ind]/dynB0[ind[,c(2,3)]]
   out<-apply(Brs[,,2:6],1:2,slp3)
   out[Brs[,,1]>1]<-0.1
+  out[out>0]<-0.1
   out
 
 }

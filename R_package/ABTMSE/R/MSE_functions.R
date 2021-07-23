@@ -63,7 +63,7 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
     AvgBra<-AvgBr(MSE,pp)
     Br30a<-Br30(MSE,pp)
 
-    PGTa<-PGT(MSE,pp)
+    OFTa<-OFT(MSE,pp)
 
     if(!quantile){
     out[[pp]]<-data.frame("AvC10"=apply(AvC10a,1,quantile,p),
@@ -88,7 +88,7 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
                           "AAVC"=apply(AAVCa,1,quantile,p),
                           "AvgBr"=apply(AvgBra,1,quantile,p),
                           "Br30"=apply(Br30a,1,quantile,p),
-                          "PGT"=apply(PGTa,1,quantile,p),
+                          "OFT"=apply(OFTa,1,quantile,p),
                           row.names=MPnams)
     }else{
       ptext<-c(p[1]*100,"Med",p[3]*100)
@@ -117,7 +117,7 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
                            t(apply(AAVCa,1,quantile,p)),
                             t(apply(AvgBra,1,quantile,p)),
                               t(apply(Br30a,1,quantile,p)),
-                              t(apply(PGTa,1,quantile,p)))
+                              t(apply(OFTa,1,quantile,p)))
 
      out[[pp]]<-as.data.frame(dat,row.names=MPnams,names=pnams)
      names(out[[pp]])<-pnams
