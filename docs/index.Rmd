@@ -1,0 +1,99 @@
+---
+title: "Atlantic Bluefin Tuna MSE"
+author: "Tom Carruthers <tom@bluematterscience.com>"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: html_document
+---
+
+![](img/Bluefin-big.jpg)
+
+<style>
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+  .col4 {
+    columns: 4 100px;
+    -webkit-columns: 4 100px;
+    -moz-columns: 4 100px;
+  }
+</style>
+
+```{r setup, include=FALSE}
+library(dplyr)
+knitr::opts_chunk$set(echo = FALSE)
+
+
+```
+
+
+## ABTMSE Documentation 
+<div class="col2">
+
+[Trial Specifications Doc (.docx)](TS/TSD.docx)
+
+[Trial Specifications Doc (.pdf)](TS/TSD.pdf)
+
+
+[CMP Development Guide (.html)](cMPdevelopment/CMP-Developers-Guide.html)
+
+
+</div>
+
+## Shiny App
+
+<div class="col2">
+
+[Latest version](https://apps.bluematterscience.com/ABTMSE/)
+
+[Legacy (2020) version](https://apps.bluematterscience.com/ABTMSE_2020/)
+
+</div>
+
+
+## R package
+<div class="col2">
+
+[ABTSE R Package](https://drive.google.com/drive/folders/1ZR3IudYH8ABcweWO_hWbO1uhImFzFFPm?usp=sharing)
+
+</div>
+
+
+## OM Reports
+
+### Summary Reports
+
+<div class="col2">
+
+[Low length comp fit OM comparison (.html)](Reports/OM_Summary/New_Lcomp_L_summary.html)
+
+[High length comp fit OM comparison (.html)](Reports/OM_Summary/New_Lcomp_H_summary.html)
+
+
+</div>
+
+### Index Fit Report
+<div class="col2">
+
+[Low length comp fit index stats (.html)](Reports/OM_Summary/New_Lcomp_L_Index_Fit.html)
+
+[High length comp fit index stats (.html)](Reports/OM_Summary/New_Lcomp_H_Index_Fit.html)
+
+
+</div>
+
+### Individual OM Diagnostic Reports
+
+<div class="col2">
+
+[Reference Grid OM summary and individual reports](https://drive.google.com/drive/folders/1sp8yscoGExoLle5GlNs1vG40E6bjb0V2?usp=sharing)
+
+[Robustness Set OM OM summary and individual reports](https://drive.google.com/drive/folders/192oFZT1SuDL6gA27IHUM4KVLgLyiHnPP?usp=sharing)
+
+</div>
