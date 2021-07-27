@@ -33,7 +33,7 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
-## ABTMSE Documentation 
+## Documentation 
 <div class="col2">
 
 [Trial Specifications Doc (.docx)](TS/TSD.docx)
@@ -60,12 +60,12 @@ knitr::opts_chunk$set(echo = FALSE)
 ## R package
 <div class="col2">
 
-[ABTSE R Package](https://drive.google.com/drive/folders/1ZR3IudYH8ABcweWO_hWbO1uhImFzFFPm?usp=sharing)
+[ABTMSE R Package](https://drive.google.com/drive/folders/1ZR3IudYH8ABcweWO_hWbO1uhImFzFFPm?usp=sharing)
 
 </div>
 
 
-## OM Reports
+## Operating Model Reports
 
 ### Summary Reports
 
@@ -78,7 +78,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 </div>
 
-### Index Fit Report
+### Index Statistic Summary Reports
 <div class="col2">
 
 [Low length comp fit index stats (.html)](Reports/OM_Summary/New_Lcomp_L_Index_Fit.html)
@@ -97,3 +97,11 @@ knitr::opts_chunk$set(echo = FALSE)
 [Robustness Set OM OM summary and individual reports](https://drive.google.com/drive/folders/192oFZT1SuDL6gA27IHUM4KVLgLyiHnPP?usp=sharing)
 
 </div>
+
+## Meeting reports
+
+Coming soon!
+
+## Acknowledgements
+
+This work was carried out under the provision of the ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP), funded by the European Union, several ICCAT CPCs, the ICCAT Secretariat and by other entities (see: http://www.iccat.int/GBYP/en/Budget.htm). The contents of this paper do not necessarily reflect the point of view of ICCAT or other funders and in no ways anticipate ICCAT future policy in this area.
