@@ -32,6 +32,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```
 
+***
 
 ## Documentation 
 <div class="col2">
@@ -41,10 +42,12 @@ knitr::opts_chunk$set(echo = FALSE)
 [Trial Specifications Doc (.pdf)](TS/TSD.pdf)
 
 
-[CMP Development Guide (.html)](cMPdevelopment/CMP-Developers-Guide.html)
+[CMP Developers Guide (.html)](cMPdevelopment/CMP-Developers-Guide.html)
 
 
 </div>
+
+***
 
 ## Shiny App
 
@@ -56,6 +59,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 </div>
 
+***
 
 ## R package
 <div class="col2">
@@ -64,6 +68,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 </div>
 
+***
 
 ## Operating Model Reports
 
@@ -77,6 +82,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 
 </div>
+
+
 
 ### Index Statistic Summary Reports
 <div class="col2">
@@ -98,10 +105,23 @@ knitr::opts_chunk$set(echo = FALSE)
 
 </div>
 
+***
+
 ## Meeting reports
 
-Coming soon!
+[September 2020 Second Intersessional Meeting of the ICCAT ABT MSE technical group (ENG)](Reports/Meeting/2020_BFTMSETG_2_ENG.pdf)
+
+***
 
 ## Acknowledgements
 
-This work was carried out under the provision of the ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP), funded by the European Union, several ICCAT CPCs, the ICCAT Secretariat and by other entities (see: http://www.iccat.int/GBYP/en/Budget.htm). The contents of this paper do not necessarily reflect the point of view of ICCAT or other funders and in no ways anticipate ICCAT future policy in this area.
+This work was carried out under the provision of the ICCAT Atlantic Wide Research Programme for Bluefin Tuna (GBYP), funded by the European Union, several ICCAT CPCs, the ICCAT Secretariat and by other entities (see: http://www.iccat.int/GBYP/en/Budget.htm). The contents of these materials do not necessarily reflect the point of view of ICCAT or other funders and in no ways anticipate ICCAT future policy in this area.
+
+
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+
