@@ -113,8 +113,10 @@ knitr::opts_chunk$set(echo = FALSE)
 
 [April 2021 First Intersessional Meeting of the Bluefin Tuna Species Group (ENG)(.pdf)](Reports/Meeting/2021_BFT1_ENG.pdf)
 
+[September 2021 Second Intersessional Meeting of BFT SG inc. mathematical description of CMPs (ENG)(.pdf)](Reports/Meeting/2021_BFT2_ENG.pdf)
 
 ***
+
 
 ## Acknowledgements
 
