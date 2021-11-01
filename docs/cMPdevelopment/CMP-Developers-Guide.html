@@ -277,8 +277,8 @@ pre { /* Code block */
 }
 </style>
 <p><br></p>
-<div id="section" class="section level1" number="1">
-<h1><span class="header-section-number">1</span> </h1>
+<div id="updates-of-which-to-be-aware-for-version-7.4.x" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Updates of which to be aware for version 7.4.x</h1>
 <div id="stochastic-tuning-oms-weighted-br30-tuning" class="section level2" number="1.1">
 <h2><span class="header-section-number">1.1</span> Stochastic tuning OMs + weighted Br30 tuning</h2>
 <p>In order to undertake tuning to stochastic simulations for the reference grid, a grid of tuning OMs (e.g. OM_1t, OM_2t, …, OM_48t) has been developed that have only 4 stochastic simulations each and a unique random seed for each OM. Note that this approach does not perfectly match tuning in the full grid of stochastic OMs, but is much closer than the previous approach using the deterministic grid OMs.</p>
@@ -813,11 +813,11 @@ checkMSE &lt;- new(&#39;MSE&#39;, OM=OM_1d, check=T)
 #&gt;   Islp &lt;-slppar[1]
 #&gt;   TACstar*(1+lambda*Islp)
 #&gt; }
-#&gt; &lt;bytecode: 0x00000000372f9e60&gt;
+#&gt; &lt;bytecode: 0x0000000039579a20&gt;
 #&gt; &lt;environment: namespace:ABTMSE&gt;
  Islope1_i4
 #&gt; function(x,dset)Islope1(x,dset,ii=4)
-#&gt; &lt;bytecode: 0x00000000372ea480&gt;
+#&gt; &lt;bytecode: 0x0000000039568120&gt;
 #&gt; &lt;environment: namespace:ABTMSE&gt;
 #&gt; attr(,&quot;class&quot;)
 #&gt; [1] &quot;MP&quot;</code></pre>
@@ -1009,10 +1009,10 @@ SP_R&lt;-function(logparams, opty, C_hist, E_hist, rprior,ny,startD){   # simple
 <p>You may have noticed this is faster than the non parallel version by some margin:</p>
 <pre class="r"><code> system.time(sapply(1:nsim,SP_i4,dset_example_East))
 #&gt;    user  system elapsed 
-#&gt;    0.08    0.00    0.08
+#&gt;    0.07    0.01    0.08
  system.time(sfSapply(1:nsim,SP_i4,dset_example_East))
 #&gt;    user  system elapsed 
-#&gt;    0.02    0.00    0.02</code></pre>
+#&gt;    0.02    0.00    0.31</code></pre>
 <p>The more computationally intensive the CMP, the wider the performance margin between parallel and regular linear processing. It is for this reason that it may be worth going the extra step to make your CMP compatible with cluster computing by exporting any internal functions to the cluster.</p>
 </div>
 </div>
