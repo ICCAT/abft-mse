@@ -41,7 +41,8 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
     AvC10a<-AvC10(MSE,pp=pp)
     AvC30a<-AvC30(MSE,pp=pp)
-
+    
+    C1a<-C1(MSE,pp=pp)
     C10a<-C10(MSE,pp=pp)
     C20a<-C20(MSE,pp=pp)
     C30a<-C30(MSE,pp=pp)
@@ -56,6 +57,7 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
     POFa<-POF(MSE,pp=pp)
     POSa<-POS(MSE,pp=pp)
+    PNOSa<-PNOS(MSE,pp=pp)
     PGKa<-PGK(MSE,pp=pp)
 
     AAVCa<-AAVC(MSE,pp)
@@ -68,7 +70,8 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
     if(!quantile){
     out[[pp]]<-data.frame("AvC10"=apply(AvC10a,1,quantile,p),
                           "AvC30"=apply(AvC30a,1,quantile,p),
-
+                          
+                          "C1"=apply(C1a,1,quantile,p),
                           "C10"=apply(C10a,1,quantile,p),
                           "C20"=apply(C20a,1,quantile,p),
                           "C30"=apply(C30a,1,quantile,p),
@@ -83,6 +86,7 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
                           "POF"=apply(POFa,1,quantile,p),
                           "POS"=apply(POSa,1,quantile,p),
+                          "PNOS"=apply(PNOSa,1,quantile,p),
                           "PGK"=apply(PGKa,1,quantile,p),
 
                           "AAVC"=apply(AAVCa,1,quantile,p),
@@ -92,12 +96,13 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
                           row.names=MPnams)
     }else{
       ptext<-c(p[1]*100,"Med",p[3]*100)
-      metrics<-c("AvC30","C10","C20","C30","D10","D20","D30","LD","DNC","LDNC","POF","POS","PGK","AAVC","Br30")
+      metrics<-c("AvC30","C1","C10","C20","C30","D10","D20","D30","LD","DNC","LDNC","POF","POS","PNOS","PGK","AAVC","Br30")
       pnams<-paste(rep(metrics,each=3),rep(ptext,length(metrics)),sep="_")
      dat<-cbind(
 
        t(apply(AvC10a,1,quantile,p)),
        t(apply(AvC30a,1,quantile,p)),
+         t(apply(C1a,1,quantile,p)),
            t(apply(C10a,1,quantile,p)),
              t(apply(C20a,1,quantile,p)),
                t(apply(C30a,1,quantile,p)),
@@ -112,7 +117,8 @@ getperf<-function(MSE,rnd=3,outdir=NA,quantiles=c(0.05,0.95),quantile=F){
 
                              t(apply(POFa,1,quantile,p)),
                                t(apply(POSa,1,quantile,p)),
-                                 t(apply(PGKa,1,quantile,p)),
+                                 t(apply(PNOSa,1,quantile,p)),
+                                   t(apply(PGKa,1,quantile,p)),
 
                            t(apply(AAVCa,1,quantile,p)),
                             t(apply(AvgBra,1,quantile,p)),
@@ -619,7 +625,7 @@ Results_compiler<-function(dir=NULL,name=NULL, CMPdesc=NULL, CMPcode=NULL){
   MSEnames<-rep(NA,nOMs)
   perf<-getperf(MSEobj)
   pnames<-names(perf[[1]])
-  pnames<-pnames[!pnames%in%c("POF","PGK")]
+  #pnames<-pnames[!pnames%in%c("POF","PGK")]
   nmet<-length(pnames)
   nMPs<-MSEobj@nMPs
   nsim<-MSEobj@nsim
@@ -723,7 +729,7 @@ Results_compiler<-function(dir=NULL,name=NULL, CMPdesc=NULL, CMPcode=NULL){
               name=name, CMPdesc=c("Zero catches",CMPdesc), pdesc=pdesc, ROMcode = ROMcode,
               pnames=pnames, MPnames=MPnames,
               OMnames=c(as.character(1:48),paste0("R",1:44)),
-              Design=Design))
+              Design=Design, Version = packageVersion('ABTMSE'),Sys.time=Sys.time()))
 
 
 }
