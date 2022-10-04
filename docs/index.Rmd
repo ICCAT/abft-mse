@@ -121,11 +121,27 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Meeting reports
 
-[September 2020 Second Intersessional Meeting of the ICCAT ABT MSE technical group (ENG)(.pdf)](Reports/Meeting/2020_BFTMSETG_2_ENG.pdf)
+[September 2020 Second Intersessional Meeting of the ICCAT BFT MSE technical sub-group (ENG)(.pdf)](Reports/Meeting/2020_BFTMSETG_2_ENG.pdf)
 
-[April 2021 First Intersessional Meeting of the Bluefin Tuna Species Group (ENG)(.pdf)](Reports/Meeting/2021_BFT1_ENG.pdf)
+[April 2021 First Intersessional Meeting of BFT Species Group (ENG)(.pdf)](Reports/Meeting/2021_BFT1_ENG.pdf)
 
-[September 2021 Second Intersessional Meeting of BFT SG inc. mathematical description of CMPs (ENG)(.pdf)](Reports/Meeting/2021_BFT2_ENG.pdf)
+[September 2021 Second Intersessional Meeting of BFT Species Group (ENG)(.pdf)](Reports/Meeting/2021_BFT2_ENG.pdf)
+
+[November 2021 PA2 meeting  (ENG)(.pdf)](Reports/Meeting/2021_PA2Nov_ENG.pdf)
+
+[March 2022 PA2 meeting including BFT MSE  (ENG)(.pdf)](Reports/Meeting/2022_PA2Mar_ENG.pdf)
+
+[April 2022 BFT Data Preparatory meeting including MSE (ENG)(.pdf)](Reports/Meeting/2022_BFT_DP_ENG.pdf)
+
+[May 2022 First Intersessional Meeting of the ICCAT BFT MSE technical sub-group (ENG)(.pdf)](Reports/Meeting/2022_BFTMSE1_ENG.pdf)
+
+[May 2022 PA2 meeting on BFT MSE  (ENG)(.pdf)](Reports/Meeting/2022_PA2May_ENG.pdf)
+
+[July 2022 E-BFT Stock Assessment meeting including MSE (ENG)(.pdf)](Reports/Meeting/2022_EBFT_SA_ENG.pdf)
+
+[July 2022 PA2 meeting on BFT MSE  (ENG)(.pdf)](Reports/Meeting/2022_PA2Jul_ENG.pdf)
+
+[September 2022 Second Intersessional Meeting of the ICCAT BFT MSE technical sub-group (ENG)(.pdf)](Reports/Meeting/2022_BFTMSE2_ENG.pdf)
 
 ***
 
