@@ -49,6 +49,17 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ***
 
+## Candidate Management Procedure (CMP) Descriptions
+
+[Butterworth Rademeyer BR, SCRS/2022/154](CMP/SCRS_2022_154_Butterworth_Rademeyer.pdf)
+
+[Duprey Hanke FO, SCRS/2022/156](CMP/SCRS_2022_156_Duprey_Hanke.pdf)
+
+[Carruthers TC](CMP/Carruthers.pdf)
+
+
+***
+
 ## Shiny App
 
 <div class="col2">
