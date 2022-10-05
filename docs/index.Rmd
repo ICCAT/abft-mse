@@ -55,6 +55,8 @@ knitr::opts_chunk$set(echo = FALSE)
 
 [Duprey Hanke FO, SCRS/2022/156](CMP/SCRS_2022_156_Duprey_Hanke.pdf)
 
+[Lauretta et al. LW](CMP/SCRS_2022_xxx_Lauretta_etal_LW_CMP_final.pdf)
+
 [Carruthers TC](CMP/Carruthers.pdf)
 
 
