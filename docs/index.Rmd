@@ -132,6 +132,12 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ***
 
+## SCRS papers
+
+[Peterson et al. SCRS/2022/169. Results, features, and interpretations of the four remaining BFT MSE candidate management procedures](SCRS/3_SCRS_2022_169_Peterson_et_al_v4.pdf)
+
+***
+
 ## Meeting reports
 
 [September 2020 Second Intersessional Meeting of the ICCAT BFT MSE technical sub-group (ENG)(.pdf)](Reports/Meeting/2020_BFTMSETG_2_ENG.pdf)
