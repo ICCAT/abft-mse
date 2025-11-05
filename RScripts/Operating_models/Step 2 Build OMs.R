@@ -168,6 +168,8 @@ custom_cexs<-0.5
 
 OMdir<-paste0(getwd(),"/objects/OMs/")
 dirs<-paste0(OMdir,1:nOMs)
+load(system.file("ts2017.Rdata", package="ABTMSE"))
+dat<-ts2017
 
 
 # Lcomp L
@@ -177,7 +179,7 @@ OMnos <- (1:nOMs)[Design$Design_Ref[,1]!=3& Design$Design_Ref[,4]=="L"]
 OMnames <- OMcodes[OMnos]
 OMdirs  <-   dirs[OMnos]
 outfile<-paste0(OMdir,"New_Lcomp_L_summary.html")
-render(input=paste0(getwd(),"/R_package/ABTMSE/inst/OM_Comp.Rmd"),output_file=outfile)
+render(input=paste0(getwd(),"/R_package/ABTMSE/inst/OM_Comp.Rmd"),output_file=outfile, output_options=c("self_contained = TRUE"))
 
 # Lcomp H
 nOMs<-nrow(Design$Design_Ref)
@@ -186,7 +188,7 @@ OMnos <- (1:nOMs)[Design$Design_Ref[,1]!=3& Design$Design_Ref[,4]=="H"]
 OMnames <- OMcodes[OMnos]
 OMdirs  <-   dirs[OMnos]
 outfile<-paste0(OMdir,"New_Lcomp_H_summary.html")
-render(input=paste0(getwd(),"/R_package/ABTMSE/inst/OM_Comp.Rmd"),output_file=outfile)
+render(input=paste0(getwd(),"/R_package/ABTMSE/inst/OM_Comp.Rmd"),output_file=outfile, output_options=c("self_contained = TRUE"))
 
 
 
@@ -211,7 +213,7 @@ OMnos <- (1:nOMs)[Design$Design_Ref[,1]!=3& Design$Design_Ref[,4]=="L"]
 OMnames <- OMcodes[OMnos]
 OMdirs  <-   dirs[OMnos]
 outfile<-paste0(OMdir,"New_Lcomp_L_Index_Fit.html")
-render(input=paste0(getwd(),"/R_package/ABTMSE/inst/Index_fit_summary_manyOMs.Rmd"),output_file=outfile)
+render(input=paste0(getwd(),"/R_package/ABTMSE/inst/Index_fit_summary_manyOMs.Rmd"),output_file=outfile, output_options=c("self_contained = TRUE"))
 
 # Mix II Lcomp H
 nOMs<-nrow(Design$Design_Ref)
@@ -220,7 +222,7 @@ OMnos <- (1:nOMs)[Design$Design_Ref[,1]!=3& Design$Design_Ref[,4]=="H"]
 OMnames <- OMcodes[OMnos]
 OMdirs  <-   dirs[OMnos]
 outfile<-paste0(OMdir,"New_Lcomp_H_Index_Fit.html")
-render(input=paste0(getwd(),"/R_package/ABTMSE/inst/Index_fit_summary_manyOMs.Rmd"),output_file=outfile)
+render(input=paste0(getwd(),"/R_package/ABTMSE/inst/Index_fit_summary_manyOMs.Rmd"),output_file=outfile, output_options=c("self_contained = TRUE"))
 
 
 
@@ -326,14 +328,21 @@ Iinds<-c("FR_AER_SUV2","MED_LAR_SUV","GOM_LAR_SUV","GBYP_AER_SUV_BAR")
 for(i in 1:nOMs){
 
   print(paste0(i,":  ",OMcodes[i]))
+
   j<-Design$Design_Ref[i,1]
+
   OM<-new('OM',OMd=OMfolders[i],nsim=48,proyears=54,seed=1,MLEonly=T,Recruitment=Recs[[j]],
           SD_override=NULL, AC_override=NULL, Yrs_override=Yrs_override, CPUEinds=CPUEinds, Iinds=Iinds)
 
+  OM@seed<-i
+
   save(OM,file=paste0(OMfolders[i],'/OM_',i))
+
   OM<-new('OM',OMd=OMfolders[i],nsim=2,proyears=54,seed=1,MLEonly=T,Recruitment=Recs[[j]],
           SD_override=NULL, AC_override=NULL, Yrs_override=Yrs_override, CPUEinds=CPUEinds, Iinds=Iinds,
           Deterministic=T, Obs = "Perfect_Obs")
+
+  OM@seed<-i
 
   save(OM,file=paste0(OMfolders[i],'/OM_',i,"d"))
 

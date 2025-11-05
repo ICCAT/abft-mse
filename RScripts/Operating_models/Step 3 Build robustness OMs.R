@@ -5,6 +5,9 @@
 # Create a set of robustness operating models following the trial specifications document that
 # are modifications of the base model
 
+# Must repackage if OMs have changed
+
+
 # Tom Carruthers UBC
 
 # 3 June 2021
@@ -25,8 +28,8 @@ M3dir<-paste0(getwd(),"/M3")
 OMcodes<-apply(Design$Design_Ref,1,FUN=function(x)paste(x,collapse=" "))
 
 # ROM grids ---------------------------------
-FourX<-match(c("1 A -- L","2 A -- L", "1 B -- L", "2 B -- L"),OMcodes) # all ROMs except the regime change "TVregime" and "IntPar"
-FourX3<- match(c("3 A -- L","3 B -- L", "3 A -- L", "3 B -- L"),OMcodes)  # TVregime
+FourX  <- match(c("1 A -- L","2 A -- L", "1 B -- L", "2 B -- L"),OMcodes)  # all ROMs except the regime change "TVregime" and "IntPar"
+FourX3 <- match(c("3 A -- L","3 B -- L", "3 A -- L", "3 B -- L"),OMcodes)  # TVregime
 FourX10<- match(c("1 A -- L","2 A -- L", "1 A -- H", "2 A -- H"),OMcodes)  # for IntPar
 
 ROMlevs<-c("WstGw","Qinc","CatOver","HiWmix","BrzCt","TVmix","NLindex","PChgMix","TVregime","IntPar","ZeroEmix")
@@ -336,10 +339,12 @@ for(i in 1:length(ROMnos)){
 
 
 # === Test 7: ROMS 25-28 # Non linear indices ===========================================
-
+# !!!!!!!!!! Something weird here - I think later you override this with an M3 fit !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # need to refit and change OM to Obs="Hyperstable"
 ROMnos<-grep(ROMlevs[7],ROMcode)
 output_dirs<-paste0(getwd(),"/Objects/ROMs/",ROMnos)
+
+
 
 for(i in 1:length(ROMnos)){
 
@@ -347,8 +352,8 @@ for(i in 1:length(ROMnos)){
   assign("OMd",get(paste0('OM_',FourX[i],"d")))
 
   OM@Name<-OMd@Name<-ROMcode[ROMnos[i]]
-  OM@Obs<-OMd@Obs<-"Hyperstable"
-
+  OM@Obs<-OMd@Obs<-"Hyperstable" #  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
+  OM@qinc <- (-1)
   save(OM,file=paste0(output_dirs[i],"/OM"))
   save(OMd,file=paste0(output_dirs[i],"/OMd"))
   cat(ROMnos[i])
@@ -365,6 +370,8 @@ for(i in 1:length(ROMnos)){
   }
 
 }
+
+
 
 
 # === Test 9: ROMS 33-36 # Varying regime change time ===========================================
@@ -501,19 +508,24 @@ Yrs_override<-data.frame(Name='MED_LAR_SUV',start=48, end=55)
 CPUEinds<-c("MOR_POR_TRAP","JPN_LL_NEAtl2","US_RR_66_114","US_RR_115_144","US_RR_66_144","US_RR_177","MEXUS_GOM_PLL","JPN_LL_West2","CAN GSL","CAN SWNS")
 Iinds<-c("FR_AER_SUV2","MED_LAR_SUV","GOM_LAR_SUV","GBYP_AER_SUV_BAR")
 
+seedind<-c(rep(FourX,4),FourX10,FourX)
+k<-0
+for(i in fitdirs){ # for(i in fitdirs[17:20]){ # for remaking the intermediate growth OMs
 
-for(i in fitdirs){
-
+  k<-k+1
   print(paste0(i,":  ",ROMcode[i]))
   j<-Rectype[i]
 
   OM<-new('OM',OMd=OMfolders[i],nsim=48,proyears=54,seed=1,MLEonly=T,Recruitment=Recs[[j]],
           SD_override=SD_override, AC_override=AC_override, Yrs_override=Yrs_override, CPUEinds=CPUEinds, Iinds=Iinds)
 
+  OM@seed<-seedind[k]
 
   OMd<-new('OM',OMd=OMfolders[i],nsim=2,proyears=54,seed=1,MLEonly=T,Recruitment=Recs[[j]],
           SD_override=SD_override, AC_override=AC_override, Yrs_override=Yrs_override, CPUEinds=CPUEinds, Iinds=Iinds,
           Deterministic=T, Obs = "Perfect_Obs")
+
+  OMd@seed<-seedind[k]
 
   if(i%in%NLind)OM@Obs<-OMd@Obs<-"Hyperstable"
 

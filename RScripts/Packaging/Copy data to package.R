@@ -59,7 +59,7 @@ nOMs<-44
 OMnams<-paste0("ROM_",1:nOMs)
 OMdirs<-paste(getwd(),"/objects/ROMs/",1:nOMs,sep="")
 
-for(o in 1:length(OMdirs)){
+for(o in 1:length(OMdirs)){ # for(o in 25:28){
 
     OMIfile<-paste0(OMdirs[o],"/OMI")
     if(file.exists(OMIfile)){
@@ -89,6 +89,48 @@ for(o in 1:length(OMdirs)){
 
 }
 
+# temporary patch over ROMs 25,26,27,28 with 1,2, 4,5
+
+of<-c(1,2,4,5)
+ot<-25:28
+OMnams<-paste0("ROM_",of)
+OMdirs<-paste(getwd(),"/objects/ROMs/",of,sep="")
+
+for(o in 1:length(OMdirs)){ # for(o in 25:28){
+
+  o1 <- of[o]
+  o2 <- ot[o]
+
+  OMIfile<-paste0(OMdirs[o],"/OMI")
+
+  if(file.exists(OMIfile)){
+    from_file<-OMIfile
+    to_file<-paste0(datadir,"OMI_R",o2)
+    load(from_file)
+    objname<-paste0("OMI_R",o2)
+    assign(objname,OMI)
+    do.call(save, list(objname,file=to_file))
+  }
+
+  from_file<-paste0(OMdirs[o],"/OMd")
+  load(from_file)
+  to_file<-paste0(datadir,"ROM_",o2,'d')
+  objname<-paste0("ROM_",o2,"d")
+  assign(objname,OMd)
+  do.call(save, list(objname,file=to_file))
+
+  from_file<-paste0(OMdirs[o],"/OM")
+  load(from_file)
+  to_file<-paste0(datadir,"ROM_",o2)
+  objname<-paste0("ROM_",o2)
+  assign(objname,OM)
+  do.call(save, list(objname,file=to_file))
+
+  cat(paste0(o2," - "))
+
+}
+
+
 
 # Allocation
 
@@ -96,8 +138,9 @@ Allocation<-array(0,c(OM_1d@nareas,OM_1d@nfleets))
 Cdist<-apply(OM_1d@Cobs[(OM_1d@nyears-2):OM_1d@nyears,,,],3:4,sum)
 MPareas<-c(2,2,2,1,1,1,1)
 Assess_data<-array(rep(MPareas,each=2)==rep(1:2,OM_1d@nareas),c(2,OM_1d@nareas))
-#byfleet0<-read.csv(paste0(getwd(),"/data/Processed/Allocations/Allocation_by_fleet_2020_2.csv"))
-byfleet<-read.csv(paste0(getwd(),"/data/Processed/Allocations/Allocation_by_fleet_2021.csv"))
+# byfleet0<-read.csv(paste0(getwd(),"/data/Processed/Allocations/Allocation_by_fleet_2020_2.csv"))
+# byfleet<-read.csv(paste0(getwd(),"/data/Processed/Allocations/Allocation_by_fleet_2021.csv"))
+byfleet<-read.csv(paste0(getwd(),"/data/Processed/Allocations/Allocation_by_fleet_2022_Ai.csv"))
 
 
 for(f in 1:nrow(byfleet)){
@@ -146,6 +189,9 @@ save(OM_wt,file=paste0(datadir,"OM_wt.RData"))
 
 library('ABTMSE')
 loadABT()
+packageVersion('ABTMSE')
+setwd("C:/Users/tcar_/Dropbox/abft-mse")
+
 #for(i in c(1,5,7,8,10,11,2,3)){
 #  OMtemp<-new('OM',OMdirs[i],nsim=10,proyears=35,seed=1,Recruitment<-Recs[[1]])
 #  test<-new('MSE',OM=OMtemp,check=T)
@@ -164,6 +210,13 @@ to_files<-paste0(datadir,files)
 file.copy(from_files,to_files,overwrite=T)
 
 
+# =======================================================================================================================================================================================
+# =======================================================================================================================================================================================
+# you need to rebuild before carrying on here
+# =======================================================================================================================================================================================
+# =======================================================================================================================================================================================
+# =======================================================================================================================================================================================
+
 # Examples ==========================
 
 OMdir<-paste0(getwd(),"/Objects/OMs/")
@@ -180,11 +233,11 @@ save(OMI_example,file=paste0(datadir,"OMI_example"))
 # might need to add recruitment examples for OMs not level 1
 load(paste0(getwd(),"/Objects/Recruitment_scenarios/Trial specifications"))
 
-SD_override<-data.frame(Name=c("MOR_POR_TRAP","JPN_LL_NEAtl2","FR_AER_SUV2","GBYP_AER_SUV_BAR"),
-                        SD=c(  0.45,         0.45,            0.8,          0.45              ))
+SD_override<-data.frame(Name=c("GBYP_AER_SUV_BAR"),
+                        SD=c(         0.45          ))
 
-AC_override<- data.frame(Name=c("MOR_POR_TRAP","JPN_LL_NEAtl2","FR_AER_SUV2","GBYP_AER_SUV_BAR","JPN_LL_West2"),
-                         AC=c(  0.2,         0,               0.2,          0.2,                         0))
+AC_override<- data.frame(Name=c("GBYP_AER_SUV_BAR"),
+                         AC=c(      0.2  ))
 
 Yrs_override<-data.frame(Name='MED_LAR_SUV',start=48, end=55)
 CPUEinds<-c("MOR_POR_TRAP","JPN_LL_NEAtl2","US_RR_66_114","US_RR_115_144","US_RR_66_144","US_RR_177","MEXUS_GOM_PLL","JPN_LL_West2","CAN GSL","CAN SWNS")
@@ -220,7 +273,7 @@ save(Recruitment_example,file=paste0(datadir,"Recruitment_example"))
 
 # MSE_example ----------
 #load(paste0(getwd(),"/Objects/OMs/1/OM"))
-sfInit(parallel=T,cpus=detectCores())
+#sfInit(parallel=T,cpus=detectCores())
 
 myMPs<-list(c('U5','U5'),
             c('MeanC','DD_i4'),
@@ -344,13 +397,28 @@ sfStop()
 myMSE2<-new('MSE',OM=OM_1,MPs=myMPs)
 save(myMSE2,file=paste0(datadir,"myMSE2"))
 
+# make the real dataset
+
+PPD<-new('MSE',OM_1t,returnPPD=T)@PPD
+data_2023<-strip_dset(PPD[[2]],TACyear=2023)
+data_2023[[1]]$Cobs
+data_2023[[2]]$Cobs
+for(AS in 1:2)data_2023[[AS]]$MPrec<-data_2023[[AS]]$TAC[,4]
+getindval(data_2023,2023)
+save(data_2023,file=paste0(datadir,"data_2023"))
+
 
 # Annual catches
 
 source(paste0(getwd(),"/RScripts/Observation_models/Build Annual Catches.r"))
 
+# Check static C1
 
+testMSE<-new('MSE',OM_1t,MPs=list(c("BR_E","BR_W"),c("TC","TC"),c("LW_E","LW_W")),returnPPD=T)
 
+year2023<-59
+testMSE@CWa[,,1,year2023] # MP, sim
+testMSE@CWa[,,2,year2023] # MP, sim
 
 
 # END OF CREATE EXAMPLES =========================================================================================
